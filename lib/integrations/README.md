@@ -17,7 +17,7 @@ body metadata and gateway observations only verify or project that state.
 
 ## Provider ownership
 
-`providers/index.ts` aggregates the eight production APIs below; `conformance/` is test-only.
+`providers/index.ts` aggregates the eight production APIs below.
 Concrete facade entrypoints expose provider classes without exposing internal capabilities.
 Each facade shares one transport, discovery instance and successful-only identity cache.
 
@@ -26,12 +26,12 @@ Each facade shares one transport, discovery instance and successful-only identit
 | `contracts` | Provider-neutral capability interfaces, issue/PR/comment DTOs and observation states. |
 | `selection` | Factory, confirmed known-origin selection, inputs/results; only selection chooses an adapter. |
 | `errors` | Normalized failure evidence, typed read/mutation errors and guards; no transport dependency. |
-| `transport` | Checked CLI execution, per-instance retry/breaker policy and complete response decoding. |
-| `attachments` | Shared safe filename normalization; actual uploads belong to concrete adapters. |
+| `transport` | Shared CLI command/option registries, checked execution, per-instance retry/breaker policy and complete response decoding. |
+| `attachments` | Shared safe filename normalization and accepted attachment URL schemes; actual uploads belong to concrete adapters. |
 | `git` | Exact unqualified issue references in complete reachable Git history; no history cap or MR fallback. |
 | `github`, `gitlab` | Concrete facade composition and provider-specific capabilities. |
 
-Each concrete adapter root contains only `provider.ts` and `index.ts`.
+Each concrete adapter root contains only `provider.ts` and `index.ts` as production files; facade composition tests live beside them.
 
 | Internal capability | Responsibility |
 | --- | --- |
@@ -108,6 +108,8 @@ reviews-to-reactions applies to GitLab. Lower wire/API owners never depend on th
 
 ## Verification
 
-Keep focused tests beside owners and shared cross-adapter contracts in `conformance/`.
+Keep tests beside their capability owners, including provider-specific facade behavior.
+Reusable cross-adapter scenarios and CLI fixtures belong to `lib/testing`; each provider
+registers those scenarios from its own capability tests.
 Run architecture/logic review, `npm run arch:check:strict`, `npm run check`, `npm run build`,
 `npm run test` and `git diff --check` before committing; verify the bundle's ESM import.

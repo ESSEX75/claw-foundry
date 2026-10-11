@@ -11,9 +11,6 @@ export const SETUP_OPERATION = {
   REFRESH: "refresh-instructions",
 } as const;
 
-/** Plugin registration identifier used in the SDK configuration. */
-export const DEVCLAW_PLUGIN_ID = "devclaw";
-
 /** Optional memory plugin whose agent allowlist setup extends. */
 export const ACTIVE_MEMORY_PLUGIN_ID = "active-memory";
 

@@ -1,6 +1,7 @@
 /** Owns GitHub labels operations and their provider-specific API semantics. */
 
 import type { ProviderTransport } from "../../transport/index.js";
+import { PROVIDER_CLI_COMMAND, PROVIDER_CLI_OPTION } from "../../transport/index.js";
 
 /** Implements the labels capability using dependencies shared by one adapter instance. */
 export class GitHubLabels {
@@ -14,7 +15,7 @@ export class GitHubLabels {
    * @param color - Configured provider label color.
    */
   async ensureLabel(name: string, color: string): Promise<void> {
-    await this.transport.write(["label", "create", name, "--color", color.replace(/^#/, ""), "--force"]);
+    await this.transport.write([PROVIDER_CLI_COMMAND.LABEL, PROVIDER_CLI_COMMAND.CREATE, name, PROVIDER_CLI_OPTION.COLOR, color.replace(/^#/, ""), PROVIDER_CLI_OPTION.FORCE]);
   }
 
   /** Add only the explicit application-selected provider label.
@@ -22,7 +23,7 @@ export class GitHubLabels {
    * @param label - Exact provider label used as an observation filter or explicit mutation target.
    */
   async addLabel(issueId: number, label: string): Promise<void> {
-    await this.transport.write(["issue", "edit", String(issueId), "--add-label", label]);
+    await this.transport.write([PROVIDER_CLI_COMMAND.ISSUE, PROVIDER_CLI_COMMAND.EDIT, String(issueId), PROVIDER_CLI_OPTION.ADD_LABEL, label]);
   }
 
   /** Remove only explicitly selected labels; an empty set has no external effects.
@@ -31,9 +32,9 @@ export class GitHubLabels {
    */
   async removeLabels(issueId: number, labels: string[]): Promise<void> {
     if (labels.length === 0) return;
-    const args = ["issue", "edit", String(issueId)];
+    const args = [PROVIDER_CLI_COMMAND.ISSUE, PROVIDER_CLI_COMMAND.EDIT, String(issueId)];
 
-    for (const l of labels) args.push("--remove-label", l);
+    for (const l of labels) args.push(PROVIDER_CLI_OPTION.REMOVE_LABEL, l);
     await this.transport.write(args);
   }
 
@@ -43,9 +44,9 @@ export class GitHubLabels {
    */
   async addLabels(issueId: number, labels: string[]): Promise<void> {
     if (!labels.length) return;
-    const args = ["issue", "edit", String(issueId)];
+    const args = [PROVIDER_CLI_COMMAND.ISSUE, PROVIDER_CLI_COMMAND.EDIT, String(issueId)];
 
-    for (const label of labels) args.push("--add-label", label);
+    for (const label of labels) args.push(PROVIDER_CLI_OPTION.ADD_LABEL, label);
     await this.transport.write(args);
   }
 

@@ -311,16 +311,16 @@ export interface ProviderRateLimitReader {
 /** Complete provider facade composed from supported capabilities. */
 export interface IssueProvider
   extends IssueReader,
-    IssueWriter,
-    IssueDeleter,
-    LabelProjector,
-    ReviewReader,
-    PullRequestReader,
-    PullRequestOperator,
-    ReactionWriter,
-    AttachmentUploader,
-    ProviderHealthCheck,
-    ProviderRateLimitReader {}
+  IssueWriter,
+  IssueDeleter,
+  LabelProjector,
+  ReviewReader,
+  PullRequestReader,
+  PullRequestOperator,
+  ReactionWriter,
+  AttachmentUploader,
+  ProviderHealthCheck,
+  ProviderRateLimitReader { }
 
 /** Explicit issue edits owned by application; omitted fields remain unchanged. */
 export type IssueEditInput = {

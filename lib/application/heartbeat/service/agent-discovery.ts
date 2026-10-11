@@ -1,6 +1,6 @@
 /** Resolves configured agent workspaces and their owned managed projects. */
 
-import type { AgentWorkspaceConfig } from "../../../integrations/index.js";
+import type { AgentRegistryConfig } from "../../../integrations/index.js";
 import { listConfiguredAgents, resolveConfiguredAgentWorkspace } from "../../../integrations/index.js";
 import { inspectManagedWorkspace } from "../../../state/index.js";
 import { HEARTBEAT_AGENT_ID } from "./const.js";
@@ -10,7 +10,7 @@ import type { AgentDiscoveryResult } from "./types.js";
  * The same workspace may contain different agents' projects; each project is processed only by its configured owner.
  * @param config - Fresh agent inventory from the service configuration.
  */
-export async function discoverAgents(config: AgentWorkspaceConfig): Promise<AgentDiscoveryResult> {
+export async function discoverAgents(config: AgentRegistryConfig): Promise<AgentDiscoveryResult> {
   const agents: AgentDiscoveryResult["agents"] = [];
   const errors: string[] = [];
   const seen = new Set<string>();

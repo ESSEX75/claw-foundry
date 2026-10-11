@@ -14,6 +14,10 @@ export {
   type HarnessOptions,
   type TestHarness,
 } from "./harness.js";
+export { registerCommentCreationTests } from "./provider-comment-scenarios.js";
+export { registerProviderCompositionTests } from "./provider-composition-scenarios.js";
+export { registerIssueIdentityTests } from "./provider-identity-scenarios.js";
+export { createPullRequestFixture, createPullRequestTransport, registerPullRequestSelectionTests } from "./provider-request-scenarios.js";
 export { createSetupRuntime } from "./setup-runtime.js";
 export {
   createEmptyIssueStateStoreForTesting,

@@ -23,3 +23,39 @@ export const GITLAB_UPLOAD_PATH_PATTERN = /^\/uploads\/[a-fA-F0-9]{32}\/[^/?#\\]
 
 /** Control characters cannot identify an externally published attachment filename. */
 export const GITLAB_FILENAME_CONTROL_LIMIT = 32;
+
+/** Host-scoped GitLab credential lookup command identifiers. */
+export const GITLAB_CREDENTIAL_CLI = {
+  /** Select CLI configuration operations. */
+  CONFIG: "config",
+  /** Read a configured credential. */
+  GET: "get",
+  /** Select the authentication credential. */
+  TOKEN: "token",
+  /** Scope credentials to the confirmed GitLab host. */
+  HOST: "--host",
+} as const;
+
+/** Curl multipart submission command and flags; uploads execute once. */
+export const GITLAB_UPLOAD_CLI = {
+  /** Submit multipart bytes through curl. */
+  EXECUTABLE: "curl",
+  /** Ignore local curl configuration. */
+  DISABLE: "--disable",
+  /** Suppress progress output. */
+  SILENT: "--silent",
+  /** Fail for rejected HTTP requests. */
+  FAIL: "--fail",
+  /** Preserve failure diagnostics in silent mode. */
+  SHOW_ERROR: "--show-error",
+  /** Supply the host-scoped authentication header. */
+  HEADER: "--header",
+  /** Supply multipart file content. */
+  FORM: "--form",
+} as const;
+
+/** Host-scoped authentication header used for GitLab multipart submission. */
+export const GITLAB_UPLOAD_TOKEN_HEADER = "PRIVATE-TOKEN";
+
+/** Multipart form field accepted by GitLab project uploads. */
+export const GITLAB_UPLOAD_FILE_FIELD = "file";

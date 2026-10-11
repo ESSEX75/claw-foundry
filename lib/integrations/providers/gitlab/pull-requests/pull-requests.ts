@@ -1,10 +1,12 @@
 /** Owns GitLab pull-requests operations and their provider-specific API semantics. */
 
+import { ISSUE_PROVIDER } from "../../../../domain/index.js";
 import type { PrState, PrStatus } from "../../contracts/index.js";
 import { PR_STATE } from "../../contracts/index.js";
 import { classifyProviderLookupFailure, PROVIDER_ISSUE_LOOKUP_ERROR, ProviderIssueLookupError } from "../../errors/index.js";
 import { hasIssueCommitOnBaseBranch } from "../../git/index.js";
 import type { ProviderTransport } from "../../transport/index.js";
+import { PROVIDER_CLI_COMMAND } from "../../transport/index.js";
 import { GITLAB_REQUEST_STATE } from "../api/index.js";
 import { GitLabDiscovery } from "../discovery/index.js";
 import { GitLabReviews } from "../reviews/index.js";
@@ -36,7 +38,7 @@ export class GitLabPullRequests {
     const found = await this.discovery.getRelatedMRs(issueId);
     const mrs = prUrl ? found.filter(mr => mr.web_url === prUrl) : found;
 
-    if (prUrl && !mrs.length) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: "gitlab",
+    if (prUrl && !mrs.length) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: ISSUE_PROVIDER.GITLAB,
       retryable: false, message: `Previously selected MR is no longer associated with this issue: ${prUrl}` });
     // Check open MRs first
     const open = mrs.find((mr) => mr.state === GITLAB_REQUEST_STATE.OPEN);
@@ -89,7 +91,7 @@ export class GitLabPullRequests {
     const open = await this.discovery.selectOpenMr(issueId, prUrl);
 
     if (!open) throw new Error(`No open MR found for issue #${issueId}`);
-    await this.transport.once(["mr", "merge", String(open.iid)]);
+    await this.transport.once([PROVIDER_CLI_COMMAND.MERGE_REQUEST, PROVIDER_CLI_COMMAND.MERGE, String(open.iid)]);
   }
 
   /** Read one selected MR's diff without replacing an unavailable explicit target.
@@ -101,8 +103,8 @@ export class GitLabPullRequests {
 
     if (!open) return null;
     try {
-      return await this.transport.read(["mr", "diff", String(open.iid)]);
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+      return await this.transport.read([PROVIDER_CLI_COMMAND.MERGE_REQUEST, PROVIDER_CLI_COMMAND.DIFF, String(open.iid)]);
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 
   /**
@@ -115,6 +117,6 @@ export class GitLabPullRequests {
   async isCommitOnBaseBranch(issueId: number, baseBranch: string): Promise<boolean> {
     try {
       return await hasIssueCommitOnBaseBranch(this.transport.runCommand, this.transport.repoPath, issueId, baseBranch);
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 }

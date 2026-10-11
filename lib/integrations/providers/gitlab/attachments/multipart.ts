@@ -7,10 +7,19 @@ import path from "node:path";
 import { z } from "zod";
 
 import type { RunCommand } from "../../../../context.js";
-import { sanitizeProviderAttachmentName } from "../../attachments/index.js";
-import { parseProviderJson, PROVIDER_HTTP_METHOD, runProviderCommand } from "../../transport/index.js";
+import { PROVIDER_ATTACHMENT_URL_PROTOCOL,sanitizeProviderAttachmentName } from "../../attachments/index.js";
+import { parseProviderJson, PROVIDER_CLI_COMMAND, PROVIDER_CLI_OPTION,PROVIDER_HTTP_METHOD, runProviderCommand } from "../../transport/index.js";
 import { gitlabApiPath } from "../api/index.js";
-import { GITLAB_ATTACHMENT_STORAGE, GITLAB_FILENAME_CONTROL_LIMIT, GITLAB_UPLOAD_PATH, GITLAB_UPLOAD_PATH_PATTERN } from "./const.js";
+import {
+  GITLAB_ATTACHMENT_STORAGE,
+  GITLAB_CREDENTIAL_CLI,
+  GITLAB_FILENAME_CONTROL_LIMIT,
+  GITLAB_UPLOAD_CLI,
+  GITLAB_UPLOAD_FILE_FIELD,
+  GITLAB_UPLOAD_PATH,
+  GITLAB_UPLOAD_PATH_PATTERN,
+  GITLAB_UPLOAD_TOKEN_HEADER,
+} from "./const.js";
 
 /** Provider-confirmed identity needed to distinguish installation prefixes from nested namespaces. */
 const projectSchema = z.object({
@@ -33,10 +42,11 @@ const uploadSchema = z.object({ url: z.string().optional(), full_path: z.string(
  */
 export async function uploadGitLabAttachment(runCommand: RunCommand, repoPath: string,
   read: (args: string[]) => Promise<string>, filename: string, buffer: Buffer): Promise<string> {
-  const project = parseProviderJson(await read(["api", gitlabApiPath(), "--method", PROVIDER_HTTP_METHOD.GET]), projectSchema);
+  const project = parseProviderJson(await read([PROVIDER_CLI_COMMAND.API, gitlabApiPath(), PROVIDER_CLI_OPTION.METHOD, PROVIDER_HTTP_METHOD.GET]), projectSchema);
   const webUrl = new URL(project.web_url);
 
-  if (!["https:", "http:"].includes(webUrl.protocol) || webUrl.username || webUrl.password || webUrl.search || webUrl.hash) {
+  if ((webUrl.protocol !== PROVIDER_ATTACHMENT_URL_PROTOCOL.HTTPS && webUrl.protocol !== PROVIDER_ATTACHMENT_URL_PROTOCOL.HTTP)
+    || webUrl.username || webUrl.password || webUrl.search || webUrl.hash) {
     throw new Error("Invalid GitLab project URL.");
   }
 
@@ -52,7 +62,7 @@ export async function uploadGitLabAttachment(runCommand: RunCommand, repoPath: s
   if (!webPath.endsWith(projectPath)) throw new Error("GitLab project URL does not match its namespace.");
   const installationPath = webPath.slice(0, -projectPath.length);
   const installationUrl = `${webUrl.origin}${installationPath}`;
-  const token = (await read(["config", "get", "token", "--host", webUrl.host])).trim();
+  const token = (await read([GITLAB_CREDENTIAL_CLI.CONFIG, GITLAB_CREDENTIAL_CLI.GET, GITLAB_CREDENTIAL_CLI.TOKEN, GITLAB_CREDENTIAL_CLI.HOST, webUrl.host])).trim();
 
   if (!token || /[\r\n]/.test(token)) throw new Error("GitLab upload credentials are unavailable.");
 
@@ -66,8 +76,10 @@ export async function uploadGitLabAttachment(runCommand: RunCommand, repoPath: s
     // Curl parses multipart syntax itself; quoting also protects commas and semicolons in trusted temp roots.
     const curlPath = path.sep === "\\" ? tmpFile.replace(/\\/g, "/") : tmpFile;
     const quotedFile = curlPath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    const output = await runProviderCommand(runCommand, ["curl", "--disable", "--silent", "--fail", "--show-error",
-      "--header", `PRIVATE-TOKEN: ${token}`, "--form", `file=@"${quotedFile}"`,
+    const output = await runProviderCommand(runCommand, [
+      GITLAB_UPLOAD_CLI.EXECUTABLE, GITLAB_UPLOAD_CLI.DISABLE, GITLAB_UPLOAD_CLI.SILENT,
+      GITLAB_UPLOAD_CLI.FAIL, GITLAB_UPLOAD_CLI.SHOW_ERROR,
+      GITLAB_UPLOAD_CLI.HEADER, `${GITLAB_UPLOAD_TOKEN_HEADER}: ${token}`, GITLAB_UPLOAD_CLI.FORM, `${GITLAB_UPLOAD_FILE_FIELD}=@"${quotedFile}"`,
       `${installationUrl}${GITLAB_UPLOAD_PATH.API}${project.id}${GITLAB_UPLOAD_PATH.ENDPOINT}`], repoPath);
     const upload = parseProviderJson(output, uploadSchema);
     const relativePath = upload.url;

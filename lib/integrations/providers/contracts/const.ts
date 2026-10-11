@@ -9,9 +9,7 @@ export const PR_COMMENT_KIND = {
 } as const;
 
 /** Canonical issue state used when comparing provider values without regard to case. */
-export const PROVIDER_ISSUE_STATE = {
-  CLOSED: "closed",
-} as const;
+export const PROVIDER_CLOSED_ISSUE_STATE = "closed";
 
 /** Provider review decisions consumed independently of their source namespace. */
 export const PROVIDER_REVIEW_STATE = {
@@ -35,6 +33,8 @@ export const PR_STATE = {
 export const PROVIDER_FEEDBACK_STATE = {
   INLINE: "INLINE",
   UNRESOLVED: "UNRESOLVED",
+  /** Discussion feedback whose provider thread is resolved. */
+  RESOLVED: "RESOLVED",
 } as const;
 
 /** Provider-side collection filters, independent of configured workflow labels. */

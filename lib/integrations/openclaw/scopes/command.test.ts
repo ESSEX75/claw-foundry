@@ -12,7 +12,14 @@ const unsupported: Awaited<ReturnType<RunCommand>> = {
 };
 
 it("recognizes absent scope CLI support only after a normal observed exit", async () => {
-  assert.deepEqual(await runScopeCommand(async () => unsupported, ["workspace:read"]), { supported: false });
+  assert.equal(await runScopeCommand(async () => unsupported, ["workspace:read"]), undefined);
+});
+
+it("returns validated approval evidence directly without treating denial as absent support", async () => {
+  const response = { status: "denied", ok: false, missing: ["workspace:read"] };
+  assert.deepEqual(await runScopeCommand(async () => ({
+    ...unsupported, code: 0, stderr: "", stdout: JSON.stringify(response),
+  }), ["workspace:read"]), response);
 });
 
 /** Abnormal transport evidence cannot establish that required approval support is unavailable. */

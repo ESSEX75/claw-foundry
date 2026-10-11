@@ -16,3 +16,19 @@ export const GITHUB_REQUEST_STATE = {
   MERGED: "MERGED",
   CLOSED: "CLOSED",
 } as const;
+
+/** REST collection filter names sent to the provider. */
+export const GITHUB_API_QUERY = {
+  /** Filter the provider lifecycle state. */
+  STATE: "state",
+  /** Filter by provider-visible labels. */
+  LABELS: "labels",
+} as const;
+
+/** REST mutation fields sent through provider CLI arguments. */
+export const GITHUB_API_FIELD = {
+  /** Supply GitHub issue body content. */
+  BODY: "body",
+  /** Supply attachment bytes or reaction content. */
+  CONTENT: "content",
+} as const;

@@ -17,13 +17,3 @@ export type CompletedCommandResult = CommandResult & {
   /** Observed normal process exit. */
   termination: typeof COMMAND_EXIT_TERMINATION;
 };
-
-/** Captured output can be interpreted only when the transport reports no clipping or stream error. */
-export type CompleteCommandOutput = CommandResult & {
-  /** Full stdout capture, or no reported capture loss. */
-  stdoutTruncatedBytes?: 0;
-  /** Full stderr capture needed for reliable failure classification. */
-  stderrTruncatedBytes?: 0;
-  /** Neither output stream reported a capture error. */
-  outputErrorStream?: undefined;
-};

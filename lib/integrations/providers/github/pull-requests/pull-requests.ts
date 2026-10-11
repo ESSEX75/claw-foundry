@@ -1,12 +1,15 @@
 /** Owns GitHub pull-requests operations and their provider-specific API semantics. */
 
+import { ISSUE_PROVIDER } from "../../../../domain/index.js";
 import type { PrState, PrStatus } from "../../contracts/index.js";
 import { PR_STATE, PROVIDER_REVIEW_STATE } from "../../contracts/index.js";
 import { classifyProviderLookupFailure, PROVIDER_ISSUE_LOOKUP_ERROR, ProviderIssueLookupError } from "../../errors/index.js";
 import { hasIssueCommitOnBaseBranch } from "../../git/index.js";
 import type { ProviderTransport } from "../../transport/index.js";
+import { PROVIDER_CLI_COMMAND, PROVIDER_CLI_OPTION } from "../../transport/index.js";
 import { GITHUB_REQUEST_STATE } from "../api/index.js";
 import { GITHUB_DISCOVERY_STATE, GitHubDiscovery } from "../discovery/index.js";
+import { GITHUB_EYES_REACTION } from "../reactions/index.js";
 import { GitHubReviews, latestFormalReviews } from "../reviews/index.js";
 import { GITHUB_MERGEABILITY } from "./const.js";
 
@@ -38,7 +41,7 @@ export class GitHubPullRequests {
     const found = await this.discovery.findPrsForIssue(issueId, GITHUB_DISCOVERY_STATE.ALL);
     const candidates = prUrl ? found.filter(pr => pr.url === prUrl) : found;
 
-    if (prUrl && !candidates.length) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: "github",
+    if (prUrl && !candidates.length) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: ISSUE_PROVIDER.GITHUB,
       retryable: false, message: `Previously selected PR is no longer associated with this issue: ${prUrl}` });
     const open = candidates.find(pr => pr.state === GITHUB_REQUEST_STATE.OPEN);
 
@@ -47,8 +50,8 @@ export class GitHubPullRequests {
       const summaries = reviews.filter(review => review.state === PROVIDER_REVIEW_STATE.COMMENTED && review.body.trim().length > 0);
       const conversations = await this.reviews.fetchConversationComments(open.number);
       const inlines = await this.reviews.fetchInlineComments(open.number);
-      const hasCommentFeedback = conversations.some(comment => (comment.reactions?.eyes ?? 0) === 0)
-        || inlines.some(comment => comment.body.trim().length > 0 && (comment.reactions?.eyes ?? 0) === 0);
+      const hasCommentFeedback = conversations.some(comment => (comment.reactions?.[GITHUB_EYES_REACTION] ?? 0) === 0)
+        || inlines.some(comment => comment.body.trim().length > 0 && (comment.reactions?.[GITHUB_EYES_REACTION] ?? 0) === 0);
       const decisions = latestFormalReviews(reviews);
       let state: PrState;
 
@@ -79,7 +82,7 @@ export class GitHubPullRequests {
     const pr = await this.discovery.selectOpenPr(issueId, prUrl);
 
     if (!pr) throw new Error(`No open PR found for issue #${issueId}`);
-    await this.transport.once(["pr", "merge", pr.url, "--merge"]);
+    await this.transport.once([PROVIDER_CLI_COMMAND.PULL_REQUEST, PROVIDER_CLI_COMMAND.MERGE, pr.url, PROVIDER_CLI_OPTION.MERGE]);
   }
 
   /** Read the same selected PR's diff; failed explicit selection cannot yield another request's content.
@@ -91,8 +94,8 @@ export class GitHubPullRequests {
 
     if (!pr) return null;
     try {
-      return await this.transport.read(["pr", "diff", String(pr.number)]);
-    } catch (error) { throw classifyProviderLookupFailure("github", error); }
+      return await this.transport.read([PROVIDER_CLI_COMMAND.PULL_REQUEST, PROVIDER_CLI_COMMAND.DIFF, String(pr.number)]);
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITHUB, error); }
   }
 
   /**
@@ -105,6 +108,6 @@ export class GitHubPullRequests {
   async isCommitOnBaseBranch(issueId: number, baseBranch: string): Promise<boolean> {
     try {
       return await hasIssueCommitOnBaseBranch(this.transport.runCommand, this.transport.repoPath, issueId, baseBranch);
-    } catch (error) { throw classifyProviderLookupFailure("github", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITHUB, error); }
   }
 }

@@ -7,7 +7,7 @@ import { GITHUB_API_RESOURCE, githubApiPath } from "../api/index.js";
 import type { GhConversationComment, GhInlineComment } from "../comments/index.js";
 import { GhCommentSchema, GhInlineSchema } from "../comments/index.js";
 import { GitHubDiscovery } from "../discovery/index.js";
-import { GITHUB_REVIEW_BOT_SUFFIX, GITHUB_REVIEW_RESOURCE } from "./const.js";
+import { GITHUB_REVIEW_BOT_SUFFIX, GITHUB_REVIEWS_RESOURCE } from "./const.js";
 import { latestFormalReviews } from "./review-observations.js";
 import { GhReviewSchema } from "./schema.js";
 
@@ -23,7 +23,7 @@ export class GitHubReviews {
    * @param prNumber - Exact selected pull request.
    */
   async readReviews(prNumber: number): Promise<PrReviewComment[]> {
-    const reviews = await this.transport.collection(githubApiPath(GITHUB_API_RESOURCE.PULLS, prNumber, GITHUB_REVIEW_RESOURCE.REVIEWS), GhReviewSchema);
+    const reviews = await this.transport.collection(githubApiPath(GITHUB_API_RESOURCE.PULLS, prNumber, GITHUB_REVIEWS_RESOURCE), GhReviewSchema);
 
     return reviews.filter(review => review.submitted_at !== null && !review.user.login.endsWith(GITHUB_REVIEW_BOT_SUFFIX)).map(review => ({ kind: PR_COMMENT_KIND.REVIEW,
       id: review.id, author: review.user.login, body: review.body, state: review.state, created_at: review.submitted_at ?? "" }));

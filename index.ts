@@ -13,12 +13,13 @@ import {
 } from "./lib/application/index.js";
 // Infrastructure
 import { registerCli } from "./lib/cli/register.js";
+import { DEVCLAW_PLUGIN_ID } from "./lib/const.js";
 import { createPluginContext } from "./lib/context.js";
 import { registerAttachmentHook, registerBootstrapHook } from "./lib/integrations/index.js";
 import { toolRegistry } from "./lib/tools/registry.js";
 
 const plugin = {
-  id: "devclaw",
+  id: DEVCLAW_PLUGIN_ID,
   name: "DevClaw",
   description:
     "Multi-project dev/qa pipeline orchestration with GitHub/GitLab integration, developer tiers, and audit logging.",
@@ -79,10 +80,10 @@ const plugin = {
 
     // CLI, services & hooks
     api.registerCli(({ program }) => registerCli(program, ctx), {
-      commands: ["devclaw"],
+      commands: [DEVCLAW_PLUGIN_ID],
       descriptors: [
         {
-          name: "devclaw",
+          name: DEVCLAW_PLUGIN_ID,
           description: "DevClaw development pipeline tools",
           hasSubcommands: true,
         },

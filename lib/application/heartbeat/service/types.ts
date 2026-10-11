@@ -3,7 +3,7 @@
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
 
 import type { RunCommand } from "../../../context.js";
-import type { AgentWorkspaceConfig } from "../../../integrations/index.js";
+import type { AgentRegistryConfig } from "../../../integrations/index.js";
 
 /** One SDK-resolved agent/workspace pair whose projects belong to that agent. */
 export type Agent = {
@@ -46,7 +46,7 @@ export type ServiceContext = {
   /** OpenClaw logger reporting only actionable lifecycle outcomes. */
   logger: HeartbeatServiceLogger;
   /** Fresh configured agent workspace inventory. */
-  config: AgentWorkspaceConfig;
+  config: AgentRegistryConfig;
 };
 
 /** Service dependencies held across scheduled callbacks. */
@@ -54,7 +54,7 @@ export type HeartbeatServiceDependencies = {
   /** Fresh plugin options for each scheduled run. */
   pluginConfig?: Record<string, unknown>;
   /** SDK configuration fallback when no service snapshot exists. */
-  config: AgentWorkspaceConfig;
+  config: AgentRegistryConfig;
   /** Gateway and provider command transport. */
   runCommand: RunCommand;
   /** Optional native runtime for exact notification delivery. */

@@ -4,7 +4,8 @@ import type { toPluginMessageContext, toPluginMessageReceivedEvent } from "openc
 
 import type { PluginContext, RunCommand } from "../../../context.js";
 import type { Project } from "../../../domain/index.js";
-import type { IssueProvider } from "../../providers/index.js";
+import type { RoleInstructionsResult } from "../../../state/index.js";
+import type { ProviderWithType } from "../../providers/index.js";
 import type { MediaAttachmentInfo } from "../media/index.js";
 import type { ATTACHMENT_MESSAGE_HOOK } from "./const.js";
 
@@ -64,9 +65,7 @@ export type AttachmentHookRegistrar = {
 };
 
 /** Runtime dependencies used by the media hook, excluding mutation of SDK configuration. */
-export type AttachmentHookContext = {
-  /** Provider command transport. */
-  runCommand: RunCommand;
+export type AttachmentHookContext = Pick<PluginContext, "runCommand"> & {
   /** Diagnostics for rejected routing or failed attachment capture. */
   logger: Pick<PluginContext["logger"], "warn">;
   /** Read-only live configuration capability. */
@@ -84,15 +83,7 @@ export type BootstrapInstructionIdentity = {
   /** Application-validated role, including configured custom roles. */
   role: string;
   /** Persisted project owning the exact worker session. */
-  projectSlug: string;
-};
-
-/** Application-selected instructions whose source is retained for diagnostics. */
-type BootstrapInstructionContent = {
-  /** Role prompt content; an empty prompt keeps the orchestrator resource stripped. */
-  content: string;
-  /** Confirmed source description reported by the loader. */
-  source: string | null;
+  projectSlug: Project["slug"];
 };
 
 /** Injected ownership resolution and prompt loading, preserving the complete application identity type. */
@@ -106,46 +97,32 @@ export type BootstrapHookActions<TIdentity extends BootstrapInstructionIdentity>
    * @param workspaceDir - Workspace used for the confirmed ownership resolution.
    * @param identity - Complete identity returned by that resolution.
    */
-  loadWorkerBootstrapInstructions(workspaceDir: string, identity: TIdentity): Promise<BootstrapInstructionContent>;
+  loadWorkerBootstrapInstructions(workspaceDir: string, identity: TIdentity): Promise<RoleInstructionsResult>;
 };
 
 /** SDK-resolved workspace for one explicitly configured owner. */
-type AttachmentOwnerWorkspace = {
-  /** Explicit SDK agent identity. */
-  agentId: string;
-  /** Effective SDK workspace for that identity. */
-  workspaceDir: string;
-};
+type AttachmentOwnerWorkspace = Pick<AttachmentMessageRoute, "agentId"> & Pick<WorkerBootstrapContext, "workspaceDir">;
 
 /** Application-confirmed project selected from a complete incoming route. */
-type AttachmentHookProject = {
-  /** Registry workspace owning the confirmed project. */
-  workspaceDir: string;
+type AttachmentHookProject = Pick<AttachmentOwnerWorkspace, "workspaceDir"> & {
   /** Registered domain project; no provider observation selects this destination. */
   project: Project;
 };
 
 /** Resolved attachment capture handed to the application-owned persistence flow. */
-type AttachmentCaptureInput = {
-  /** Registry workspace owning local attachment storage. */
-  workspaceDir: string;
+type AttachmentCaptureInput = Pick<AttachmentHookProject, "workspaceDir"> & Pick<ProviderWithType, "provider"> & {
   /** Confirmed project destination. */
-  projectSlug: string;
+  projectSlug: Project["slug"];
   /** Explicit issue reference from the incoming message. */
   issueId: number;
-  /** Confirmed project provider capabilities. */
-  provider: IssueProvider;
   /** Sender supplied by the SDK event. */
-  uploader: string;
+  uploader: AttachmentMessageEvent["from"];
   /** Complete ordered media observations from the SDK boundary. */
   mediaAttachments: MediaAttachmentInfo[];
 };
 
 /** Provider capability selected by the injected project resolver. */
-type AttachmentHookProvider = {
-  /** Resolved provider retained for all captured issue references. */
-  provider: IssueProvider;
-};
+type AttachmentHookProvider = Pick<AttachmentCaptureInput, "provider">;
 
 /** Injected application decisions; SDK registration and route normalization remain adapter-owned. */
 export type AttachmentHookActions = {

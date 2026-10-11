@@ -1,8 +1,10 @@
 /** Owns GitHub repository operations and their provider-specific API semantics. */
 
+import { ISSUE_PROVIDER } from "../../../../domain/index.js";
 import { classifyProviderLookupFailure } from "../../errors/index.js";
 import type { ProviderTransport } from "../../transport/index.js";
-import { GITHUB_REPOSITORY_QUERY } from "./const.js";
+import { PROVIDER_CLI_COMMAND, PROVIDER_CLI_OPTION } from "../../transport/index.js";
+import { GITHUB_REPOSITORY_FIELDS } from "./const.js";
 import { GhRepositorySchema } from "./schema.js";
 import type { GitHubRepositoryInfo } from "./types.js";
 
@@ -19,14 +21,16 @@ export class GitHubRepository {
   async getRepoInfo(): Promise<GitHubRepositoryInfo> {
     if (this.repoInfo !== undefined) return this.repoInfo;
     try {
-      const raw: unknown = JSON.parse(await this.transport.read(["repo", "view", "--json", GITHUB_REPOSITORY_QUERY.REPOSITORY_FIELDS]));
+      const raw: unknown = JSON.parse(await this.transport.read([
+        PROVIDER_CLI_COMMAND.REPOSITORY, PROVIDER_CLI_COMMAND.VIEW, PROVIDER_CLI_OPTION.JSON, GITHUB_REPOSITORY_FIELDS,
+      ]));
       const data = GhRepositorySchema.parse(raw);
 
       this.repoInfo = { owner: data.owner.login, name: data.name };
 
       return this.repoInfo;
     } catch (error) {
-      throw classifyProviderLookupFailure("github", error);
+      throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITHUB, error);
     }
   }
 }

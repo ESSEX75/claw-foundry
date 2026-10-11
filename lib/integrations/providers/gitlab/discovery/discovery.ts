@@ -1,11 +1,12 @@
 /** Owns GitLab discovery operations and their provider-specific API semantics. */
 
+import { ISSUE_PROVIDER } from "../../../../domain/index.js";
 import { classifyProviderLookupFailure, PROVIDER_ISSUE_LOOKUP_ERROR, ProviderIssueLookupError } from "../../errors/index.js";
 import type { ProviderTransport } from "../../transport/index.js";
-import { parseProviderJson } from "../../transport/index.js";
+import { parseProviderJson, PROVIDER_CLI_COMMAND } from "../../transport/index.js";
 import { GITLAB_API_RESOURCE, GITLAB_REQUEST_STATE, gitlabApiPath } from "../api/index.js";
 import { GitLabRepository } from "../repository/index.js";
-import { GITLAB_DISCOVERY_RESOURCE, GITLAB_MERGEABILITY } from "./const.js";
+import { GITLAB_INCLUDE_REBASE_QUERY,GITLAB_MERGEABILITY,GITLAB_RELATED_MERGE_REQUESTS_RESOURCE } from "./const.js";
 import { GitLabMergeabilitySchema, GitLabMRSchema } from "./schema.js";
 import type { GitLabMR } from "./types.js";
 
@@ -21,7 +22,7 @@ export class GitLabDiscovery {
    * @param issueId - Managed issue whose related merge requests are requested.
    */
   async getRelatedMRs(issueId: number): Promise<GitLabMR[]> {
-    const mrs = await this.transport.collection(gitlabApiPath(GITLAB_API_RESOURCE.ISSUES, issueId, GITLAB_DISCOVERY_RESOURCE.RELATED_MERGE_REQUESTS), GitLabMRSchema);
+    const mrs = await this.transport.collection(gitlabApiPath(GITLAB_API_RESOURCE.ISSUES, issueId, GITLAB_RELATED_MERGE_REQUESTS_RESOURCE), GitLabMRSchema);
 
     if (!mrs.length) return [];
     const projectId = await this.repository.getProjectId();
@@ -37,7 +38,7 @@ export class GitLabDiscovery {
     const candidates = (await this.getRelatedMRs(issueId)).filter(mr => mr.state === GITLAB_REQUEST_STATE.OPEN);
     const selected = prUrl ? candidates.find(mr => mr.web_url === prUrl) : candidates[0];
 
-    if (prUrl && !selected) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: "gitlab",
+    if (prUrl && !selected) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: ISSUE_PROVIDER.GITLAB,
       retryable: false, message: `Previously selected MR is no longer available as an open request: ${prUrl}` });
 
     return selected;
@@ -48,7 +49,10 @@ export class GitLabDiscovery {
    */
   async isMrMergeable(mrIid: number): Promise<boolean | undefined> {
     try {
-      const raw = await this.transport.read(["api", `${gitlabApiPath(GITLAB_API_RESOURCE.MERGE_REQUESTS, mrIid)}?include_rebase_in_progress=true`]);
+      const raw = await this.transport.read([
+        PROVIDER_CLI_COMMAND.API,
+        `${gitlabApiPath(GITLAB_API_RESOURCE.MERGE_REQUESTS, mrIid)}?${GITLAB_INCLUDE_REBASE_QUERY}=true`,
+      ]);
       const mr = parseProviderJson(raw, GitLabMergeabilitySchema);
 
       if (mr.has_conflicts === true) return false;
@@ -56,6 +60,6 @@ export class GitLabDiscovery {
       if (mr.detailed_merge_status === GITLAB_MERGEABILITY.MERGEABLE || mr.detailed_merge_status === GITLAB_MERGEABILITY.CI_REQUIRED) return true;
 
       return undefined; // Unknown
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 }

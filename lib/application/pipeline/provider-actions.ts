@@ -2,7 +2,7 @@
 
 import { log as auditLog } from "../../audit.js";
 import { ACTION, type CompletionRule } from "../../domain/index.js";
-import { type Issue, PR_STATE, PROVIDER_ISSUE_STATE } from "../../integrations/index.js";
+import { type Issue, PR_STATE, PROVIDER_CLOSED_ISSUE_STATE } from "../../integrations/index.js";
 import { PIPELINE_AUDIT, PIPELINE_GIT_PULL_COMMAND } from "./const.js";
 import type { CompletionActions, CompletionInput } from "./types.js";
 
@@ -89,7 +89,7 @@ export async function executeCompletionActions(opts: CompletionInput, rule: Comp
  * @param issue - Provider snapshot read before the attempt.
  */
 export async function applyCompletionLifecycle(opts: CompletionInput, rule: CompletionRule<string>, issue: Issue): Promise<void> {
-  let closed = issue.state === PROVIDER_ISSUE_STATE.CLOSED;
+  let closed = issue.state === PROVIDER_CLOSED_ISSUE_STATE;
 
   for (const action of rule.actions) {
     if (action === ACTION.CLOSE_ISSUE && !closed) {

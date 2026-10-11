@@ -1,9 +1,11 @@
 /** Owns GitLab reviews operations and their provider-specific API semantics. */
 
+import { ISSUE_PROVIDER } from "../../../../domain/index.js";
 import type { PrReviewComment } from "../../contracts/index.js";
 import { PR_COMMENT_KIND, PROVIDER_FEEDBACK_STATE, PROVIDER_REVIEW_STATE } from "../../contracts/index.js";
 import { classifyProviderLookupFailure } from "../../errors/index.js";
 import type { ProviderTransport } from "../../transport/index.js";
+import { PROVIDER_CLI_COMMAND } from "../../transport/index.js";
 import { GITLAB_API_RESOURCE, gitlabApiPath } from "../api/index.js";
 import type { GitLabNote } from "../comments/index.js";
 import { GitLabNoteSchema } from "../comments/index.js";
@@ -31,7 +33,7 @@ export class GitLabReviews {
       return discussions.some((d) =>
         d.notes.some((n) => n.resolvable && !n.resolved && !n.system),
       );
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 
   /**
@@ -50,7 +52,7 @@ export class GitLabReviews {
       }
 
       return false;
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 
   /**
@@ -67,7 +69,7 @@ export class GitLabReviews {
       return all.filter(
         (n) => !n.system && n.body.trim().length > 0,
       );
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 
   /** Check if an MR is approved via the dedicated approvals endpoint.
@@ -75,7 +77,7 @@ export class GitLabReviews {
    */
   async isMrApproved(mrIid: number): Promise<boolean> {
     try {
-      const raw = await this.transport.read(["api", gitlabApiPath(GITLAB_API_RESOURCE.MERGE_REQUESTS, mrIid, GITLAB_REVIEW_RESOURCE.APPROVALS)]);
+      const raw = await this.transport.read([PROVIDER_CLI_COMMAND.API, gitlabApiPath(GITLAB_API_RESOURCE.MERGE_REQUESTS, mrIid, GITLAB_REVIEW_RESOURCE.APPROVALS)]);
       const response: unknown = JSON.parse(raw);
       const data = GitLabApprovalSchema.parse(response);
       // Only trust explicit approvals — ignore bare 'approved' flag.
@@ -87,7 +89,7 @@ export class GitLabReviews {
 
       // All required approvals satisfied
       return (data.approvals_left ?? 1) <= 0;
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 
   /** Read complete feedback for one selected MR, deduplicating its shared note identities.
@@ -111,14 +113,14 @@ export class GitLabReviews {
             id: note.id,
             author: note.author.username,
             body: note.body,
-            state: note.resolvable ? (note.resolved ? "RESOLVED" : PROVIDER_FEEDBACK_STATE.UNRESOLVED) : PROVIDER_REVIEW_STATE.COMMENTED,
+            state: note.resolvable ? (note.resolved ? PROVIDER_FEEDBACK_STATE.RESOLVED : PROVIDER_FEEDBACK_STATE.UNRESOLVED) : PROVIDER_REVIEW_STATE.COMMENTED,
             created_at: note.created_at,
             path: note.position?.new_path,
             line: note.position?.new_line ?? undefined,
           });
         }
       }
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
 
     // Also include top-level conversation notes (regular MR comments, not threaded)
     const conversationNotes = await this.fetchConversationComments(open.iid);

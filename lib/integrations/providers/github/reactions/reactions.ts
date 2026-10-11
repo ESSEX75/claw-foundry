@@ -1,10 +1,10 @@
 /** Owns GitHub reactions operations and their provider-specific API semantics. */
 
 import type { ProviderTransport } from "../../transport/index.js";
-import { PROVIDER_HTTP_METHOD } from "../../transport/index.js";
-import { GITHUB_API_RESOURCE, githubApiPath } from "../api/index.js";
+import { PROVIDER_CLI_COMMAND, PROVIDER_CLI_OPTION,PROVIDER_HTTP_METHOD } from "../../transport/index.js";
+import { GITHUB_API_FIELD,GITHUB_API_RESOURCE, githubApiPath } from "../api/index.js";
 import { GITHUB_DISCOVERY_STATE, GitHubDiscovery } from "../discovery/index.js";
-import { GITHUB_REACTION_RESOURCE } from "./const.js";
+import { GITHUB_REACTIONS_RESOURCE } from "./const.js";
 import { GhReactionSchema } from "./schema.js";
 
 /** Implements the reactions capability using dependencies shared by one adapter instance. */
@@ -22,9 +22,9 @@ export class GitHubReactions {
   async reactToIssue(issueId: number, emoji: string): Promise<void> {
     try {
       await this.transport.once([
-        "api", githubApiPath(GITHUB_API_RESOURCE.ISSUES, issueId, GITHUB_REACTION_RESOURCE.REACTIONS),
-        "--method", PROVIDER_HTTP_METHOD.POST,
-        "--field", `content=${emoji}`,
+        PROVIDER_CLI_COMMAND.API, githubApiPath(GITHUB_API_RESOURCE.ISSUES, issueId, GITHUB_REACTIONS_RESOURCE),
+        PROVIDER_CLI_OPTION.METHOD, PROVIDER_HTTP_METHOD.POST,
+        PROVIDER_CLI_OPTION.FIELD, `${GITHUB_API_FIELD.CONTENT}=${emoji}`,
       ]);
     } catch { /* best-effort */ }
   }
@@ -35,7 +35,7 @@ export class GitHubReactions {
    */
   async issueHasReaction(issueId: number, emoji: string): Promise<boolean> {
     try {
-      const reactions = await this.transport.collection(githubApiPath(GITHUB_API_RESOURCE.ISSUES, issueId, GITHUB_REACTION_RESOURCE.REACTIONS), GhReactionSchema);
+      const reactions = await this.transport.collection(githubApiPath(GITHUB_API_RESOURCE.ISSUES, issueId, GITHUB_REACTIONS_RESOURCE), GhReactionSchema);
 
       return reactions.some((r) => r.content === emoji);
     } catch { return false; }
@@ -52,9 +52,9 @@ export class GitHubReactions {
 
       if (prs.length === 0) return;
       await this.transport.once([
-        "api", githubApiPath(GITHUB_API_RESOURCE.ISSUES, prs[0].number, GITHUB_REACTION_RESOURCE.REACTIONS),
-        "--method", PROVIDER_HTTP_METHOD.POST,
-        "--field", `content=${emoji}`,
+        PROVIDER_CLI_COMMAND.API, githubApiPath(GITHUB_API_RESOURCE.ISSUES, prs[0].number, GITHUB_REACTIONS_RESOURCE),
+        PROVIDER_CLI_OPTION.METHOD, PROVIDER_HTTP_METHOD.POST,
+        PROVIDER_CLI_OPTION.FIELD, `${GITHUB_API_FIELD.CONTENT}=${emoji}`,
       ]);
     } catch { /* best-effort */ }
   }
@@ -68,7 +68,7 @@ export class GitHubReactions {
         const prs = await this.discovery.findPrsForIssue(issueId, GITHUB_DISCOVERY_STATE.OPEN);
 
       if (prs.length === 0) return false;
-      const reactions = await this.transport.collection(githubApiPath(GITHUB_API_RESOURCE.ISSUES, prs[0].number, GITHUB_REACTION_RESOURCE.REACTIONS), GhReactionSchema);
+      const reactions = await this.transport.collection(githubApiPath(GITHUB_API_RESOURCE.ISSUES, prs[0].number, GITHUB_REACTIONS_RESOURCE), GhReactionSchema);
 
       return reactions.some((r) => r.content === emoji);
     } catch { return false; }
@@ -82,9 +82,9 @@ export class GitHubReactions {
   async reactToIssueComment(_issueId: number, commentId: number, emoji: string): Promise<void> {
     try {
       await this.transport.once([
-        "api", githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTION_RESOURCE.REACTIONS),
-        "--method", PROVIDER_HTTP_METHOD.POST,
-        "--field", `content=${emoji}`,
+        PROVIDER_CLI_COMMAND.API, githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTIONS_RESOURCE),
+        PROVIDER_CLI_OPTION.METHOD, PROVIDER_HTTP_METHOD.POST,
+        PROVIDER_CLI_OPTION.FIELD, `${GITHUB_API_FIELD.CONTENT}=${emoji}`,
       ]);
     } catch { /* best-effort */ }
   }
@@ -100,9 +100,9 @@ export class GitHubReactions {
   async reactToPrComment(_issueId: number, commentId: number, emoji: string): Promise<void> {
     try {
       await this.transport.once([
-        "api", githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTION_RESOURCE.REACTIONS),
-        "--method", PROVIDER_HTTP_METHOD.POST,
-        "--field", `content=${emoji}`,
+        PROVIDER_CLI_COMMAND.API, githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTIONS_RESOURCE),
+        PROVIDER_CLI_OPTION.METHOD, PROVIDER_HTTP_METHOD.POST,
+        PROVIDER_CLI_OPTION.FIELD, `${GITHUB_API_FIELD.CONTENT}=${emoji}`,
       ]);
     } catch { /* best-effort */ }
   }
@@ -113,8 +113,8 @@ export class GitHubReactions {
    * @param emoji - GitHub reaction content.
    */
   async reactToPrReviewComment(_issueId: number, commentId: number, emoji: string): Promise<void> {
-    await this.transport.once(["api", githubApiPath(GITHUB_API_RESOURCE.PULLS, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTION_RESOURCE.REACTIONS),
-      "--method", PROVIDER_HTTP_METHOD.POST, "--field", `content=${emoji}`]);
+    await this.transport.once([PROVIDER_CLI_COMMAND.API, githubApiPath(GITHUB_API_RESOURCE.PULLS, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTIONS_RESOURCE),
+      PROVIDER_CLI_OPTION.METHOD, PROVIDER_HTTP_METHOD.POST, PROVIDER_CLI_OPTION.FIELD, `${GITHUB_API_FIELD.CONTENT}=${emoji}`]);
   }
 
   /** Observe cosmetic reaction evidence in the issue-comment namespace.
@@ -125,7 +125,7 @@ export class GitHubReactions {
   async issueCommentHasReaction(issueId: number, commentId: number, emoji: string): Promise<boolean> {
     try {
       const reactions = await this.transport.collection(
-        githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTION_RESOURCE.REACTIONS),
+        githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTIONS_RESOURCE),
         GhReactionSchema,
       );
 
@@ -141,7 +141,7 @@ export class GitHubReactions {
   async prCommentHasReaction(issueId: number, commentId: number, emoji: string): Promise<boolean> {
     try {
       const reactions = await this.transport.collection(
-        githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTION_RESOURCE.REACTIONS),
+        githubApiPath(GITHUB_API_RESOURCE.ISSUES, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTIONS_RESOURCE),
         GhReactionSchema,
       );
 
@@ -156,7 +156,7 @@ export class GitHubReactions {
    */
   async prReviewCommentHasReaction(_issueId: number, commentId: number, emoji: string): Promise<boolean> {
     const reactions = await this.transport.collection(
-      githubApiPath(GITHUB_API_RESOURCE.PULLS, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTION_RESOURCE.REACTIONS),
+      githubApiPath(GITHUB_API_RESOURCE.PULLS, GITHUB_API_RESOURCE.COMMENTS, commentId, GITHUB_REACTIONS_RESOURCE),
       GhReactionSchema,
     );
 

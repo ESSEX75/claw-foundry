@@ -2,12 +2,20 @@
 
 import { z } from "zod";
 
+import { ISSUE_PROVIDER } from "../../../../domain/index.js";
 import { classifyProviderLookupFailure, PROVIDER_ISSUE_LOOKUP_ERROR, PROVIDER_OPERATION_ERROR, ProviderIssueLookupError, ProviderTransportError } from "../../errors/index.js";
 import type { ProviderTransport } from "../../transport/index.js";
-import { PROVIDER_PAGE_SIZE } from "../../transport/index.js";
-import { GITHUB_API_RESOURCE, GITHUB_REQUEST_STATE, githubApiPath } from "../api/index.js";
+import { PROVIDER_CLI_COMMAND, PROVIDER_CLI_OPTION,PROVIDER_PAGE_SIZE } from "../../transport/index.js";
+import { GITHUB_API_QUERY,GITHUB_API_RESOURCE, GITHUB_REQUEST_STATE, githubApiPath } from "../api/index.js";
 import { GitHubRepository } from "../repository/index.js";
-import { GITHUB_DISCOVERY_QUERY, GITHUB_DISCOVERY_STATE, GITHUB_PR_FIELDS } from "./const.js";
+import {
+  GITHUB_DISCOVERY_STATE,
+  GITHUB_GRAPHQL_ENDPOINT,
+  GITHUB_GRAPHQL_QUERY_FIELD,
+  GITHUB_ISSUE_BRANCH_CATEGORIES,
+  GITHUB_PR_FIELDS,
+  GITHUB_PULL_REQUEST_URL_RESOURCE,
+} from "./const.js";
 import { GhPullRequestSchema, GhRestPullSchema, GhTimelineSchema } from "./schema.js";
 import type { GhDiscoveryState, GhPullRequest } from "./types.js";
 
@@ -42,7 +50,11 @@ export class GitHubDiscovery {
     }`;
 
     try {
-      const raw: unknown = JSON.parse(await this.transport.read(["api", GITHUB_DISCOVERY_QUERY.GRAPHQL, "--paginate", "--slurp", "-f", `query=${query}`]));
+      const raw: unknown = JSON.parse(await this.transport.read([
+        PROVIDER_CLI_COMMAND.API, GITHUB_GRAPHQL_ENDPOINT,
+        PROVIDER_CLI_OPTION.PAGINATE, PROVIDER_CLI_OPTION.SLURP,
+        PROVIDER_CLI_OPTION.RAW_FIELD, `${GITHUB_GRAPHQL_QUERY_FIELD}=${query}`,
+      ]));
       const pages = z.array(GhTimelineSchema).min(1).parse(raw);
       const last = pages[pages.length - 1].data.repository.issue.timelineItems;
 
@@ -54,7 +66,7 @@ export class GitHubDiscovery {
           const reference = node.subject ?? node.source;
 
           if (!reference?.number || !reference.url) continue;
-          const expectedPath = `/${repo.owner}/${repo.name}/pull/${reference.number}`;
+          const expectedPath = `/${repo.owner}/${repo.name}/${GITHUB_PULL_REQUEST_URL_RESOURCE}/${reference.number}`;
 
           if (new URL(reference.url).pathname.toLowerCase() !== expectedPath.toLowerCase()) continue;
           const pr = GhPullRequestSchema.parse(reference);
@@ -67,7 +79,7 @@ export class GitHubDiscovery {
     } catch (error) {
       if (error instanceof ProviderTransportError && !error.failure.outcomeUnknown
         && error.failure.code === PROVIDER_OPERATION_ERROR.VALIDATION_FAILED) return null;
-      throw classifyProviderLookupFailure("github", error);
+      throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITHUB, error);
     }
   }
 
@@ -80,15 +92,17 @@ export class GitHubDiscovery {
     let candidates = linked ?? [];
 
     if (!linked?.some(pr => pr.state === GITHUB_REQUEST_STATE.OPEN)) {
-      const all = await this.transport.collection(`${githubApiPath(GITHUB_API_RESOURCE.PULLS)}?state=all`, GhRestPullSchema);
-      const branchPattern = new RegExp(`^(?:fix|feat|feature|chore|bugfix|hotfix|refactor|docs|test)/${issueId}-`);
+      const all = await this.transport.collection(`${githubApiPath(GITHUB_API_RESOURCE.PULLS)}?${GITHUB_API_QUERY.STATE}=${GITHUB_DISCOVERY_STATE.ALL}`, GhRestPullSchema);
+      const branchPattern = new RegExp(`^(?:${GITHUB_ISSUE_BRANCH_CATEGORIES.join("|")})/${issueId}-`);
       const mention = new RegExp(`(^|[^A-Za-z0-9_#])#${issueId}(?![A-Za-z0-9_])`);
       const byBranch = all.filter(pr => branchPattern.test(pr.head.ref));
       const matching = byBranch.length ? byBranch : all.filter(pr => mention.test(pr.title) || mention.test(pr.body ?? ""));
 
       candidates = [...(linked ?? [])];
       for (const pr of matching) {
-        const raw: unknown = JSON.parse(await this.transport.read(["pr", "view", String(pr.number), "--json", GITHUB_PR_FIELDS]));
+        const raw: unknown = JSON.parse(await this.transport.read([
+          PROVIDER_CLI_COMMAND.PULL_REQUEST, PROVIDER_CLI_COMMAND.VIEW, String(pr.number), PROVIDER_CLI_OPTION.JSON, GITHUB_PR_FIELDS,
+        ]));
 
         candidates.push(GhPullRequestSchema.parse(raw));
       }
@@ -109,7 +123,7 @@ export class GitHubDiscovery {
     const candidates = await this.findPrsForIssue(issueId, GITHUB_DISCOVERY_STATE.OPEN);
     const selected = prUrl ? candidates.find(pr => pr.url === prUrl) : candidates[0];
 
-    if (prUrl && !selected) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: "github",
+    if (prUrl && !selected) throw new ProviderIssueLookupError({ code: PROVIDER_ISSUE_LOOKUP_ERROR.UNKNOWN, provider: ISSUE_PROVIDER.GITHUB,
       retryable: false, message: `Previously selected PR is no longer available as an open request: ${prUrl}` });
 
     return selected;

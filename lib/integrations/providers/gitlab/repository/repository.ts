@@ -1,7 +1,9 @@
 /** Owns GitLab repository operations and their provider-specific API semantics. */
 
+import { ISSUE_PROVIDER } from "../../../../domain/index.js";
 import { classifyProviderLookupFailure } from "../../errors/index.js";
 import type { ProviderTransport } from "../../transport/index.js";
+import { PROVIDER_CLI_COMMAND } from "../../transport/index.js";
 import { gitlabApiPath } from "../api/index.js";
 import { GitLabProjectIdentitySchema } from "./schema.js";
 
@@ -18,12 +20,12 @@ export class GitLabRepository {
   async getProjectId(): Promise<number> {
     if (this.projectId !== undefined) return this.projectId;
     try {
-      const response: unknown = JSON.parse(await this.transport.read(["api", gitlabApiPath()]));
+      const response: unknown = JSON.parse(await this.transport.read([PROVIDER_CLI_COMMAND.API, gitlabApiPath()]));
       const project = GitLabProjectIdentitySchema.parse(response);
 
       this.projectId = project.id;
 
       return project.id;
-    } catch (error) { throw classifyProviderLookupFailure("gitlab", error); }
+    } catch (error) { throw classifyProviderLookupFailure(ISSUE_PROVIDER.GITLAB, error); }
   }
 }

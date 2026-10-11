@@ -24,3 +24,21 @@ export const GITHUB_ATTACHMENT_STORAGE = {
 
 /** Exact object identity returned by the GitHub Contents API. */
 export const GITHUB_OBJECT_SHA_PATTERN = /^[a-fA-F0-9]{40}$/;
+
+/** Fields required to create a Git reference or publish attachment content. */
+export const GITHUB_ATTACHMENT_FIELD = {
+  /** Supply the fully qualified Git branch reference. */
+  REF: "ref",
+  /** Select the commit backing a new reference. */
+  SHA: "sha",
+  /** Describe the attachment commit. */
+  MESSAGE: "message",
+  /** Select the attachment storage branch. */
+  BRANCH: "branch",
+} as const;
+
+/** Fully qualified branch reference namespace used when creating attachment storage. */
+export const GITHUB_ATTACHMENT_REF_PREFIX = `${GITHUB_ATTACHMENT_RESOURCE.REFS}/${GITHUB_ATTACHMENT_RESOURCE.HEADS}/`;
+
+/** Binary encoding required by the GitHub Contents API. */
+export const GITHUB_ATTACHMENT_ENCODING = "base64";

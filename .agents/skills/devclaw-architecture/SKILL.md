@@ -97,6 +97,7 @@ Prefer focused names that communicate the file's owned responsibility.
 
 ### Constant placement and string literals
 
+- Prefer a scalar constant for one standalone value instead of a one-property object registry. Retain a singleton object only when its shape serves a current consumer contract, preserves registry-derived types, or belongs to a concretely planned extensible set. Explain that reason in its JSDoc; hypothetical future growth alone is insufficient.
 - Format object constant registries across multiple lines, with one property per line and a trailing comma; keep the closing brace and `as const` together.
 - Move filesystem and resource identifiers into documented constants even when a value currently appears only once. This includes filenames, directory names, extensions, backup suffixes, relative paths, template paths, and path-segment collections.
 - Move repeated or architecturally meaningful protocol identifiers, prefixes, event names, labels, and policy values into documented constants instead of embedding string literals in implementation code.
@@ -156,6 +157,8 @@ Useful parameter documentation may be concise:
 
 ## TypeScript boundaries
 
+- Express optional capability through the presence of its method or value. Do not add `supported`, `available`, or `success` flags when they merely duplicate that presence. Prefer a direct result with `undefined` for confirmed absence over `{ supported: true, result } | { supported: false }` wrappers.
+- Keep capability presence distinct from execution success and domain approval. Operational failures must remain errors or explicit failure outcomes, never become absence; retain discriminants when they distinguish states that payload presence cannot express.
 - Keep untrusted values as `unknown` until a guard or schema validates them.
 - Do not introduce `any` or type assertions to bypass ownership or type errors.
 - Use top-level `import type` declarations instead of inline imports.

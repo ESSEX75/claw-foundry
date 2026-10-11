@@ -2,10 +2,10 @@
 
 import type { z } from "zod";
 
-import { classifyProviderLookupFailure } from "../errors/index.js";
-import { classifyProviderOperationError } from "../errors/index.js";
+import { ISSUE_PROVIDER } from "../../../domain/index.js";
+import { classifyProviderLookupFailure, classifyProviderOperationError } from "../errors/index.js";
 import { runProviderCommand } from "./command.js";
-import { PROVIDER_CLI, PROVIDER_COMMAND_MODE, PROVIDER_PAGE_QUERY, PROVIDER_PAGE_SIZE } from "./const.js";
+import { PROVIDER_CLI, PROVIDER_CLI_COMMAND, PROVIDER_CLI_OPTION, PROVIDER_COMMAND_MODE, PROVIDER_PAGE_QUERY, PROVIDER_PAGE_SIZE } from "./const.js";
 import { parseProviderPages } from "./pagination.js";
 import { createProviderPolicy, withResilience } from "./resilience.js";
 import type { ProviderAdapterOptions, ProviderCli, ProviderTransport } from "./types.js";
@@ -17,7 +17,7 @@ import type { ProviderAdapterOptions, ProviderCli, ProviderTransport } from "./t
 export function createProviderTransport(opts: ProviderAdapterOptions, cli: ProviderCli): ProviderTransport {
   const { repoPath, runCommand } = opts;
   const policy = createProviderPolicy();
-  const provider = cli === PROVIDER_CLI.GITHUB ? "github" : "gitlab";
+  const provider = cli === PROVIDER_CLI.GITHUB ? ISSUE_PROVIDER.GITHUB : ISSUE_PROVIDER.GITLAB;
   const transport: ProviderTransport = {
     repoPath,
     runCommand,
@@ -47,9 +47,9 @@ export function createProviderTransport(opts: ProviderAdapterOptions, cli: Provi
     async collection<T>(endpoint: string, schema: z.ZodType<T>): Promise<T[]> {
       try {
         const separator = endpoint.includes("?") ? "&" : "?";
-        const args = ["api", `${endpoint}${separator}${PROVIDER_PAGE_QUERY}=${PROVIDER_PAGE_SIZE}`, "--paginate"];
+        const args = [PROVIDER_CLI_COMMAND.API, `${endpoint}${separator}${PROVIDER_PAGE_QUERY}=${PROVIDER_PAGE_SIZE}`, PROVIDER_CLI_OPTION.PAGINATE];
 
-        if (cli === PROVIDER_CLI.GITHUB) args.push("--slurp");
+        if (cli === PROVIDER_CLI.GITHUB) args.push(PROVIDER_CLI_OPTION.SLURP);
 
         return parseProviderPages(await transport.read(args), schema, cli === PROVIDER_CLI.GITHUB);
       } catch (error) { throw classifyProviderLookupFailure(provider, error); }

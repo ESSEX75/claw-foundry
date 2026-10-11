@@ -31,9 +31,6 @@ export const GATEWAY_STATUS_METHOD = "status";
 /** Text encoding of gateway-owned session stores. */
 export const SESSION_STORE_ENCODING = "utf-8";
 
-/** Prefix of opaque gateway idempotency identities supplied by application orchestration. */
-export const AGENT_TURN_IDEMPOTENCY_PREFIX = "devclaw";
-
 /** CLI prefix shared by the supported gateway session RPCs. */
 export const GATEWAY_COMMAND = ["openclaw", "gateway", "call"] as const;
 

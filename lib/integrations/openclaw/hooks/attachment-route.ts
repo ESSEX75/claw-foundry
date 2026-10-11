@@ -17,6 +17,7 @@ export function normalizeAttachmentRoute(event: AttachmentMessageEvent, context:
   if (!conversationId || extra.length || (topic !== undefined && !topic)) return null;
   const threadId = event.threadId === undefined ? topic : String(event.threadId);
 
+  //TODO: Remove topics
   if (topic !== undefined && threadId !== topic) return null;
 
   return { channel: context.channelId, accountId: context.accountId, conversationId, threadId, agentId };

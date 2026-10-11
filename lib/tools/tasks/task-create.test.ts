@@ -1,3 +1,5 @@
+/** Verifies managed creation with explicit default and custom role configuration. */
+
 import { describe, it } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs/promises";
@@ -32,6 +34,7 @@ describe("task_create managed initial-state flow", () => {
         providerType: ISSUE_PROVIDER.GITHUB,
         provider,
         workflow,
+        roles: [],
         title: "Investigate checkout",
         description: "Clarify the expected behavior",
         idempotencyKey: "hold-task",
@@ -88,6 +91,7 @@ describe("task_create managed initial-state flow", () => {
         providerType: ISSUE_PROVIDER.GITHUB,
         provider,
         workflow,
+        roles: ["designer"],
         title: "Design checkout",
         description: "Prepare the checkout design",
         idempotencyKey: "design-task",
@@ -127,6 +131,7 @@ describe("task_create managed initial-state flow", () => {
         providerType: ISSUE_PROVIDER.GITHUB,
         provider,
         workflow: DEFAULT_WORKFLOW,
+        roles: ["developer"],
         title: "Implement login",
         description: "Build the login screen",
         notifyTarget: { channel: NOTIFICATION_CHANNEL.TELEGRAM, name: "primary" },

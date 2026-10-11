@@ -3,12 +3,13 @@
  */
 
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
+import { composeIssueCreationBody } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
 import { creationAudit } from "./audit.js";
 import { CREATION_EVENT, CREATION_REQUEST_BUDGET, CREATION_RETRY_DELAY_MS, CREATION_STEPS } from "./const.js";
 import { creationFailureFromProvider, IssueCreationFailureError } from "./failure.js";
-import { appendCreationMarker, reconcileCreatedProviderIssue } from "./projection.js";
+import { reconcileCreatedProviderIssue } from "./projection.js";
 import { completeStep, failOperation, markStep, transitionStatus, updateOperation } from "./record.js";
 import { resultFromOperation } from "./result.js";
 import type { CreatedManagedTask, CreateManagedTaskInput, CreationProvider } from "./types.js";
@@ -87,7 +88,7 @@ export async function runCreationOperation(
     try {
       providerIssue = await opts.provider.createIssue({
         title: current.input.title,
-        body: appendCreationMarker(current.input.body, current.operationId),
+        body: composeIssueCreationBody(current.input.body, current.operationId),
         labels: current.expectedLabels,
         assignees: current.input.assignees,
       });

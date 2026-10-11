@@ -15,7 +15,7 @@ it("refuses claim, approval, and prepared-level changes before creation readines
   t.after(() => harness.cleanup());
   const created = await createManagedTaskIssue({
     workspaceDir: harness.workspaceDir, project: harness.project,
-    providerType: ISSUE_PROVIDER.GITHUB, provider: harness.provider, workflow: DEFAULT_WORKFLOW,
+    providerType: ISSUE_PROVIDER.GITHUB, provider: harness.provider, workflow: DEFAULT_WORKFLOW, roles: ["developer"],
     title: "Creation readiness", description: "Await durable readiness", idempotencyKey: "readiness", requestedBy: "test"
   });
   assert.equal(created.success, true);
@@ -53,7 +53,7 @@ it("transfers an initialized issue using local state even when the provider issu
   t.after(() => harness.cleanup());
   const created = await createManagedTaskIssue({
     workspaceDir: harness.workspaceDir, project: harness.project,
-    providerType: ISSUE_PROVIDER.GITHUB, provider: harness.provider, workflow: DEFAULT_WORKFLOW,
+    providerType: ISSUE_PROVIDER.GITHUB, provider: harness.provider, workflow: DEFAULT_WORKFLOW, roles: ["developer"],
     title: "Transfer owner", description: "Use local ownership", idempotencyKey: "claim-closed", requestedBy: "test",
   });
 

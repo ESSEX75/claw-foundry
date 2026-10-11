@@ -10,6 +10,7 @@ import { describe, it } from "node:test";
 
 import { DEFAULT_WORKFLOW, ISSUE_CREATION_STATUS, ISSUE_PROVIDER, NOTIFICATION_CHANNEL } from "../../../domain/index.js";
 import { PROVIDER_OPERATION_ERROR, createProvider, type CreateIssueInput, type Issue, ProviderOperationError } from "../../../integrations/index.js";
+import { extractIssueCreationMarker, extractIssueMetadata, renderIssueCreationMarker, renderIssueMetadata } from "../../../projection/index.js";
 
 
 import { readIssueCreationStore, readIssueStateStore, updateIssueCreationStore } from "../../../state/index.js";
@@ -180,6 +181,96 @@ class LocalCommitReadFailureProvider extends TestProvider {
 }
 
 describe("managed issue creation transaction", () => {
+  it("rejects omitted role configuration before recording intent or submitting a create", async () => {
+    await withWorkspace(async workspaceDir => {
+      const provider = new TestProvider();
+      const request = input(workspaceDir, provider, "missing-roles");
+
+      Reflect.deleteProperty(request, "roles");
+      await assert.rejects(createManagedTaskIssue(request), /explicit configured role list/);
+      assert.strictEqual(provider.callsTo("createIssue").length, 0);
+      assert.deepStrictEqual((await readIssueCreationStore(workspaceDir, project.slug)).operations, {});
+    });
+  });
+
+  it("rejects unterminated submitted blocks before recording intent or submitting a create", async () => {
+    await withWorkspace(async workspaceDir => {
+      const provider = new TestProvider();
+      const request = {
+        ...input(workspaceDir, provider, "unterminated-body"),
+        description: "Keep user text\n<!-- devclaw:issue-metadata unfinished",
+      };
+
+      await assert.rejects(createManagedTaskIssue(request), /nested or unterminated/);
+      assert.strictEqual(provider.callsTo("createIssue").length, 0);
+      assert.deepStrictEqual((await readIssueCreationStore(workspaceDir, project.slug)).operations, {});
+    });
+  });
+
+  it("restores a known creation identity during recovery without creating another issue", async () => {
+    await withWorkspace(async workspaceDir => {
+      const provider = new ReadBackFailureProvider();
+      const first = await createManagedTaskIssue(input(workspaceDir, provider, "marker-recovery"));
+
+      assert.strictEqual(first.success, false);
+      const operation = (await readIssueCreationStore(workspaceDir, project.slug)).operations["marker-recovery"];
+
+      assert.ok(operation?.providerIssue);
+      provider.failReadBack = false;
+      await provider.editIssue(operation.providerIssue.issueId, {
+        body: "Verify the durable saga\n" + renderIssueCreationMarker("ffffffff-bbbb-cccc-dddd-eeeeeeeeeeee"),
+      });
+      const recovered = await reconcileManagedTaskCreations({
+        workspaceDir, project, providerType: ISSUE_PROVIDER.GITHUB, provider,
+        workflow: DEFAULT_WORKFLOW, roles: ["developer"], maxItems: 1,
+      });
+      const issue = await provider.getIssue(operation.providerIssue.issueId);
+
+      assert.deepStrictEqual(recovered.ready, [issue.iid]);
+      assert.strictEqual(extractIssueCreationMarker(issue.description), operation.operationId);
+      assert.strictEqual(provider.callsTo("createIssue").length, 1);
+    });
+  });
+
+  it("creates a ready issue from copied managed body blocks and reuses it on retry", async () => {
+    await withWorkspace(async workspaceDir => {
+      const provider = new TestProvider();
+      const copiedMarker = renderIssueCreationMarker("ffffffff-bbbb-cccc-dddd-eeeeeeeeeeee");
+      const request = {
+        ...input(workspaceDir, provider, "copied-managed-body"),
+        description: [
+          "Keep this user description",
+          renderIssueMetadata({ projectSlug: "foreign-project", issueId: 999 }),
+          copiedMarker,
+          "Keep this user conclusion",
+        ].join("\n\n"),
+      };
+      const first = await createManagedTaskIssue(request);
+      const repeated = await createManagedTaskIssue(request);
+
+      assert.strictEqual(provider.calls.filter(call => call.method === "createIssue").length, 1);
+      assert.strictEqual(first.success, true, `Copied managed blocks must not block creation: ${first.error?.code ?? first.status}`);
+      assert.strictEqual(first.status, "ready");
+      assert.strictEqual(repeated.success, true);
+      assert.strictEqual(repeated.operationId, first.operationId);
+      const issueId = first.issue?.iid;
+
+      assert.ok(issueId, "Ready creation must expose its provider issue identity.");
+      const issue = await provider.getIssue(issueId);
+
+      assert.deepStrictEqual(extractIssueMetadata(issue.description), { projectSlug: project.slug, issueId });
+      assert.strictEqual(extractIssueCreationMarker(issue.description), first.operationId);
+      assert.strictEqual(issue.description.match(/<!-- devclaw:issue-metadata\b/g)?.length, 1);
+      assert.strictEqual(issue.description.match(/<!-- devclaw:issue-creation\b/g)?.length, 1);
+      assert.ok(issue.description.includes("Keep this user description"));
+      assert.ok(issue.description.includes("Keep this user conclusion"));
+      assert.ok(!issue.description.includes(copiedMarker));
+      const local = (await readIssueStateStore(workspaceDir, project.slug)).issues[String(issueId)];
+
+      assert.strictEqual(local?.creationOperationId, first.operationId);
+    });
+  });
+
   it("creates one provider issue for concurrent requests sharing an idempotency key", async () => {
     await withWorkspace(async (workspaceDir) => {
       const provider = new TestProvider();
@@ -350,6 +441,7 @@ describe("managed issue creation transaction", () => {
         providerType: ISSUE_PROVIDER.GITHUB,
         provider,
         workflow: DEFAULT_WORKFLOW,
+        roles: ["developer", "architect", "tester", "reviewer"],
         maxItems: 1,
       });
 
@@ -373,6 +465,7 @@ describe("managed issue creation transaction", () => {
         providerType: ISSUE_PROVIDER.GITHUB,
         provider,
         workflow: DEFAULT_WORKFLOW,
+        roles: ["developer", "architect", "tester", "reviewer"],
         maxItems: 1,
       });
 

@@ -28,6 +28,32 @@ import {
 import { reconcileManagedLabels } from "./index.js";
 
 describe("managed projection coordinator", () => {
+  it("verifies present local labels across workflow and role drift without repeated mutations", async () => {
+    await withFixture(async (workspaceDir, provider) => {
+      await updateIssueStateStore(workspaceDir, "devclaw", store => ({
+        store: { ...store, issues: { ...store.issues, "123": {
+          ...store.issues["123"], workflowLabel: "Legacy To Do", assignedRole: "security", assignedLevel: "expert",
+        } } }, result: undefined,
+      }));
+      provider.seedIssue({ iid: 123, labels: ["Legacy To Do", "security:expert", "priority:high"] });
+      const input = { workspaceDir, projectSlug: "devclaw", issueId: 123,
+        workflow: DEFAULT_WORKFLOW, roles: ["developer"], provider, owner: "config_drift" };
+      const first = await reconcileManagedLabels(input);
+      const second = await reconcileManagedLabels(input);
+
+      assert.equal(first.changed, false);
+      assert.equal(second.changed, false);
+      assert.equal(provider.callsTo("ensureLabel").length, 0);
+      assert.equal(provider.callsTo("addLabel").length, 0);
+      assert.equal(provider.callsTo("removeLabels").length, 0);
+      const local = (await readIssueStateStore(workspaceDir, "devclaw")).issues["123"];
+
+      assert.equal(local.workflowLabel, "Legacy To Do");
+      assert.equal(local.assignedRole, "security");
+      assert.equal(local.integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
+    });
+  });
+
   it("preserves metadata and independent errors after label verification", async () => {
     await withFixture(async (workspaceDir, provider) => {
       await updateIssueStateStore(workspaceDir, "devclaw", store => {

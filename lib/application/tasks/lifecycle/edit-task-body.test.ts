@@ -7,18 +7,21 @@ import { extractIssueMetadata, renderIssueCreationMarker, replaceIssueMetadata }
 import { withIssueOrchestrationLock } from "../../../state/index.js";
 import { createTestHarness } from "../../../testing/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { createManagedTaskIssue } from "../creation/index.js";
 import { editTaskBody } from "./edit-task-body.js";
 
 it("preserves metadata and creation marker on body/title edits and repeated requests", async () => {
   const harness = await createTestHarness();
   try {
-    const marker = renderIssueCreationMarker("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-    const issue = await harness.provider.createIssue({
-      title: "Before", body: replaceIssueMetadata(`Before body\n${marker}`, {
-        projectSlug: harness.project.slug, issueId: 1,
-      }), labels: ["Planning"], assignees: []
+    const created = await createManagedTaskIssue({
+      workspaceDir: harness.workspaceDir, project: harness.project,
+      provider: harness.provider, providerType: ISSUE_PROVIDER.GITHUB, workflow: DEFAULT_WORKFLOW,
+      roles: ["developer"], title: "Before", description: "Before body",
+      idempotencyKey: "editable-created-issue", requestedBy: "test",
     });
-    await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue, providerType: ISSUE_PROVIDER.GITHUB, workflow: DEFAULT_WORKFLOW });
+    assert.ok(created.issue);
+    const issue = created.issue;
+    const marker = renderIssueCreationMarker(created.operationId);
     const get = mock.method(GitHubProvider.prototype, "getIssue", (id: number) => harness.provider.getIssue(id));
     const edit = mock.method(GitHubProvider.prototype, "editIssue", (...args: Parameters<GitHubProvider["editIssue"]>) => harness.provider.editIssue(...args));
     const input = { workspaceDir: harness.workspaceDir, channelId: harness.project.channels[0]!.channelId, issueId: issue.iid, runCommand: harness.runCommand, addComment: false };

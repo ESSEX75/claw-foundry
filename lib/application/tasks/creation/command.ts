@@ -5,7 +5,7 @@
 import { createHash } from "node:crypto";
 
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, REVIEW_POLICY, STATE_TYPE, TEST_POLICY, type WorkflowConfig } from "../../../domain/index.js";
-import { expectedManagedLabels } from "../../../projection/index.js";
+import { expectedManagedLabels, stripManagedIssueBody } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
 import { newIssueCreationIdentity, updateIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
 import { buildInitialIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -19,11 +19,14 @@ import type { CreatedManagedTask, CreateManagedTaskInput } from "./types.js";
 /**
  * Create or resume one issue creation operation under its idempotency lock.
  * A repeated key with a different payload fails before any provider mutation.
+ * Nested or unterminated managed body comments are rejected before recording creation intent.
  *
  * @param opts - Validated creation request and provider capability.
  */
 export function createManagedTaskIssue(opts: CreateManagedTaskInput): Promise<CreatedManagedTask> {
   return withIssueCreationLock(opts.workspaceDir, opts.project.slug, opts.idempotencyKey, async () => {
+    if (!Array.isArray(opts.roles)) throw new Error("Creation requires an explicit configured role list.");
+    stripManagedIssueBody(opts.description);
     const operation = await ensureCreationOperation(opts);
 
     await creationAudit(opts, operation, CREATION_EVENT.REQUESTED);

@@ -2,14 +2,14 @@
  * Applies and verifies the provider-visible projection of a created issue.
  */
 
-import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../domain/index.js";
+import { getStateLabels, ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../domain/index.js";
 import {
+  composeManagedIssueBody,
   diffIssueProjection,
   extractIssueCreationMarker,
   extractIssueMetadata,
   metadataMatches,
-  renderIssueCreationMarker,
-  replaceIssueMetadata,
+  stripManagedIssueBody,
 } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
 import { buildInitialIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -35,29 +35,31 @@ export async function reconcileCreatedProviderIssue(
   if (!providerRef) throw new Error("Provider identity is missing from provider_created operation.");
   let issue = await opts.provider.getIssue(providerRef.issueId);
   const draft = buildInitialIssueRuntimeState(operation.input, operation.projectSlug, issue.iid);
+  const options = { stateLabels: getStateLabels(opts.workflow), roles: opts.roles };
   const diff = diffIssueProjection({
     state: draft,
     actualLabels: issue.labels,
-    options: { stateLabels: Object.values(opts.workflow.states).map((state) => state.label), roles: opts.roles },
+    options,
   });
 
-  await applyManagedLabelDiff({ issueId: issue.iid, provider: opts.provider, diff, workflow: opts.workflow, roles: opts.roles ?? [] });
+  await applyManagedLabelDiff({ issueId: issue.iid, provider: opts.provider, diff, workflow: opts.workflow, roles: opts.roles });
   const metadata = { projectSlug: operation.projectSlug, issueId: issue.iid };
+  const desiredBody = composeManagedIssueBody(issue.description, metadata, operation.operationId);
 
-  if (!metadataMatches(extractIssueMetadata(issue.description), metadata)) {
-    await opts.provider.editIssue(issue.iid, { body: replaceIssueMetadata(issue.description, metadata) });
+  if (desiredBody !== issue.description) {
+    await opts.provider.editIssue(issue.iid, { body: desiredBody });
   }
 
   issue = await opts.provider.getIssue(issue.iid);
   const verifiedDiff = diffIssueProjection({
     state: draft,
     actualLabels: issue.labels,
-    options: { stateLabels: Object.values(opts.workflow.states).map((state) => state.label), roles: opts.roles },
+    options,
   });
   const verifiedMetadata = metadataMatches(extractIssueMetadata(issue.description), metadata);
   const markerMatches = extractIssueCreationMarker(issue.description) === operation.operationId;
-  const bodyMatches = operation.input.body.trim() === ""
-    || (issue.description ?? "").includes(operation.input.body.trim());
+  const expectedUserBody = stripManagedIssueBody(operation.input.body).trim();
+  const bodyMatches = expectedUserBody === "" || stripManagedIssueBody(issue.description).includes(expectedUserBody);
 
   if (
     issue.title !== operation.input.title
@@ -80,16 +82,4 @@ export async function reconcileCreatedProviderIssue(
     target.lastError = undefined;
     target.retryAfter = undefined;
   });
-}
-
-/**
- * Bind the provider issue body to its durable creation operation.
- *
- * @param body - Requested issue description.
- * @param operationId - Durable operation identity embedded in the marker.
- */
-export function appendCreationMarker(body: string, operationId: string): string {
-  const marker = renderIssueCreationMarker(operationId);
-
-  return body.trim() ? `${body.trimEnd()}\n\n${marker}` : marker;
 }

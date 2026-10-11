@@ -18,7 +18,7 @@ import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFact
 import { checkWorkerHealth, type HealthFix, resolveProvider } from "../../application/index.js";
 import { log as auditLog } from "../../audit.js";
 import type { PluginContext } from "../../context.js";
-import { fetchGatewaySessions } from "../../integrations/openclaw/gateway-sessions.js";
+import { fetchGatewaySessions } from "../../integrations/index.js";
 import { getConfiguredRoleIds, loadConfig } from "../../state/index.js";
 import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
@@ -84,14 +84,16 @@ export function createHealthTool(ctx: PluginContext): OpenClawPluginToolFactory 
         fix,
         issuesFound: issues.length,
         issuesFixed: issues.filter((i) => i.fixed).length,
-        sessionsCached: sessions?.size ?? 0,
+        sessionsCached: sessions?.sessions.size ?? 0,
+        sessionInventoryComplete: sessions?.complete ?? false,
       });
 
       return jsonResult({
         success: true,
         fix,
         projectsScanned: slugs.length,
-        sessionsQueried: sessions?.size ?? 0,
+        sessionsQueried: sessions?.sessions.size ?? 0,
+        sessionInventoryComplete: sessions?.complete ?? false,
         issues,
       });
     },

@@ -2,7 +2,7 @@
 
 import type { RunCommand } from "../../context.js";
 import type { Project } from "../../domain/index.js";
-import { createProvider, type ProviderWithType } from "../../integrations/providers/index.js";
+import { createProvider, type ProviderWithType } from "../../integrations/index.js";
 import { loadConfig, type ProjectsData, readProjects } from "../../state/index.js";
 import type { ProjectContext, ProjectRoute } from "./types.js";
 
@@ -79,12 +79,7 @@ export async function resolveProvider(
   project: Project,
   runCommand: RunCommand,
 ): Promise<ProviderWithType> {
-  const config = await loadConfig(workspaceDir, project.slug);
+  await loadConfig(workspaceDir, project.slug);
 
-  return createProvider({
-    repo: project.repo,
-    provider: project.provider,
-    runCommand,
-    workflow: config.workflow,
-  });
+  return createProvider({ repo: project.repo, provider: project.provider, runCommand });
 }

@@ -98,6 +98,15 @@ it("preserves optional preflight when the scopes command is absent", async () =>
   const result = await ensureRequiredOpenClawScopes(async () => commandResult("error: unknown command 'scopes'", 1));
   assert.equal(result.status, "unavailable");
 });
+it("preserves missing scopes when the request command is unavailable", async () => {
+  let calls = 0;
+  const result = await ensureRequiredOpenClawScopes(async () => ++calls === 1
+    ? commandResult(JSON.stringify({ status: "missing_scopes", approved: ["operator.read"], missing: ["operator.write"] }))
+    : commandResult("error: unknown command 'request'", 1));
+  assert.equal(result.status, "unavailable");
+  assert.deepStrictEqual(result.missing, ["operator.write"]);
+  assert.equal(calls, 2);
+});
 it("rejects incomplete approval evidence and malformed responses", async () => {
   for (const response of ["not json", "{}", JSON.stringify({ status: "approved", approved: ["operator.read"], missing: [] }), JSON.stringify({ ok: true, missing: ["operator.write"] })]) {
     await assert.rejects(ensureRequiredOpenClawScopes(async () => commandResult(response)));

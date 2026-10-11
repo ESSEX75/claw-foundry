@@ -1,9 +1,11 @@
 /** Resumes provider, slot, and issue effects authorized by a durable operator decision. */
 
 import { log as auditLog } from "../../../audit.js";
-import { WORKER_DELIVERY_RESOLUTION } from "../../../domain/index.js";
-import type { IssueProvider } from "../../../integrations/providers/index.js";
+import { WORKER_DELIVERY_RESOLUTION, type WorkflowConfig } from "../../../domain/index.js";
+import type { IssueProvider } from "../../../integrations/index.js";
 import { readIssueStateStore, readProjects, updateIssueRuntimeRecord, updateProjects, type WorkerDeliveryResolution, writeWorkerDeliveryResolution } from "../../../state/index.js";
+import { transitionWorkflowLabel } from "../../projection/index.js";
+import { confirmReviewSummaryDelivery } from "../../review/index.js";
 import { WORKER_AUDIT_EVENT } from "../const.js";
 
 /** Apply idempotent effects under the caller's issue lock, retaining intent on every failure.
@@ -11,9 +13,10 @@ import { WORKER_AUDIT_EVENT } from "../const.js";
  * @param projectSlug - Canonical project.
  * @param record - Immutable operator evidence persisted before effects.
  * @param provider - Required only for verified non-start queue restoration.
+ * @param workflow - Resolved workflow defining projection labels.
  */
 export async function applyDeliveryResolution(
-  workspaceDir: string, projectSlug: string, record: WorkerDeliveryResolution, provider: IssueProvider | undefined,
+  workspaceDir: string, projectSlug: string, record: WorkerDeliveryResolution, provider: IssueProvider | undefined, workflow: WorkflowConfig,
 ): Promise<void> {
   const nonStart = record.decision === WORKER_DELIVERY_RESOLUTION.CONFIRMED_NOT_STARTED;
   const state = (await readIssueStateStore(workspaceDir, projectSlug)).issues[String(record.issueId)];
@@ -42,7 +45,11 @@ export async function applyDeliveryResolution(
     if (!provider) throw new Error("Queue restoration requires a provider.");
     const issue = await provider.getIssue(record.issueId);
 
-    if (!issue.labels.includes(record.toLabel) || issue.labels.includes(record.fromLabel)) await provider.transitionLabel(record.issueId, record.fromLabel, record.toLabel);
+    if (!issue.labels.includes(record.toLabel) || issue.labels.includes(record.fromLabel)) {
+      await transitionWorkflowLabel(provider, workflow, record.issueId, record.fromLabel, record.toLabel, issue);
+    }
+  } else if (state.pendingReviewSummaryDelivery?.operationId === record.deliveryId) {
+    await confirmReviewSummaryDelivery({ workspaceDir, projectSlug }, record.issueId, record.deliveryId);
   }
 
   await updateProjects(workspaceDir, (current) => {
@@ -74,6 +81,8 @@ export async function applyDeliveryResolution(
     }
 
     return { ...current, workflowState: record.toState, workflowLabel: record.toLabel,
+      pendingReviewSummaryDelivery: nonStart && current.pendingReviewSummaryDelivery?.operationId === record.deliveryId
+        ? undefined : current.pendingReviewSummaryDelivery,
       activeWorker: nonStart ? null : worker ? { ...worker, delivery: undefined } : null, updatedAt: new Date().toISOString() };
   });
   await writeWorkerDeliveryResolution(workspaceDir, projectSlug, { ...record, completed: true });

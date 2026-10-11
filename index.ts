@@ -2,16 +2,24 @@
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 
-import { registerHeartbeatService } from "./lib/application/index.js";
+import {
+  extractIssueReferences,
+  loadWorkerBootstrapInstructions,
+  processAttachmentMessage,
+  registerHeartbeatService,
+  resolveAttachmentProject,
+  resolveProvider,
+  resolveWorkerBootstrapIdentity,
+} from "./lib/application/index.js";
 // Infrastructure
 import { registerCli } from "./lib/cli/register.js";
+import { DEVCLAW_PLUGIN_ID } from "./lib/const.js";
 import { createPluginContext } from "./lib/context.js";
-import { registerAttachmentHook } from "./lib/integrations/openclaw/attachment-hook.js";
-import { registerBootstrapHook } from "./lib/integrations/openclaw/bootstrap-hook.js";
+import { registerAttachmentHook, registerBootstrapHook } from "./lib/integrations/index.js";
 import { toolRegistry } from "./lib/tools/registry.js";
 
 const plugin = {
-  id: "devclaw",
+  id: DEVCLAW_PLUGIN_ID,
   name: "DevClaw",
   description:
     "Multi-project dev/qa pipeline orchestration with GitHub/GitLab integration, developer tiers, and audit logging.",
@@ -60,6 +68,9 @@ const plugin = {
     },
   },
 
+  /** Wire application callbacks and adapter registrations into one SDK plugin runtime.
+   * @param api - SDK registration, configuration, runtime and diagnostic capabilities.
+   */
   register(api: OpenClawPluginApi) {
     const ctx = createPluginContext(api);
 
@@ -69,18 +80,18 @@ const plugin = {
 
     // CLI, services & hooks
     api.registerCli(({ program }) => registerCli(program, ctx), {
-      commands: ["devclaw"],
+      commands: [DEVCLAW_PLUGIN_ID],
       descriptors: [
         {
-          name: "devclaw",
+          name: DEVCLAW_PLUGIN_ID,
           description: "DevClaw development pipeline tools",
           hasSubcommands: true,
         },
       ],
     });
     registerHeartbeatService(api, ctx);
-    registerBootstrapHook(api, ctx);
-    registerAttachmentHook(api, ctx);
+    registerBootstrapHook(api, ctx, { resolveWorkerBootstrapIdentity, loadWorkerBootstrapInstructions });
+    registerAttachmentHook(api, ctx, { extractIssueReferences, processAttachmentMessage, resolveAttachmentProject, resolveProvider });
 
     api.logger.info(
       `DevClaw plugin registered (${toolRegistry.length} tools, 1 CLI command group, 1 service, 3 hooks)`,

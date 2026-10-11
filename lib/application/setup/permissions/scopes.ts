@@ -1,7 +1,7 @@
 /** Coordinates setup scope approval using validated integration outcomes. */
 
 import type { RunCommand } from "../../../context.js";
-import { runScopeCommand, SCOPE_STATUS, type ScopeCommandResult } from "../../../integrations/openclaw/scopes/index.js";
+import { runScopeCommand, SCOPE_STATUS, type ScopeCommandResult } from "../../../integrations/index.js";
 import { REQUIRED_OPENCLAW_SCOPES, SCOPE_APPROVAL_REASON, SCOPE_PREFLIGHT_STATUS } from "./const.js";
 import { ScopeApprovalRejectedError, ScopeApprovalRequiredError } from "./errors.js";
 import type { ScopePreflightResult } from "./types.js";
@@ -13,30 +13,30 @@ import type { ScopePreflightResult } from "./types.js";
 export async function ensureRequiredOpenClawScopes(runCommand: RunCommand): Promise<ScopePreflightResult> {
   const check = await runScopeCommand(runCommand, REQUIRED_OPENCLAW_SCOPES);
 
-  if (!check.supported) return unavailable([...REQUIRED_OPENCLAW_SCOPES]);
-  const missing = missingScopes(check.result);
+  if (check === undefined) return unavailable([...REQUIRED_OPENCLAW_SCOPES]);
+  const missing = missingScopes(check);
 
-  assertNotRejectedOrPending(check.result, missing);
-  if (isApproved(check.result, missing)) return approved(check.result);
-  if (check.result.ok === true || check.result.status === SCOPE_STATUS.APPROVED
-    || (check.result.status !== SCOPE_STATUS.MISSING && !check.result.missing?.length)) {
-    throw new Error(`Unexpected OpenClaw scopes response: ${JSON.stringify(check.result)}`);
+  assertNotRejectedOrPending(check, missing);
+  if (isApproved(check, missing)) return approved(check);
+  if (check.ok === true || check.status === SCOPE_STATUS.APPROVED
+    || (check.status !== SCOPE_STATUS.MISSING && !check.missing?.length)) {
+    throw new Error(`Unexpected OpenClaw scopes response: ${JSON.stringify(check)}`);
   }
 
   if (!missing.length) throw new Error("OpenClaw reported missing scopes without identifying required permissions.");
   const request = await runScopeCommand(runCommand, missing, SCOPE_APPROVAL_REASON);
 
-  if (!request.supported) return unavailable(missing);
+  if (request === undefined) return unavailable(missing);
   const confirmedBeforeRequest = REQUIRED_OPENCLAW_SCOPES.filter(scope => !missing.includes(scope));
   const requestResult = {
-    ...request.result,
-    ...(request.result.approved === undefined ? {} : { approved: [...new Set([...confirmedBeforeRequest, ...request.result.approved])] }),
+    ...request,
+    ...(request.approved === undefined ? {} : { approved: [...new Set([...confirmedBeforeRequest, ...request.approved])] }),
   };
   const requestMissing = missingScopes(requestResult);
 
   assertNotRejectedOrPending(requestResult, requestMissing);
   if (isApproved(requestResult, requestMissing)) return approved(requestResult);
-  throw new Error(`Unexpected OpenClaw scopes response: ${JSON.stringify(request.result)}`);
+  throw new Error(`Unexpected OpenClaw scopes response: ${JSON.stringify(request)}`);
 }
 
 /** Explicit denial and pending approval take precedence over contradictory success fields.

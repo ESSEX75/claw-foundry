@@ -1,5 +1,6 @@
 /**
- * Coordinates atomic worker reservation, provider transition, session dispatch, and runtime persistence.
+ * Coordinates dispatch after an atomic local worker reservation. Provider projection,
+ * gateway submission and runtime persistence are sequenced effects that may partially complete.
  * This application capability owns the dispatch use case while state retains worker-slot authority.
  */
 
@@ -8,20 +9,19 @@ import { randomUUID } from "node:crypto";
 import { log as auditLog } from "../../../audit.js";
 import type { WorkerDeliveryState } from "../../../domain/index.js";
 import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
-import { AGENT_TURN_STATUS } from "../../../integrations/openclaw/const.js";
-import { shouldClearSession } from "../../../integrations/openclaw/session.js";
-import { deleteWorkerSession } from "../../../integrations/openclaw/session-cleanup.js";
-import { ensureSessionModel } from "../../../integrations/openclaw/session-model.js";
+import { AGENT_TURN_STATUS, deleteWorkerSession, ensureSessionModel } from "../../../integrations/index.js";
 import { isIssueCreationReady, loadConfig } from "../../../state/index.js";
 import { readIssueStateStore, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
 import { getProject, getRoleWorker, readProjects } from "../../../state/index.js";
 import { getNotificationConfig, notify } from "../../notifications/index.js";
 import { resolveIssueNotificationEndpoint } from "../../notifications/resolve-endpoint.js";
-import { acknowledgeComments, EYES_EMOJI } from "../../review/index.js";
+import { transitionWorkflowLabel } from "../../projection/index.js";
+import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageReviewSummaryDelivery } from "../../review/index.js";
 import { buildAnnouncement, formatSessionLabel } from "../../tasks/index.js";
-import { WORKER_AUDIT_EVENT } from "../const.js";
+import { REVIEW_SUMMARY_RECEIPT_STEP, WORKER_AUDIT_EVENT } from "../const.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
 import { recordSlotDelivery } from "../delivery-state.js";
+import { shouldClearSession } from "../session-budget.js";
 import { auditDispatch, dispatchErrorMessage } from "./audit.js";
 import { settleDispatchDelivery } from "./delivery-settlement.js";
 import { loadDispatchContext } from "./dispatch-context.js";
@@ -119,7 +119,7 @@ export async function dispatchTaskLocked(
 
   await reserveDispatchSlot(opts, plan, resolvedConfig);
   let taskDispatched = false;
-  let providerTransitioned = false;
+  let providerProjectionAttempted = false;
 
   try {
     if (sessionKeyToDelete) {
@@ -131,16 +131,17 @@ export async function dispatchTaskLocked(
     await ensureSessionModel(sessionKey, model, rc, timeouts.sessionPatchMs, sessionLabel);
 
     // ── Provider transition — compensated if agent send does not begin ──
-    await provider.transitionLabel(issueId, fromLabel, toLabel);
-    providerTransitioned = true;
+    providerProjectionAttempted = true;
+    await transitionWorkflowLabel(provider, resolvedConfig.workflow, issueId, fromLabel, toLabel);
 
     const issue = await provider.getIssue(issueId);
 
     // Model is set on the session via sessions.patch, not on the agent RPC —
     // the gateway's agent endpoint rejects unknown properties like 'model'.
     const delivery = await beginWorkerDelivery(sessionKey, taskMessage, {
-      agentId, projectName: project.name, issueId, role, level, slotIndex, fromLabel,
-      orchestratorSessionKey: opts.sessionKey, workspaceDir,
+      submissionId: plan.deliveryId,
+      agentId,
+      orchestratorSessionKey: opts.sessionKey,
       dispatchTimeoutMs: timeouts.dispatchMs,
       extraSystemPrompt: roleInstructions.trim() || undefined,
       runCommand: rc,
@@ -194,6 +195,10 @@ export async function dispatchTaskLocked(
       }).catch(() => { });
     }
 
+    await stageReviewSummaryDelivery({ workspaceDir, projectSlug: project.slug }, issueId, plan.deliveryId, plan, prFeedback)
+      .catch(error => auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, { step: REVIEW_SUMMARY_RECEIPT_STEP, issue: issueId,
+        error: dispatchErrorMessage(error) }).catch(() => {}));
+
     if (delivery.initial.kind === AGENT_TURN_STATUS.UNKNOWN) {
       await reconcileUncertainDispatch({
         workspaceDir, projectSlug: project.slug, role, level, slotIndex, issueId, sessionKey, deliveryId: plan.deliveryId,
@@ -209,6 +214,12 @@ export async function dispatchTaskLocked(
     if (delivery.initial.kind === AGENT_TURN_STATUS.ACCEPTED) {
       provider.reactToIssue(issueId, EYES_EMOJI).catch(() => {});
       provider.reactToPr(issueId, EYES_EMOJI).catch(() => {});
+      if (prFeedback) {
+        await confirmReviewSummaryDelivery({ workspaceDir, projectSlug: project.slug }, issueId, plan.deliveryId).catch(error =>
+          auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, { step: REVIEW_SUMMARY_RECEIPT_STEP, issue: issueId,
+            error: dispatchErrorMessage(error) }).catch(() => {}));
+      }
+
       acknowledgeComments(provider, issueId, isConflictFix ? [] : comments, prFeedback, workspaceDir).catch(() => {});
     }
 
@@ -224,9 +235,9 @@ export async function dispatchTaskLocked(
     return { sessionAction, sessionKey, level, model, announcement, deliveryStatus, deliveryId: plan.deliveryId };
   } catch (error) {
     if (!taskDispatched) {
-      if (providerTransitioned) {
+      if (providerProjectionAttempted) {
         try {
-          await provider.transitionLabel(issueId, toLabel, fromLabel);
+          await transitionWorkflowLabel(provider, resolvedConfig.workflow, issueId, toLabel, fromLabel);
         } catch (rollbackError) {
           await auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, {
             step: "restoreProviderLabel",

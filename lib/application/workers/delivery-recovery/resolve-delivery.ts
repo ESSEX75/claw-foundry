@@ -1,7 +1,7 @@
 /** Records operator evidence before resuming one exact worker-delivery resolution. */
 
 import { findStateKeyByLabel, getQueueLabels, STATE_TYPE, WORKER_DELIVERY_RESOLUTION } from "../../../domain/index.js";
-import { createProvider } from "../../../integrations/providers/index.js";
+import { createProvider } from "../../../integrations/index.js";
 import {
   getProject,
   getRoleWorker,
@@ -46,8 +46,9 @@ export async function resolveWorkerDelivery(input: ResolveWorkerDeliveryInput): 
 
     if (record.completed) return result;
     const provider = record.decision === WORKER_DELIVERY_RESOLUTION.CONFIRMED_NOT_STARTED
-      ? input.provider ?? (input.runCommand ? (await createProvider({ repo: project.repo, provider: project.provider,
-        runCommand: input.runCommand, workflow })).provider : undefined) : undefined;
+      ? input.provider ?? (input.runCommand ? (await createProvider({
+        repo: project.repo, provider: project.provider, runCommand: input.runCommand,
+      })).provider : undefined) : undefined;
 
     if (record.decision === WORKER_DELIVERY_RESOLUTION.CONFIRMED_NOT_STARTED) {
       if (!provider) throw new Error("A provider or runCommand is required to restore the queue.");
@@ -64,7 +65,7 @@ export async function resolveWorkerDelivery(input: ResolveWorkerDeliveryInput): 
 
     if (!input.apply) return result;
     if (!existing) await writeWorkerDeliveryResolution(input.workspaceDir, input.projectSlug, record);
-    await applyDeliveryResolution(input.workspaceDir, input.projectSlug, record, provider);
+    await applyDeliveryResolution(input.workspaceDir, input.projectSlug, record, provider, workflow);
 
     return result;
   });

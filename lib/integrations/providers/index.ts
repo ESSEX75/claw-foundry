@@ -1,54 +1,13 @@
 /**
- * Provider factory — auto-detects GitHub vs GitLab from git remote.
+ * Aggregates the provider submodules' supported APIs for external consumers.
+ * Each owning submodule selects its exports; implementations use owner entrypoints to keep composition acyclic.
  */
 
-import { ISSUE_PROVIDER, type IssueProviderId, type WorkflowConfig } from "../../domain/index.js";
-
-export type * from "./capabilities.js";
-export { PR_COMMENT_KIND, PROVIDER_ISSUE_STATE } from "./const.js";
-export * from "./lookup-errors.js";
-export * from "./operation-errors.js";
-export * from "./provider.js";
-export * from "./types.js";
-import type { RunCommand } from "../../context.js";
-import { resolveRepoPath } from "../../state/index.js";
-import { GitHubProvider } from "./github.js";
-import { GitLabProvider } from "./gitlab.js";
-
-export type ProviderOptions = {
-  provider?: IssueProviderId;
-  repo?: string;
-  repoPath?: string;
-  runCommand: RunCommand;
-  workflow?: WorkflowConfig;
-};
-
-export type ProviderWithType = {
-  provider: GitHubProvider | GitLabProvider;
-  type: IssueProviderId;
-};
-
-async function detectProvider(repoPath: string, runCommand: RunCommand): Promise<IssueProviderId> {
-  try {
-    const result = await runCommand(["git", "remote", "get-url", "origin"], { timeoutMs: 5_000, cwd: repoPath });
-
-    return result.stdout.trim().includes("github.com")
-      ? ISSUE_PROVIDER.GITHUB
-      : ISSUE_PROVIDER.GITLAB;
-  } catch {
-    return ISSUE_PROVIDER.GITLAB;
-  }
-}
-
-export async function createProvider(opts: ProviderOptions): Promise<ProviderWithType> {
-  const repoPath = opts.repoPath ?? (opts.repo ? resolveRepoPath(opts.repo) : null);
-
-  if (!repoPath) throw new Error("Either repoPath or repo must be provided");
-  const rc = opts.runCommand;
-  const type = opts.provider ?? await detectProvider(repoPath, rc);
-  const provider = type === ISSUE_PROVIDER.GITHUB
-    ? new GitHubProvider({ repoPath, runCommand: rc, workflow: opts.workflow })
-    : new GitLabProvider({ repoPath, runCommand: rc, workflow: opts.workflow });
-
-  return { provider, type };
-}
+export * from "./attachments/index.js";
+export * from "./contracts/index.js";
+export * from "./errors/index.js";
+export * from "./git/index.js";
+export * from "./github/index.js";
+export * from "./gitlab/index.js";
+export * from "./selection/index.js";
+export * from "./transport/index.js";

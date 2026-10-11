@@ -2,7 +2,7 @@
  * Loads fresh local and provider snapshots for repair planning and apply.
  */
 
-import { createProvider, isProviderIssueLookupError, type Issue, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../integrations/providers/index.js";
+import { createProvider, isProviderIssueLookupError, type Issue, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../integrations/index.js";
 import { loadConfig, readIssueStateStore, readProjects } from "../../../state/index.js";
 import { ISSUE_REPAIR_ERROR } from "./const.js";
 import { repairFailure } from "./failure.js";
@@ -21,12 +21,7 @@ export async function resolveRepairContext(input: RepairManagedIssueInput): Prom
   const local = store.issues[String(input.issueId)];
 
   if (!local) throw repairFailure(ISSUE_REPAIR_ERROR.LOCAL_STATE_NOT_FOUND, `Issue #${input.issueId} has no active local state.`);
-  const provider = input.provider ?? (await createProvider({
-    repo: project.repo,
-    provider: project.provider,
-    runCommand: input.runCommand,
-    workflow: config.workflow,
-  })).provider;
+  const provider = input.provider ?? (await createProvider({ repo: project.repo, provider: project.provider, runCommand: input.runCommand })).provider;
   let providerIssue: Issue;
 
   try {

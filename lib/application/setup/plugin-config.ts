@@ -7,10 +7,11 @@
 
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 
+import { DEVCLAW_PLUGIN_ID } from "../../const.js";
 import type { ExecutionMode } from "../../domain/index.js";
-import { findConfiguredAgent } from "../../integrations/openclaw/agent-registry.js";
+import { findConfiguredAgent } from "../../integrations/index.js";
 import { HEARTBEAT_DEFAULTS } from "../heartbeat/service/defaults.js";
-import { ACTIVE_MEMORY_PLUGIN_ID, CONFIG_RELOAD_MODE, DEVCLAW_PLUGIN_ID, SUBAGENT_ARCHIVE_AFTER_MINUTES } from "./const.js";
+import { ACTIVE_MEMORY_PLUGIN_ID, CONFIG_RELOAD_MODE, SUBAGENT_ARCHIVE_AFTER_MINUTES } from "./const.js";
 import { buildAgentToolPolicy, resolveProjectToolOwners } from "./permissions/index.js";
 import type { SetupRuntime } from "./types.js";
 

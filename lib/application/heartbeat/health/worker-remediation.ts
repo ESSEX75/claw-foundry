@@ -2,8 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { DEFAULT_WORKFLOW, findStateKeyByLabel, getActiveLabel, getRevertLabel } from "../../../domain/index.js";
-import { AGENT_TURN_STATUS } from "../../../integrations/openclaw/const.js";
-import { submitAgentTurn } from "../../../integrations/openclaw/session.js";
+import { AGENT_TURN_STATUS, submitAgentTurn } from "../../../integrations/index.js";
 import {
   getProject, getRoleWorker, readIssueStateStore, readProjects,
   updateIssueRuntimeRecord, updateSlot, withIssueOrchestrationLock,
@@ -74,8 +73,8 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
         return { ...previous, activeWorker: { ...previous.activeWorker, lastNudgeAt: attemptedAt } };
       });
       const outcome = await submitAgentTurn(slot.sessionKey, NUDGE_MESSAGE, {
-        workspaceDir, projectName: project.name, role, level, slotIndex, issueId,
-        agentId: input.agentId, runCommand: input.runCommand, fromLabel: `health-nudge-${attemptedAt}`,
+        submissionId: `${slot.sessionKey}:${attemptedAt}`,
+        agentId: input.agentId, runCommand: input.runCommand,
         dispatchTimeoutMs: NUDGE_COMMAND_TIMEOUT_MS,
       });
 

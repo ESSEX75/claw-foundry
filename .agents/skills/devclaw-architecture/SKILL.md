@@ -30,10 +30,15 @@ Keep README files only at layer roots (`lib/<layer>/README.md`); do not create t
 
 ## Subpackage structure
 
+- Before completing a structural refactor, map the affected package's files to cohesive responsibilities and inspect the dependencies between those groups. Include shared infrastructure, `const.ts`, `types.ts`, `guards.ts`, and tests; do not stop after separating concrete implementations. Keep this inventory in the local task plan when one exists rather than adding a new committed report.
 - When a package root contains more than 10 production `.ts` files, excluding `index.ts`, `const.ts`, `types.ts`, `guards.ts`, and test files, review whether cohesive capabilities should become subpackages. Treat this count as a review trigger, not a mandatory file limit; split only along real responsibilities and keep tests beside their implementation.
 - Organize every large package by cohesive responsibility instead of placing unrelated files together at its root.
+- Repeat the responsibility review in affected child packages after extracting subpackages. A shared adapter instance, transport, or lifecycle does not by itself justify keeping independent capabilities flat inside that child.
 - Apply this rule to every current and future package without maintaining an allowlist in this skill.
 - Create a subpackage when several files implement one stable capability, share a public contract, or change for the same architectural reason.
+- Sharing a module between several implementations does not justify leaving it at their parent root. Identify the shared capability's owner and boundary; move a helper used by only one implementation into that implementation's package.
+- Move shared types and constants with the responsibility that owns them. Do not preserve a parent-level `types.ts` or `const.ts` that mixes independent capabilities merely to avoid updating imports.
+- For files remaining at the package root, explain their common responsibility and why no separate boundary is needed. Record durable ownership and import rules in the layer README; distinguish an intended structure from boundaries already implemented.
 - Keep a small, isolated responsibility as a focused file until a real subpackage boundary exists; do not create directories only for visual symmetry.
 - Name each subpackage after the cohesive capability or responsibility it owns; new valid responsibilities require no skill update.
 - Give a subpackage an `index.ts` when it exposes a supported API to other packages or sibling subpackages.
@@ -44,12 +49,18 @@ Keep README files only at layer roots (`lib/<layer>/README.md`); do not create t
 ## Package APIs and imports
 
 - Treat a directory with an `index.ts` as an explicit package or subpackage API.
-- Re-export only supported entities owned by that package.
+- Give every package with an independent external contract a root `index.ts`, including when all implementation lives in subpackages. Distinguish that package from a purely organizational layer or test directory, which needs no barrel without a supported contract.
+- Use hierarchical barrels: an aggregation entrypoint combines its public submodule APIs with `export * from "./submodule/index.js"`. Do not repeat a second hand-picked symbol list at the aggregation level; each submodule's `index.ts` explicitly names its supported exports from owning implementation files.
+- Check every aggregation level up to the affected layer's external API; do not stop after adding a barrel to one nested package. When a layer exposes a supported adapter/use-case API, its root participates in this hierarchy rather than remaining an organizational exception.
+- Before aggregating APIs, remove reverse runtime dependencies through composition-injected callbacks or ports. Do not hide a cycle behind dynamic imports or make internal capabilities import their ancestor barrel.
+- Re-export only supported entities owned by that package or its descendant subpackages. Private implementation details stay out of the owning submodule's `index.ts` and therefore out of the aggregate API. Facade submodules may explicitly export their facade without aggregating internal composition capabilities.
+- Aggregate only actual production APIs, not test directories or implementation files. Keep exported names unambiguous across submodules; resolve collisions at the owning APIs rather than relying on ambiguous wildcard exports.
 - Keep file-local implementation details private.
 - Import through the target package's `index.ts` when it defines a public API for the consumer's boundary.
+- External consumers use the root package API. Internal sibling capabilities use the immediate owner's entrypoint; files within one capability use local implementation imports. Document intentionally supported external subpackage APIs in the layer README.
 - Allow direct imports between implementation files inside the same package.
 - Do not import a package through its own barrel from inside that package; avoid cycles.
-- Do not re-export an entity from a package that does not own it.
+- Do not re-export entities from unrelated packages merely to shorten consumer imports.
 - Do not create a large top-level barrel merely to hide legitimate internal package structure.
 - Use `.js` extensions in TypeScript import and export paths.
 
@@ -86,6 +97,7 @@ Prefer focused names that communicate the file's owned responsibility.
 
 ### Constant placement and string literals
 
+- Prefer a scalar constant for one standalone value instead of a one-property object registry. Retain a singleton object only when its shape serves a current consumer contract, preserves registry-derived types, or belongs to a concretely planned extensible set. Explain that reason in its JSDoc; hypothetical future growth alone is insufficient.
 - Format object constant registries across multiple lines, with one property per line and a trailing comma; keep the closing brace and `as const` together.
 - Move filesystem and resource identifiers into documented constants even when a value currently appears only once. This includes filenames, directory names, extensions, backup suffixes, relative paths, template paths, and path-segment collections.
 - Move repeated or architecturally meaningful protocol identifiers, prefixes, event names, labels, and policy values into documented constants instead of embedding string literals in implementation code.
@@ -145,6 +157,8 @@ Useful parameter documentation may be concise:
 
 ## TypeScript boundaries
 
+- Express optional capability through the presence of its method or value. Do not add `supported`, `available`, or `success` flags when they merely duplicate that presence. Prefer a direct result with `undefined` for confirmed absence over `{ supported: true, result } | { supported: false }` wrappers.
+- Keep capability presence distinct from execution success and domain approval. Operational failures must remain errors or explicit failure outcomes, never become absence; retain discriminants when they distinguish states that payload presence cannot express.
 - Keep untrusted values as `unknown` until a guard or schema validates them.
 - Do not introduce `any` or type assertions to bypass ownership or type errors.
 - Use top-level `import type` declarations instead of inline imports.
@@ -158,9 +172,11 @@ Before completing an architectural change, verify that:
 
 - every changed file belongs to its package;
 - large packages and capabilities remain divided into cohesive subpackages;
+- the responsibility map covers shared infrastructure as thoroughly as concrete implementations, and remaining root files have an explicit cohesive owner;
 - affected package README contracts were read and remain accurate;
 - dependency direction follows package boundaries;
 - public entities are exported from the correct owner API;
+- packages with independent external contracts have a root API, aggregation barrels use `export *` from submodule entrypoints, owning submodules explicitly define their exports, and outside consumers do not bypass the root API;
 - every exported `type` and `interface` is declared in the owning package or subpackage's `types.ts`;
 - filesystem/resource strings and shared architectural identifiers are owned by documented constants in the appropriate `const.ts`;
 - private helpers remain private;

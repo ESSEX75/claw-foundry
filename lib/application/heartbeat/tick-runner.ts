@@ -5,7 +5,7 @@
 import { log as auditLog } from "../../audit.js";
 import { EXECUTION_MODE } from "../../domain/index.js";
 import { loadInstanceName } from "../../instance.js";
-import { createProvider } from "../../integrations/providers/index.js";
+import { createProvider } from "../../integrations/index.js";
 import { loadConfig } from "../../state/index.js";
 import { readProjects } from "../../state/index.js";
 import { projectTick } from "../queue/tick.js";
@@ -75,12 +75,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
       if (!project || (agentId && project.agentId !== agentId)) continue;
 
       const resolvedConfig = await loadConfig(workspaceDir, project.slug);
-      const provider = opts.providerFactory ? await opts.providerFactory(project) : (await createProvider({
-        repo: project.repo,
-        provider: project.provider,
-        runCommand,
-        workflow: resolvedConfig.workflow,
-      })).provider;
+      const provider = opts.providerFactory ? await opts.providerFactory(project) : (await createProvider({ repo: project.repo, provider: project.provider, runCommand })).provider;
 
       const recovered = await runHeartbeatPasses(slug, [
         { name: HEARTBEAT_PASS.CREATION, run: async () => {

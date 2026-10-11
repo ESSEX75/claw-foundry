@@ -15,8 +15,3 @@ export type ScopeCommandResult = {
   /** Transport-provided diagnostic text. */
   message?: string;
 };
-
-/** Distinguishes a missing CLI capability from a successful command response. */
-export type ScopeCommandOutcome =
-  | { /** CLI capability is installed. */ supported: true; /** Validated JSON payload. */ result: ScopeCommandResult }
-  | { /** CLI capability is not installed. */ supported: false };

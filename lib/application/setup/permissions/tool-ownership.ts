@@ -1,8 +1,7 @@
 /** Resolves DevClaw tool authorization from validated local project ownership. */
 
-import { listConfiguredAgents } from "../../../integrations/openclaw/agent-registry.js";
-import { resolveConfiguredAgentWorkspace } from "../../../integrations/openclaw/agent-workspace.js";
-import type { AgentWorkspaceConfig } from "../../../integrations/openclaw/types.js";
+import type { AgentRegistryConfig } from "../../../integrations/index.js";
+import { listConfiguredAgents, resolveConfiguredAgentWorkspace } from "../../../integrations/index.js";
 import { readOptionalProjects } from "../../../state/index.js";
 
 /** Identify project owners in their configured workspaces.
@@ -10,7 +9,7 @@ import { readOptionalProjects } from "../../../state/index.js";
  * Existing tool allowlists alone never grant ownership.
  * @param config - Fresh SDK configuration containing the configured agents and workspaces.
  */
-export async function resolveProjectToolOwners(config: AgentWorkspaceConfig): Promise<ReadonlySet<string>> {
+export async function resolveProjectToolOwners(config: AgentRegistryConfig): Promise<ReadonlySet<string>> {
   const agents = listConfiguredAgents(config);
 
   const authorized = new Set<string>();

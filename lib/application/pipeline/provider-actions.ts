@@ -2,7 +2,7 @@
 
 import { log as auditLog } from "../../audit.js";
 import { ACTION, type CompletionRule } from "../../domain/index.js";
-import { type Issue, PROVIDER_ISSUE_STATE, PrState } from "../../integrations/providers/index.js";
+import { type Issue, PR_STATE, PROVIDER_CLOSED_ISSUE_STATE } from "../../integrations/index.js";
 import { PIPELINE_AUDIT, PIPELINE_GIT_PULL_COMMAND } from "./const.js";
 import type { CompletionActions, CompletionInput } from "./types.js";
 
@@ -46,18 +46,18 @@ export async function executeCompletionActions(opts: CompletionInput, rule: Comp
 
         break;
       case ACTION.MERGE_PR: {
-        const observed = await provider.getPrStatus(issueId);
+        const observed = await provider.getPrStatus(issueId, prUrl);
 
         prUrl = prUrl ?? observed.url ?? undefined;
         prTitle = observed.title;
         sourceBranch = observed.sourceBranch;
         try {
-          if (observed.state !== PrState.MERGED) await provider.mergePr(issueId);
+          if (observed.state !== PR_STATE.MERGED) await provider.mergePr(issueId, prUrl);
           mergedPr = true;
         } catch (err) {
-          const observed = await provider.getPrStatus(issueId);
+          const observed = await provider.getPrStatus(issueId, prUrl);
 
-          if (observed.state === PrState.MERGED) { mergedPr = true; break; }
+          if (observed.state === PR_STATE.MERGED) { mergedPr = true; break; }
 
           if (observed.mergeable !== false) throw err;
           const error = err instanceof Error ? err.message : String(err);
@@ -89,7 +89,7 @@ export async function executeCompletionActions(opts: CompletionInput, rule: Comp
  * @param issue - Provider snapshot read before the attempt.
  */
 export async function applyCompletionLifecycle(opts: CompletionInput, rule: CompletionRule<string>, issue: Issue): Promise<void> {
-  let closed = issue.state === PROVIDER_ISSUE_STATE.CLOSED;
+  let closed = issue.state === PROVIDER_CLOSED_ISSUE_STATE;
 
   for (const action of rule.actions) {
     if (action === ACTION.CLOSE_ISSUE && !closed) {

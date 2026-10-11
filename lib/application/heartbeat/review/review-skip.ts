@@ -17,7 +17,7 @@ import {
   STATE_TYPE,
   WORKFLOW_EVENT,
 } from "../../../domain/index.js";
-import { PrState, type PrStatus } from "../../../integrations/providers/provider.js";
+import { PR_STATE, type PrStatus } from "../../../integrations/index.js";
 import { planWorkflowEvent } from "../../pipeline/plan.js";
 import { getHeartbeatCandidates } from "../local-candidates.js";
 import { transitionHeartbeatIssue } from "../transition-state.js";
@@ -86,13 +86,13 @@ export async function reviewSkipPass(opts: ReviewSkipPassInput): Promise<number>
                 case ACTION.MERGE_PR: {
                   const status = await provider.getPrStatus(issue.iid);
 
-                  if (status.state === PrState.MERGED) {
+                  if (status.state === PR_STATE.MERGED) {
                     mergeNotification.status = status;
                     break;
                   }
 
                   if (!status.url) break;
-                  try { await provider.mergePr(issue.iid); }
+                  try { await provider.mergePr(issue.iid, status.url); }
                   catch (error) { mergeFailure = error; throw error; }
 
                   mergeNotification.status = status;

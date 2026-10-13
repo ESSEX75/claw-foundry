@@ -23,9 +23,13 @@ and cannot select or validate a task's lifecycle eligibility.
   and `labels/index.ts`. Capability entrypoints explicitly name supported exports.
 - Sibling capabilities use the owning capability's entrypoint; implementation files
   use local imports. Protocol constants, framing helpers and validation guards remain private to their capability API.
-- `labels` owns `render.ts`, `classification.ts`, `diff.ts`, `types.ts`, `const.ts`
+- `labels` owns `render.ts`, `classification.ts`, `diff.ts`, `types.ts`
   and its tests. The configured role list is required; an explicit empty list owns
   no role namespaces. Missing roles are rejected, never interpreted as all roles.
+- The plugin ID prefix alone grants no label ownership. Labels such as
+  `devclaw:example` are preserved unless configured workflow/roles or exact local
+  expectations independently establish their ownership. Body block identifiers
+  belong to the separate body protocol and do not reserve provider label names.
 - Exact labels expected from local state remain managed even when current workflow
   labels or role configuration change. Such drift cannot implicitly rewrite local
   fields. Label observations are compared as sorted distinct sets.

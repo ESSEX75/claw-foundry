@@ -17,6 +17,7 @@ export function expectedManagedLabels(state: IssueRuntimeState): string[] {
   }
 
   if (state.owner) labels.add(`${OWNER_LABEL_PREFIX}${state.owner}`);
+  //TODO: The behavior of the tester, reviewer, etc. is hard-coded.
   if (state.reviewPolicy) labels.add(`${POLICY_LABEL_PREFIX.REVIEW}${state.reviewPolicy}`);
   if (state.testPolicy) labels.add(`${POLICY_LABEL_PREFIX.TEST}${state.testPolicy}`);
   if (state.notifyTarget) labels.add(getNotifyLabel(state.notifyTarget));

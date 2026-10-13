@@ -4,6 +4,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, type IssueRuntimeState } from "../../domain/index.js";
+import { isManagedLabel } from "./classification.js";
 import { diffIssueProjection } from "./diff.js";
 import { expectedManagedLabels } from "./render.js";
 
@@ -36,6 +37,26 @@ function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
 }
 
 describe("projection labels", () => {
+  it("preserves plugin-prefixed labels that have no configured or local meaning", () => {
+    const local = state();
+    const expected = expectedManagedLabels(local);
+    const userLabels = ["devclaw:example", "devclaw:issue-creation", "devclaw:issue-metadata"];
+    const options = { stateLabels: ["To Do", "Doing"], roles: ["developer"] };
+    const diff = diffIssueProjection({ state: local, actualLabels: [...expected, ...userLabels], options });
+
+    for (const label of userLabels) assert.strictEqual(isManagedLabel(label, options), false);
+    assert.deepStrictEqual(diff.actualManagedLabels, expected);
+    assert.deepStrictEqual(diff.unmanagedLabels, userLabels);
+    assert.deepStrictEqual(diff.missingManagedLabels, []);
+    assert.deepStrictEqual(diff.unexpectedManagedLabels, []);
+  });
+
+  it("classifies plugin-prefixed labels only through explicit workflow or role ownership", () => {
+    assert.strictEqual(isManagedLabel("devclaw:queued", { stateLabels: ["devclaw:queued"], roles: [] }), true);
+    assert.strictEqual(isManagedLabel("devclaw:junior", { stateLabels: [], roles: ["devclaw"] }), true);
+    assert.strictEqual(isManagedLabel("devclaw:junior", { stateLabels: [], roles: [] }), false);
+  });
+
   it("derives expected managed labels from issue state", () => {
     assert.deepStrictEqual(expectedManagedLabels(state()), [
       "To Do",

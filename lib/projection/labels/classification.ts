@@ -1,7 +1,6 @@
 /** Classifies provider labels using explicit configuration and reserved domain namespaces. */
 
 import { NOTIFY_LABEL_PREFIX, OWNER_LABEL_PREFIX, POLICY_LABEL_PREFIX } from "../../domain/index.js";
-import { DEVCLAW_LABEL_PREFIX } from "./const.js";
 import type { ManagedLabelOptions } from "./types.js";
 
 /** Determine configuration ownership; missing role configuration is an input error.
@@ -14,7 +13,7 @@ export function isManagedLabel(label: string, options: ManagedLabelOptions): boo
   if (options.stateLabels.includes(label)) return true;
   if (label.startsWith(OWNER_LABEL_PREFIX)) return true;
   if (label.startsWith(NOTIFY_LABEL_PREFIX)) return true;
-  if (label.startsWith(DEVCLAW_LABEL_PREFIX)) return true;
+  //TODO: The behavior of the tester, reviewer, etc. is hard-coded.
   if (Object.values(POLICY_LABEL_PREFIX).some(prefix => label.startsWith(prefix))) return true;
   const separator = label.indexOf(":");
 

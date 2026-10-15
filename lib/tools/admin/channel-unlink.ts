@@ -7,11 +7,23 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { log as auditLog } from "../../audit.js";
-import { isNotificationChannel, NOTIFICATION_CHANNEL } from "../../domain/index.js";
+import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { readProjects, updateProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
+
+/** Validates channel-unlink arguments before context resolution or effects. */
+const channelUnlinkInput = z.strictObject({
+  channel: z.enum(Object.values(NOTIFICATION_CHANNEL)).describe("Transport of the exact endpoint to remove."),
+  accountId: requiredTextInput.describe("Explicit account ID of the exact endpoint to remove."),
+  channelId: requiredTextInput.describe("Channel ID to remove (e.g., Telegram group ID)"),
+  project: requiredTextInput.describe("Project name or slug to unlink the channel from"),
+  threadId: requiredTextInput.describe("Optional thread/topic ID when the same channel has multiple project topics.").optional(),
+  confirm: z.boolean().describe("Set to true to confirm the removal. Defaults to false (dry-run).").optional(),
+});
 
 /** Remove only the explicitly selected complete route, rechecking it under the registry lock. */
 export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
@@ -21,56 +33,21 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
     description:
       "Remove a channel from a project. Validates that the channel exists and prevents " +
       "removing the last channel (projects must have at least one notification endpoint).",
-    parameters: {
-      type: "object",
-      required: ["channel", "accountId", "channelId", "project"],
-      properties: {
-        channel: {
-          type: "string",
-          enum: Object.values(NOTIFICATION_CHANNEL),
-          description: "Transport of the exact endpoint to remove.",
-        },
-        accountId: {
-          type: "string",
-          description: "Explicit account ID of the exact endpoint to remove.",
-        },
-        channelId: {
-          type: "string",
-          description: "Channel ID to remove (e.g., Telegram group ID)",
-        },
-        project: {
-          type: "string",
-          description: "Project name or slug to unlink the channel from",
-        },
-        threadId: {
-          type: "string",
-          description:
-            "Optional thread/topic ID when the same channel has multiple project topics.",
-        },
-        confirm: {
-          type: "boolean",
-          description: "Set to true to confirm the removal. Defaults to false (dry-run).",
-        },
-      },
-    },
+    parameters: toolInputParameters(channelUnlinkInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = channelUnlinkInput.parse(rawParams);
       const channelType = params.channel;
-
-      if (!isNotificationChannel(channelType)) throw new Error("A valid channel is required.");
-      const accountId = typeof params.accountId === "string" ? params.accountId.trim() : "";
-
-      if (!accountId) throw new Error("accountId is required.");
-      const channelId = params.channelId as string;
-      const projectRef = params.project as string;
-      const threadId = typeof params.threadId === "string" && params.threadId.trim()
-        ? params.threadId.trim()
-        : undefined;
-      const confirm = params.confirm as boolean | undefined;
+      const accountId = params.accountId.trim();
+      const channelId = params.channelId;
+      const projectRef = params.project;
+      const threadId = params.threadId?.trim();
+      const confirm = params.confirm;
       const workspaceDir = requireWorkspaceDir(toolCtx);
-
-      if (!channelId) throw new Error("channelId is required.");
-      if (!projectRef) throw new Error("project is required.");
 
       const data = await readProjects(workspaceDir);
 

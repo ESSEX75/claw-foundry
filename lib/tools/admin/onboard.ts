@@ -5,9 +5,16 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { getOnboardingContext } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
+import { toolInputParameters } from "../validation/index.js";
+
+/** Validates onboard arguments before context resolution or effects. */
+const onboardInput = z.strictObject({
+  mode: z.enum(["first-run", "reconfigure"]).describe("Auto-detected if omitted.").optional(),
+});
 
 /** Create the conversational onboarding adapter.
  * @param ctx - Current plugin configuration used for onboarding detection.
@@ -17,17 +24,16 @@ export function createOnboardTool(ctx: PluginContext): OpenClawPluginToolFactory
     name: "onboard",
     label: "Onboard",
     description: "Start DevClaw onboarding workflow. Returns step-by-step QA-style guidance. Call this first, then setup with collected answers.",
-    parameters: {
-      type: "object",
-      properties: {
-        mode: { type: "string", enum: ["first-run", "reconfigure"], description: "Auto-detected if omitted." },
-      },
-    },
+    parameters: toolInputParameters(onboardInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = onboardInput.parse(rawParams);
       const requestedMode = params.mode;
 
-      if (requestedMode !== undefined && requestedMode !== "first-run" && requestedMode !== "reconfigure") throw new Error("Invalid onboarding mode.");
       const { mode, configured, instructions } = await getOnboardingContext(toolCtx.workspaceDir, ctx.pluginConfig, requestedMode);
 
       return jsonResult({

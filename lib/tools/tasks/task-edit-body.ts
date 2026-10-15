@@ -4,11 +4,27 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { editTaskBody } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
 import { requireWorkspaceDir, resolveChannelId } from "../helpers.js";
+import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
 
+/** Validates task-edit-body arguments before context resolution or effects. */
+const taskEditBodyInput = z.strictObject({
+  channelId: requiredTextInput.describe("YOUR chat/group ID — the numeric ID of the chat you are in right now " +
+    "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from."),
+  issueId: issueIdInput.describe("Issue ID to edit"),
+  title: z.string().describe("New title for the issue (optional)").optional(),
+  body: z.string().describe("New body/description for the issue (optional)").optional(),
+  reason: z.string().describe("Why the edit was made (optional, for audit trail)").optional(),
+  addComment: z.boolean().describe("Post an auto-comment on the issue noting the edit (default: true)").optional(),
+});
+
+/** Create the task edit body SDK adapter with validated command input.
+ * @param ctx - Plugin capabilities used after boundary validation.
+ */
 export function createTaskEditBodyTool(ctx: PluginContext): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "task_edit_body",
@@ -22,51 +38,25 @@ Examples:
 - Fix typo: { issueId: 42, title: "Fix login timeout bug" }
 - Clarify scope: { issueId: 42, body: "Updated requirements...", reason: "Clarified after meeting" }
 - Silent edit: { issueId: 42, body: "...", addComment: false }`,
-    parameters: {
-      type: "object",
-      required: ["channelId", "issueId"],
-      properties: {
-        channelId: {
-          type: "string",
-          description:
-            "YOUR chat/group ID — the numeric ID of the chat you are in right now " +
-            "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from.",
-        },
-        issueId: {
-          type: "number",
-          description: "Issue ID to edit",
-        },
-        title: {
-          type: "string",
-          description: "New title for the issue (optional)",
-        },
-        body: {
-          type: "string",
-          description: "New body/description for the issue (optional)",
-        },
-        reason: {
-          type: "string",
-          description: "Why the edit was made (optional, for audit trail)",
-        },
-        addComment: {
-          type: "boolean",
-          description: "Post an auto-comment on the issue noting the edit (default: true)",
-        },
-      },
-    },
+    parameters: toolInputParameters(taskEditBodyInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = taskEditBodyInput.parse(rawParams);
       const workspaceDir = requireWorkspaceDir(toolCtx);
-      const channelId = resolveChannelId(toolCtx, params.channelId as string | undefined);
+      const channelId = resolveChannelId(toolCtx, params.channelId);
 
       return jsonResult(await editTaskBody({
         workspaceDir,
         channelId,
-        issueId: params.issueId as number,
-        title: params.title as string | undefined,
-        body: params.body as string | undefined,
-        reason: params.reason as string | undefined,
-        addComment: params.addComment as boolean | undefined,
+        issueId: params.issueId,
+        title: params.title,
+        body: params.body,
+        reason: params.reason,
+        addComment: params.addComment,
         runCommand: ctx.runCommand,
       }));
     },

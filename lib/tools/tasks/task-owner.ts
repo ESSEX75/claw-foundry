@@ -7,6 +7,7 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { claimManagedTask, resolveProject, resolveProvider } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
@@ -19,7 +20,19 @@ import { loadInstanceName } from "../../instance.js";
 import { loadConfig } from "../../state/index.js";
 import { readIssueStateStore } from "../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../helpers.js";
+import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
 
+/** Validates task-owner arguments before context resolution or effects. */
+const taskOwnerInput = z.strictObject({
+  channelId: requiredTextInput.describe("YOUR chat/group ID — the numeric ID of the chat you are in right now " +
+    "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from."),
+  issueId: issueIdInput.describe("Specific issue ID to claim. If omitted, claims all unclaimed queued issues.").optional(),
+  force: z.boolean().describe("Override existing owner label (transfer ownership). Default: false.").optional(),
+});
+
+/** Create the task owner SDK adapter with validated command input.
+ * @param ctx - Plugin capabilities used after boundary validation.
+ */
 export function createTaskOwnerTool(ctx: PluginContext): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "task_owner",
@@ -28,33 +41,17 @@ export function createTaskOwnerTool(ctx: PluginContext): OpenClawPluginToolFacto
       "Claim issue(s) for this instance by adding an owner label. " +
       "If issueId is given, claims that specific issue. Otherwise claims all unclaimed queued issues. " +
       "Use force to transfer ownership from another instance.",
-    parameters: {
-      type: "object",
-      required: ["channelId"],
-      properties: {
-        channelId: {
-          type: "string",
-          description:
-            "YOUR chat/group ID — the numeric ID of the chat you are in right now " +
-            "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from.",
-        },
-        issueId: {
-          type: "number",
-          description:
-            "Specific issue ID to claim. If omitted, claims all unclaimed queued issues.",
-        },
-        force: {
-          type: "boolean",
-          description:
-            "Override existing owner label (transfer ownership). Default: false.",
-        },
-      },
-    },
+    parameters: toolInputParameters(taskOwnerInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
-      const channelId = resolveChannelId(toolCtx, params.channelId as string | undefined);
-      const issueIdParam = params.issueId as number | undefined;
-      const force = (params.force as boolean) ?? false;
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = taskOwnerInput.parse(rawParams);
+      const channelId = resolveChannelId(toolCtx, params.channelId);
+      const issueIdParam = params.issueId;
+      const force = params.force ?? false;
       const workspaceDir = requireWorkspaceDir(toolCtx);
 
       const { project } = await resolveProject(workspaceDir, channelId);

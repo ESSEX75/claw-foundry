@@ -14,6 +14,7 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { checkWorkerHealth, type HealthFix, resolveProvider } from "../../application/index.js";
 import { log as auditLog } from "../../audit.js";
@@ -22,6 +23,13 @@ import { fetchGatewaySessions } from "../../integrations/index.js";
 import { getConfiguredRoleIds, loadConfig } from "../../state/index.js";
 import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
+
+/** Validates health arguments before context resolution or effects. */
+const healthInput = z.strictObject({
+  projectSlug: requiredTextInput.describe("Canonical project slug to scan. Omit for all projects.").optional(),
+  fix: z.boolean().describe("Apply fixes for detected issues. Default: false (read-only).").optional(),
+});
 
 /** Create manual health inspection with the same resolved policy as the heartbeat.
  * @param ctx - Command transport for provider observations and worker remediation.
@@ -31,19 +39,18 @@ export function createHealthTool(ctx: Pick<PluginContext, "runCommand">): OpenCl
     name: "health",
     label: "Health",
     description: `Scan worker health across projects. Detects zombies, stale workers, orphaned state. Pass fix=true to auto-fix. Context-aware: auto-filters in group chats.`,
-    parameters: {
-      type: "object",
-      properties: {
-        projectSlug: { type: "string", description: "Canonical project slug to scan. Omit for all projects." },
-        fix: { type: "boolean", description: "Apply fixes for detected issues. Default: false (read-only)." },
-      },
-    },
+    parameters: toolInputParameters(healthInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = healthInput.parse(rawParams);
       const workspaceDir = requireWorkspaceDir(toolCtx);
-      const fix = (params.fix as boolean) ?? false;
+      const fix = params.fix ?? false;
 
-      const projectSlug = params.projectSlug as string | undefined;
+      const projectSlug = params.projectSlug;
 
       const data = await readProjects(workspaceDir);
 

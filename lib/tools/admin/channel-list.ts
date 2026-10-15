@@ -6,29 +6,33 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
+/** Validates channel-list arguments before context resolution or effects. */
+const channelListInput = z.strictObject({
+  project: requiredTextInput.describe("Project name or slug to list channels for. Omit to list channels for all projects.").optional(),
+});
+
+/** Create the channel list SDK adapter with validated command input. */
 export function createChannelListTool(): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "channel_list",
     label: "Channel List",
     description:
       "List channels for a project or all projects. Shows channel type, ID, and name.",
-    parameters: {
-      type: "object",
-      properties: {
-        project: {
-          type: "string",
-          description:
-            "Project name or slug to list channels for. Omit to list channels for all projects.",
-        },
-      },
-    },
+    parameters: toolInputParameters(channelListInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
-      const projectRef = params.project as string | undefined;
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = channelListInput.parse(rawParams);
+      const projectRef = params.project;
       const workspaceDir = requireWorkspaceDir(toolCtx);
 
       const data = await readProjects(workspaceDir);

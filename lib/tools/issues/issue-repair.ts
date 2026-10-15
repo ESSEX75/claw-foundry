@@ -4,21 +4,30 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import {
   isIssueRepairFailure,
   ISSUE_REPAIR_SOURCE,
-  type IssueRepairSource,
   repairManagedIssue,
   resolveProject,
 } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
 import { getProject, readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
+import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
 
-const INPUT_FIELDS = new Set([
-  "channelId", "project", "issueId", "source", "dryRun", "apply", "reason", "planToken",
-]);
+/** Validates issue-repair arguments before context resolution or effects. */
+const issueRepairInput = z.strictObject({
+  channelId: requiredTextInput.trim().describe("Current bound chat/group ID; mutually exclusive with project.").optional(),
+  project: requiredTextInput.trim().describe("Explicit project slug; mutually exclusive with channelId.").optional(),
+  issueId: issueIdInput.describe("Positive provider issue ID."),
+  source: z.enum(Object.values(ISSUE_REPAIR_SOURCE)).describe("Authoritative repair source."),
+  dryRun: z.boolean().describe("Plan without mutation; defaults to true.").optional(),
+  apply: z.boolean().describe("Apply a previously planned repair.").optional(),
+  planToken: requiredTextInput.trim().describe("Token from the matching dry-run; required for apply.").optional(),
+  reason: requiredTextInput.trim().describe("Optional operator reason included in audit events.").optional(),
+});
 
 /** Create the safe-by-default issue_repair plugin tool. */
 export function createIssueRepairTool(ctx: PluginContext): OpenClawPluginToolFactory {
@@ -26,38 +35,28 @@ export function createIssueRepairTool(ctx: PluginContext): OpenClawPluginToolFac
     name: "issue_repair",
     label: "Issue Repair",
     description: "Plan or apply a verified repair between local managed issue state and provider projection.",
-    parameters: {
-      type: "object",
-      additionalProperties: false,
-      required: ["issueId", "source"],
-      properties: {
-        channelId: { type: "string", description: "Current bound chat/group ID; mutually exclusive with project." },
-        project: { type: "string", description: "Explicit project slug; mutually exclusive with channelId." },
-        issueId: { type: "number", description: "Positive provider issue ID." },
-        source: { type: "string", enum: Object.values(ISSUE_REPAIR_SOURCE), description: "Authoritative repair source." },
-        dryRun: { type: "boolean", description: "Plan without mutation; defaults to true." },
-        apply: { type: "boolean", description: "Apply a previously planned repair." },
-        planToken: { type: "string", description: "Token from the matching dry-run; required for apply." },
-        reason: { type: "string", description: "Optional operator reason included in audit events." },
-      },
-    },
-    async execute(_id: string, params: Record<string, unknown>) {
-      rejectUnknownFields(params);
-      const projectInput = optionalString(params.project, "project");
-      const channelId = optionalString(params.channelId, "channelId");
+    parameters: toolInputParameters(issueRepairInput),
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = issueRepairInput.parse(rawParams);
+      const projectInput = params.project;
+      const channelId = params.channelId;
 
       if ((projectInput === undefined) === (channelId === undefined)) {
         throw new Error("Exactly one of project or channelId is required.");
       }
 
-      const issueId = requirePositiveSafeInteger(params.issueId, "issueId");
-      const source = requireRepairSource(params.source);
-      const dryRun = optionalBoolean(params.dryRun, "dryRun");
-      const apply = optionalBoolean(params.apply, "apply") ?? false;
+      const issueId = params.issueId;
+      const source = params.source;
+      const dryRun = params.dryRun;
+      const apply = params.apply ?? false;
 
       if (dryRun === true && apply) throw new Error("dryRun and apply cannot both be true.");
       if (dryRun === false && !apply) throw new Error("dryRun: false requires apply: true.");
-      const planToken = optionalString(params.planToken, "planToken");
+      const planToken = params.planToken;
 
       if (apply && !planToken) throw new Error("planToken from a matching dry-run is required for apply.");
       const workspaceDir = requireWorkspaceDir(toolCtx);
@@ -82,7 +81,7 @@ export function createIssueRepairTool(ctx: PluginContext): OpenClawPluginToolFac
           source,
           apply,
           planToken,
-          reason: optionalString(params.reason, "reason"),
+          reason: params.reason,
           actor: toolCtx.agentId,
           channelContext: { channelId },
           runCommand: ctx.runCommand,
@@ -104,38 +103,4 @@ export function createIssueRepairTool(ctx: PluginContext): OpenClawPluginToolFac
       return jsonResult(result);
     },
   });
-}
-
-function rejectUnknownFields(params: Record<string, unknown>): void {
-  const unknown = Object.keys(params).filter((field) => !INPUT_FIELDS.has(field));
-
-  if (unknown.length > 0) throw new Error(`Unknown issue_repair parameters: ${unknown.join(", ")}.`);
-}
-
-function optionalString(value: unknown, field: string): string | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "string" || !value.trim()) throw new Error(`${field} must be a non-empty string.`);
-
-  return value.trim();
-}
-
-function optionalBoolean(value: unknown, field: string): boolean | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "boolean") throw new Error(`${field} must be a boolean.`);
-
-  return value;
-}
-
-function requirePositiveSafeInteger(value: unknown, field: string): number {
-  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
-    throw new Error(`${field} must be a positive safe integer.`);
-  }
-
-  return value;
-}
-
-function requireRepairSource(value: unknown): IssueRepairSource {
-  if (value === ISSUE_REPAIR_SOURCE.LOCAL_STATE || value === ISSUE_REPAIR_SOURCE.PROVIDER) return value;
-
-  throw new Error("source must be local-state or provider.");
 }

@@ -10,9 +10,11 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { DATA_DIR } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
+import { toolInputParameters } from "../validation/index.js";
 
 type WorkflowGuideTopic =
   | "overview"
@@ -33,11 +35,14 @@ const WORKFLOW_GUIDE_TOPICS: readonly WorkflowGuideTopic[] = [
   "overrides",
 ];
 
-function isWorkflowGuideTopic(value: unknown): value is WorkflowGuideTopic {
-  return typeof value === "string"
-    && WORKFLOW_GUIDE_TOPICS.some((topic) => topic === value);
-}
+/** Validates workflow-guide arguments before context resolution or effects. */
+const workflowGuideInput = z.strictObject({
+  topic: z.enum(WORKFLOW_GUIDE_TOPICS).describe("Optional: narrow to a specific topic. " +
+    'Options: "overview", "states", "roles", "review", "testing", "timeouts", "overrides". ' +
+    "Omit for the full guide.").optional(),
+});
 
+/** Create the workflow guide SDK adapter with validated command input. */
 export function createWorkflowGuideTool(): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "workflow_guide",
@@ -48,21 +53,14 @@ export function createWorkflowGuideTool(): OpenClawPluginToolFactory {
       `Returns the full config structure, all valid values (enums, free-form fields), ` +
       `the three-layer override system, and common recipes like enabling the test phase ` +
       `or changing the review policy.`,
-    parameters: {
-      type: "object",
-      properties: {
-        topic: {
-          type: "string",
-          description:
-            "Optional: narrow to a specific topic. " +
-            'Options: "overview", "states", "roles", "review", "testing", "timeouts", "overrides". ' +
-            "Omit for the full guide.",
-          enum: WORKFLOW_GUIDE_TOPICS,
-        },
-      },
-    },
+    parameters: toolInputParameters(workflowGuideInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = workflowGuideInput.parse(rawParams);
       const workspaceDir = requireWorkspaceDir(toolCtx);
       const dataDir = `${workspaceDir}/${DATA_DIR}`;
       const topic = params.topic;
@@ -77,7 +75,7 @@ export function createWorkflowGuideTool(): OpenClawPluginToolFactory {
         overrides: buildOverridesSection(dataDir),
       };
 
-      if (isWorkflowGuideTopic(topic)) {
+      if (topic !== undefined) {
         return jsonResult({ guide: sections[topic] });
       }
 

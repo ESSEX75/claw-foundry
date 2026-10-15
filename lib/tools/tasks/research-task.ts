@@ -14,19 +14,34 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { createManagedTaskIssue, dispatchTask, resolveProject, resolveProvider } from "../../application/index.js";
 import { log as auditLog } from "../../audit.js";
 import type { PluginContext } from "../../context.js";
 import { countActiveSlots, findStateKeyByLabel, getActiveLabel } from "../../domain/index.js";
 import { loadInstanceName } from "../../instance.js";
-import { isTaskComplexity, resolveModelForLevel, selectLevel, TASK_COMPLEXITY } from "../../roles/index.js";
+import { resolveModelForLevel, selectLevel, TASK_COMPLEXITY } from "../../roles/index.js";
 import { loadConfig } from "../../state/index.js";
 import { getRoleWorker } from "../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../helpers.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
 /** Queue label for research tasks. */
 const TO_RESEARCH_LABEL = "To Research";
+
+/** Validates research-task arguments before context resolution or effects. */
+const researchTaskInput = z.strictObject({
+  channelId: requiredTextInput.describe("YOUR chat/group ID — the numeric ID of the chat you are in right now " +
+    "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from."),
+  title: requiredTextInput.describe("Research title (e.g., 'Research: Session persistence strategy')"),
+  description: requiredTextInput.describe("Detailed background context: what exists today, why this needs investigation, constraints, " +
+    "relevant code paths, prior decisions. Must be detailed enough for the architect to produce development-ready findings."),
+  focusAreas: z.array(requiredTextInput).describe("Specific areas to investigate (e.g., ['performance', 'scalability', 'simplicity'])").optional(),
+  complexity: z.enum(Object.values(TASK_COMPLEXITY)).describe("Selects level: simple → lowest rank, medium → default, complex → highest rank. When omitted, " +
+    "analyzes task text.").optional(),
+  dryRun: z.boolean().describe("Preview without executing. Defaults to false.").optional(),
+});
 
 /** Create the research adapter with explicit complexity validation before task effects.
  * @param ctx - Plugin runtime dependencies used for project resolution and dispatch.
@@ -56,59 +71,22 @@ Example:
     focusAreas: ["SQLite vs file-based", "migration path", "cache invalidation"],
     complexity: "complex"
   })`,
-    parameters: {
-      type: "object",
-      required: ["channelId", "title", "description"],
-      properties: {
-        channelId: {
-          type: "string",
-          description:
-            "YOUR chat/group ID — the numeric ID of the chat you are in right now " +
-            "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from.",
-        },
-        title: {
-          type: "string",
-          description: "Research title (e.g., 'Research: Session persistence strategy')",
-        },
-        description: {
-          type: "string",
-          description:
-            "Detailed background context: what exists today, why this needs investigation, constraints, " +
-            "relevant code paths, prior decisions. Must be detailed enough for the architect to produce development-ready findings.",
-        },
-        focusAreas: {
-          type: "array",
-          items: { type: "string" },
-          description: "Specific areas to investigate (e.g., ['performance', 'scalability', 'simplicity'])",
-        },
-        complexity: {
-          type: "string",
-          enum: Object.values(TASK_COMPLEXITY),
-          description: "Selects level: simple → lowest rank, medium → default, complex → highest rank. When omitted, analyzes task text.",
-        },
-        dryRun: {
-          type: "boolean",
-          description: "Preview without executing. Defaults to false.",
-        },
-      },
-    },
+    parameters: toolInputParameters(researchTaskInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
-      const channelId = resolveChannelId(toolCtx, params.channelId as string | undefined);
-      const title = params.title as string;
-      const description = (params.description as string) ?? "";
-      const focusAreas = (params.focusAreas as string[]) ?? [];
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = researchTaskInput.parse(rawParams);
+      const channelId = resolveChannelId(toolCtx, params.channelId);
+      const title = params.title;
+      const description = params.description ?? "";
+      const focusAreas = params.focusAreas ?? [];
       const complexity = params.complexity;
 
-      if (complexity !== undefined && !isTaskComplexity(complexity)) {
-        throw new Error("complexity must be simple, medium, or complex.");
-      }
-
-      const dryRun = (params.dryRun as boolean) ?? false;
+      const dryRun = params.dryRun ?? false;
       const workspaceDir = requireWorkspaceDir(toolCtx);
-
-      if (!title) throw new Error("title is required");
-      if (!description) throw new Error("description is required — provide detailed background context for the architect");
 
       const { project, endpoint } = await resolveProject(workspaceDir, channelId);
       const { provider, type: providerType } = await resolveProvider(workspaceDir, project, ctx.runCommand);

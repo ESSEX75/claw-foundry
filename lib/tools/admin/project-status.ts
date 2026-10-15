@@ -7,6 +7,7 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { getIssueArchiveStatus, resolveProject } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
@@ -14,7 +15,17 @@ import { EXECUTION_MODE, STATE_TYPE } from "../../domain/index.js";
 import { loadInstanceName } from "../../instance.js";
 import { getLevelMaxWorkers, loadConfig } from "../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../helpers.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
+/** Validates project-status arguments before context resolution or effects. */
+const projectStatusInput = z.strictObject({
+  channelId: requiredTextInput.describe("YOUR chat/group ID — the numeric ID of the chat you are in right now " +
+    "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from."),
+});
+
+/** Create the project status SDK adapter with validated command input.
+ * @param ctx - Plugin capabilities used after boundary validation.
+ */
 export function createProjectStatusTool(ctx: PluginContext): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "project_status",
@@ -22,22 +33,16 @@ export function createProjectStatusTool(ctx: PluginContext): OpenClawPluginToolF
     description:
       "Instant project info for this channel: registration, channels, worker slots, workflow, and config. " +
       "No API calls — all local data. Use `tasks_status` for live issue counts from the issue tracker.",
-    parameters: {
-      type: "object",
-      required: ["channelId"],
-      properties: {
-        channelId: {
-          type: "string",
-          description:
-            "YOUR chat/group ID — the numeric ID of the chat you are in right now " +
-            "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from.",
-        },
-      },
-    },
+    parameters: toolInputParameters(projectStatusInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = projectStatusInput.parse(rawParams);
       const workspaceDir = requireWorkspaceDir(toolCtx);
-      const channelId = resolveChannelId(toolCtx, params.channelId as string | undefined);
+      const channelId = resolveChannelId(toolCtx, params.channelId);
 
       const { project } = await resolveProject(workspaceDir, channelId);
 

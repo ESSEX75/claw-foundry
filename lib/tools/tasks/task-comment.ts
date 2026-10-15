@@ -8,6 +8,7 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { resolveProject, resolveProvider } from "../../application/index.js";
 import { log as auditLog } from "../../audit.js";
@@ -15,9 +16,20 @@ import type { PluginContext } from "../../context.js";
 import { getFallbackEmoji } from "../../roles/index.js";
 import { isConfiguredRoleId, loadConfig } from "../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../helpers.js";
+import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
 
-type AuthorRole = string;
+/** Validates task-comment arguments before context resolution or effects. */
+const taskCommentInput = z.strictObject({
+  channelId: requiredTextInput.describe("YOUR chat/group ID — the numeric ID of the chat you are in right now " +
+    "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from."),
+  issueId: issueIdInput.describe("Issue ID to comment on"),
+  body: requiredTextInput.describe("Comment body in markdown. Supports GitHub-flavored markdown."),
+  authorRole: requiredTextInput.describe("Optional configured role attribution, or orchestrator.").optional(),
+});
 
+/** Create the task comment SDK adapter with validated command input.
+ * @param ctx - Plugin capabilities used after boundary validation.
+ */
 export function createTaskCommentTool(ctx: PluginContext): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "task_comment",
@@ -34,41 +46,19 @@ Examples:
 - Simple: { issueId: 42, body: "Found an edge case with null inputs" }
 - With role: { issueId: 42, body: "LGTM!", authorRole: "tester" }
 - Detailed: { issueId: 42, body: "## Notes\\n\\n- Tested on staging\\n- All checks passing", authorRole: "developer" }`,
-    parameters: {
-      type: "object",
-      required: ["channelId", "issueId", "body"],
-      properties: {
-        channelId: {
-          type: "string",
-          description:
-            "YOUR chat/group ID — the numeric ID of the chat you are in right now " +
-            "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from.",
-        },
-        issueId: {
-          type: "number",
-          description: "Issue ID to comment on",
-        },
-        body: {
-          type: "string",
-          description: "Comment body in markdown. Supports GitHub-flavored markdown.",
-        },
-        authorRole: {
-          type: "string",
-          description: "Optional configured role attribution, or orchestrator.",
-        },
-      },
-    },
+    parameters: toolInputParameters(taskCommentInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
-      const channelId = resolveChannelId(toolCtx, params.channelId as string | undefined);
-      const issueId = params.issueId as number;
-      const body = params.body as string;
-      const authorRole = (params.authorRole as AuthorRole) ?? undefined;
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = taskCommentInput.parse(rawParams);
+      const channelId = resolveChannelId(toolCtx, params.channelId);
+      const issueId = params.issueId;
+      const body = params.body;
+      const authorRole = params.authorRole;
       const workspaceDir = requireWorkspaceDir(toolCtx);
-
-      if (!body || body.trim().length === 0) {
-        throw new Error("Comment body cannot be empty.");
-      }
 
       const { project } = await resolveProject(workspaceDir, channelId);
       const config = await loadConfig(workspaceDir, project.slug);

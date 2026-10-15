@@ -13,10 +13,17 @@ import { z } from "zod";
 import { manageTaskAttachments } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
 import { requireWorkspaceDir, resolveChannelId } from "../helpers.js";
+import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
 
-/** Strict attachment command fields accepted at the tool boundary. */
-const attachmentInput = z.object({ channelId: z.string().optional(), issueId: z.number().int().positive().safe(),
-  action: z.enum(["list", "add", "get"]).default("list"), filePath: z.string().optional(), attachmentId: z.string().optional() });
+/** Validates task-attach arguments before context resolution or effects. */
+const taskAttachInput = z.strictObject({
+  channelId: requiredTextInput.describe("YOUR chat/group ID — the numeric ID of the chat you are in right now " +
+    "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from."),
+  issueId: issueIdInput.describe("Issue ID"),
+  action: z.enum(["list", "add", "get"]).describe("Action to perform. Defaults to 'list'.").optional(),
+  filePath: requiredTextInput.describe("Local file path to attach (required for 'add' action).").optional(),
+  attachmentId: requiredTextInput.describe("Attachment ID to retrieve (required for 'get' action).").optional(),
+});
 
 /** Register manual attachment commands through application orchestration.
  * @param ctx - Provider transport and runtime diagnostics.
@@ -31,44 +38,16 @@ Use cases:
 - List attachments: { issueId: 42, action: "list" }
 - Attach file: { issueId: 42, action: "add", filePath: "/path/to/file.png" }
 - Get attachment path: { issueId: 42, action: "get", attachmentId: "abc-123" }`,
-    parameters: {
-      type: "object",
-      required: ["channelId", "issueId"],
-      properties: {
-        channelId: {
-          type: "string",
-          description:
-            "YOUR chat/group ID — the numeric ID of the chat you are in right now " +
-            "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from.",
-        },
-        issueId: {
-          type: "number",
-          description: "Issue ID",
-        },
-        action: {
-          type: "string",
-          enum: ["list", "add", "get"],
-          description: "Action to perform. Defaults to 'list'.",
-        },
-        filePath: {
-          type: "string",
-          description: "Local file path to attach (required for 'add' action).",
-        },
-        attachmentId: {
-          type: "string",
-          description: "Attachment ID to retrieve (required for 'get' action).",
-        },
-      },
-    },
+    parameters: toolInputParameters(taskAttachInput),
 
     /** Validate the request and format the shared application result.
      * @param _id - SDK tool invocation identifier.
-     * @param params - Untrusted tool arguments.
+     * @param rawParams - Untrusted tool arguments.
      */
-    async execute(_id: string, params: Record<string, unknown>) {
-      const input = attachmentInput.parse(params);
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const input = taskAttachInput.parse(rawParams);
 
-      return jsonResult(await manageTaskAttachments({ ...input,
+      return jsonResult(await manageTaskAttachments({ ...input, action: input.action ?? "list",
         channelId: resolveChannelId(toolCtx, input.channelId), workspaceDir: requireWorkspaceDir(toolCtx), runCommand: ctx.runCommand }));
     },
   });

@@ -4,11 +4,24 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { deleteManagedIssue, resolveProjectByRoute, resolveProvider, validateProjectRoute } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
-import { isNotificationChannel } from "../../domain/index.js";
+import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
+import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
+
+/** Validates issue-delete arguments before context resolution or effects. */
+const issueDeleteInput = z.strictObject({
+  channel: z.enum(NOTIFICATION_CHANNEL).describe("Current OpenClaw channel type."),
+  accountId: requiredTextInput.trim().describe("Current explicit channel account ID."),
+  channelId: requiredTextInput.trim().describe("Current bound chat/group ID used to resolve the project."),
+  threadId: requiredTextInput.trim().describe("Current topic/thread ID when applicable.").optional(),
+  issueId: issueIdInput.describe("Provider issue number to delete."),
+  confirmIssueId: issueIdInput.describe("Must exactly match issueId when dryRun is false.").optional(),
+  dryRun: z.boolean().describe("Preview only; defaults to true.").optional(),
+});
 
 /** Create the capability-aware issue_delete tool. */
 export function createIssueDeleteTool(ctx: PluginContext): OpenClawPluginToolFactory {
@@ -16,30 +29,19 @@ export function createIssueDeleteTool(ctx: PluginContext): OpenClawPluginToolFac
     name: "issue_delete",
     label: "Delete Issue",
     description: "Preview or explicitly confirm deletion of one provider issue and archive a local tombstone.",
-    parameters: {
-      type: "object",
-      required: ["channel", "accountId", "channelId", "issueId"],
-      properties: {
-        channel: { type: "string", description: "Current OpenClaw channel type." },
-        accountId: { type: "string", description: "Current explicit channel account ID." },
-        channelId: { type: "string", description: "Current bound chat/group ID used to resolve the project." },
-        threadId: { type: "string", description: "Current topic/thread ID when applicable." },
-        issueId: { type: "number", description: "Provider issue number to delete." },
-        confirmIssueId: { type: "number", description: "Must exactly match issueId when dryRun is false." },
-        dryRun: { type: "boolean", description: "Preview only; defaults to true." },
-      },
-    },
-    async execute(_id: string, params: Record<string, unknown>) {
-      const channelId = requireString(params.channelId, "channelId");
-      const accountId = requireString(params.accountId, "accountId");
+    parameters: toolInputParameters(issueDeleteInput),
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = issueDeleteInput.parse(rawParams);
+      const channelId = params.channelId;
+      const accountId = params.accountId;
       const channel = params.channel;
-
-      if (!isNotificationChannel(channel)) throw new Error(`Unsupported notification channel "${String(channel)}".`);
-      const threadId = params.threadId === undefined ? undefined : requireString(params.threadId, "threadId");
-      const issueId = requirePositiveInteger(params.issueId, "issueId");
-      const confirmIssueId = params.confirmIssueId === undefined
-        ? undefined
-        : requirePositiveInteger(params.confirmIssueId, "confirmIssueId");
+      const threadId = params.threadId;
+      const issueId = params.issueId;
+      const confirmIssueId = params.confirmIssueId;
       const workspaceDir = requireWorkspaceDir(toolCtx);
       const { project, endpoint } = await resolveProjectByRoute(workspaceDir,
         { channel, accountId, channelId, threadId });
@@ -64,16 +66,4 @@ export function createIssueDeleteTool(ctx: PluginContext): OpenClawPluginToolFac
       return jsonResult({ success: result.dryRun || (result.deleted && result.archived), ...result });
     },
   });
-}
-
-function requireString(value: unknown, field: string): string {
-  if (typeof value !== "string" || !value.trim()) throw new Error(`${field} is required.`);
-
-  return value.trim();
-}
-
-function requirePositiveInteger(value: unknown, field: string): number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) throw new Error(`${field} must be a positive integer.`);
-
-  return value;
 }

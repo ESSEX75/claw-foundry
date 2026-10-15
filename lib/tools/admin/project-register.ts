@@ -11,6 +11,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { ensureWorkflowLabels } from "../../application/index.js";
 import {
@@ -24,7 +25,6 @@ import {
   getRoleLabels,
   getStateLabels,
   getStepRoutingLabels,
-  isNotificationChannel,
   ISSUE_PROVIDER,
   NOTIFICATION_CHANNEL,
   type NotificationEndpoint,
@@ -40,6 +40,7 @@ import {
   updateProjects,
 } from "../../state/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../state/index.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
 /**
  * Scaffold a canonical project directory with a prompts folder and override documentation.
@@ -115,6 +116,18 @@ Call \`workflow_guide\` for the full config reference.
   }
 }
 
+/** Validates project-register arguments before context resolution or effects. */
+const projectRegisterInput = z.strictObject({
+  channelId: requiredTextInput.describe("Channel ID — the chat/group ID where this project is managed (e.g. Telegram group ID)"),
+  accountId: requiredTextInput.describe("Explicit OpenClaw channel account ID used by this project."),
+  name: requiredTextInput.describe("Short project name (e.g. 'my-webapp')"),
+  repo: requiredTextInput.describe("Path to git repo (e.g. '~/git/my-project')"),
+  channel: z.enum(Object.values(NOTIFICATION_CHANNEL)).describe("Channel type (e.g. 'telegram', 'whatsapp'). Defaults to 'telegram'.").optional(),
+  threadId: requiredTextInput.describe("Optional thread/topic ID for forum-style channels, e.g. Telegram topic ID.").optional(),
+  baseBranch: requiredTextInput.describe("Base branch for development (e.g. 'development', 'main')"),
+  deployBranch: requiredTextInput.describe("Branch that triggers deployment. Defaults to baseBranch.").optional(),
+});
+
 /**
  * Create the OpenClaw adapter for project registration and label provisioning.
  *
@@ -125,68 +138,25 @@ export function createProjectRegisterTool(ctx: PluginContext): OpenClawPluginToo
     name: "project_register",
     label: "Project Register",
     description: `Register a new project with DevClaw. Creates state labels, adds to projects.json. One-time setup per project.`,
-    parameters: {
-      type: "object",
-      required: ["channelId", "accountId", "name", "repo", "baseBranch"],
-      properties: {
-        channelId: {
-          type: "string",
-          description: "Channel ID — the chat/group ID where this project is managed (e.g. Telegram group ID)",
-        },
-        accountId: {
-          type: "string",
-          description: "Explicit OpenClaw channel account ID used by this project.",
-        },
-        name: {
-          type: "string",
-          description: "Short project name (e.g. 'my-webapp')",
-        },
-        repo: {
-          type: "string",
-          description: "Path to git repo (e.g. '~/git/my-project')",
-        },
-        channel: {
-          type: "string",
-          enum: Object.values(NOTIFICATION_CHANNEL),
-          description: "Channel type (e.g. 'telegram', 'whatsapp'). Defaults to 'telegram'.",
-        },
-        threadId: {
-          type: "string",
-          description:
-            "Optional thread/topic ID for forum-style channels, e.g. Telegram topic ID.",
-        },
-        baseBranch: {
-          type: "string",
-          description: "Base branch for development (e.g. 'development', 'main')",
-        },
-        deployBranch: {
-          type: "string",
-          description: "Branch that triggers deployment. Defaults to baseBranch.",
-        },
-      },
-    },
+    parameters: toolInputParameters(projectRegisterInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
-      const channelId = params.channelId as string;
-      const accountId = typeof params.accountId === "string" ? params.accountId.trim() : "";
-      const name = params.name as string;
-      const repo = params.repo as string;
-      const channelInput = params.channel ?? NOTIFICATION_CHANNEL.TELEGRAM;
-
-      if (!isNotificationChannel(channelInput)) {
-        throw new Error(`Unsupported notification channel: ${String(channelInput)}.`);
-      }
-
-      const channel = channelInput;
-      const threadId = typeof params.threadId === "string" && params.threadId.trim()
-        ? params.threadId.trim()
-        : undefined;
-      const baseBranch = params.baseBranch as string;
-      const deployBranch = (params.deployBranch as string) ?? baseBranch;
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = projectRegisterInput.parse(rawParams);
+      const channelId = params.channelId;
+      const accountId = params.accountId.trim();
+      const name = params.name;
+      const repo = params.repo;
+      const channel = params.channel ?? NOTIFICATION_CHANNEL.TELEGRAM;
+      const threadId = params.threadId?.trim();
+      const baseBranch = params.baseBranch;
+      const deployBranch = params.deployBranch ?? baseBranch;
       const workspaceDir = toolCtx.workspaceDir;
       const agentId = toolCtx.agentId;
 
-      if (!accountId) throw new Error("accountId is required.");
       if (!agentId) throw new Error("DevClaw project registration requires an agent context.");
 
       const requestedEndpoint = parseNotificationEndpoint({

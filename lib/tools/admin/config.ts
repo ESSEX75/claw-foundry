@@ -7,8 +7,16 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { compareWorkspaceConfig, resetWorkspaceConfig } from "../../application/index.js";
+import { toolInputParameters } from "../validation/index.js";
+
+/** Validates config arguments before context resolution or effects. */
+const configInput = z.strictObject({
+  action: z.enum(["reset", "diff"]).describe("Config action to perform."),
+  scope: z.enum(["prompts", "workflow", "all"]).describe("Scope for reset action. Default: all.").optional(),
+});
 
 /** Create the adapter for explicit configuration reset and read-only comparison. */
 export function createConfigTool(): OpenClawPluginToolFactory {
@@ -26,24 +34,14 @@ Examples:
   config({ action: "reset", scope: "workflow" })
   config({ action: "reset", scope: "all" })
   config({ action: "diff" })`,
-    parameters: {
-      type: "object",
-      required: ["action"],
-      properties: {
-        action: {
-          type: "string",
-          enum: ["reset", "diff"],
-          description: "Config action to perform.",
-        },
-        scope: {
-          type: "string",
-          enum: ["prompts", "workflow", "all"],
-          description: "Scope for reset action. Default: all.",
-        },
-      },
-    },
+    parameters: toolInputParameters(configInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = configInput.parse(rawParams);
       const action = params.action;
       const workspacePath = toolCtx.workspaceDir;
 

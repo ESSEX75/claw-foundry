@@ -11,25 +11,25 @@ import { z } from "zod";
 import {
   isScopeApprovalRejectedError,
   isScopeApprovalRequiredError,
-  isSetupNotificationChannel,
   runSetup,
   SETUP_NOTIFICATION_CHANNELS,
   type SetupOpts,
 } from "../../application/index.js";
 import { EXECUTION_MODE } from "../../domain/index.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
-/** Validate optional tool inputs without trusting schema enforcement by the caller. */
-const setupInput = z.object({
-  newAgentName: z.string().min(1).optional(),
-  channelBinding: z.string().optional(),
-  channelAccountId: z.string().optional(),
-  channelPeerId: z.string().optional(),
-  models: z.record(z.string(), z.record(z.string(), z.string().min(1))).optional(),
-  projectExecution: z.enum(EXECUTION_MODE).optional(),
-  ejectDefaults: z.boolean().optional(),
-  resetDefaults: z.boolean().optional(),
-  refreshInstructions: z.boolean().optional(),
-  dryRun: z.boolean().optional(),
+/** Validates setup arguments before context resolution or effects. */
+const setupInput = z.strictObject({
+  newAgentName: requiredTextInput.describe("Create a new agent. Omit to configure current workspace.").optional(),
+  channelBinding: z.enum(SETUP_NOTIFICATION_CHANNELS).describe("Channel to bind to the selected or newly-created agent.").optional(),
+  channelAccountId: requiredTextInput.describe("Explicit channel account id required when channelBinding is set, e.g. Telegram account 'dev'.").optional(),
+  channelPeerId: requiredTextInput.describe("Exact group/chat/topic peer id required when channelBinding is set, e.g. '-1003911014709:topic:331'.").optional(),
+  models: z.record(z.string(), z.record(z.string(), requiredTextInput)).describe("Model overrides keyed by configured role and level.").optional(),
+  projectExecution: z.enum(Object.values(EXECUTION_MODE)).describe("Project execution mode. Default: parallel.").optional(),
+  ejectDefaults: z.boolean().describe("Write all package defaults to workspace. Skips files that already exist.").optional(),
+  resetDefaults: z.boolean().describe("Force-write all package defaults to workspace, overwriting existing files. Creates .bak backups.").optional(),
+  refreshInstructions: z.boolean().describe("Refresh system instructions only, preserving .bak backups.").optional(),
+  dryRun: z.boolean().describe("Return the setup plan without writing OpenClaw or workspace configuration.").optional(),
 });
 
 /** Create the setup adapter with validated tool inputs and application-owned effects.
@@ -43,72 +43,16 @@ export function createSetupTool(ctx: Pick<SetupOpts, "runtime" | "runCommand">):
       `Execute DevClaw setup. Creates AGENTS.md, HEARTBEAT.md, TOOLS.md, devclaw/projects.json, ` +
       `devclaw/prompts/, and model level config. Optionally creates a new agent with channel binding. ` +
       `Called after onboard collects configuration.`,
-    parameters: {
-      type: "object",
-      properties: {
-        newAgentName: {
-          type: "string",
-          description:
-            "Create a new agent. Omit to configure current workspace.",
-        },
-        channelBinding: {
-          type: "string",
-          enum: SETUP_NOTIFICATION_CHANNELS,
-          description: "Channel to bind to the selected or newly-created agent.",
-        },
-        channelAccountId: {
-          type: "string",
-          description: "Explicit channel account id required when channelBinding is set, e.g. Telegram account 'dev'.",
-        },
-        channelPeerId: {
-          type: "string",
-          description: "Exact group/chat/topic peer id required when channelBinding is set, e.g. '-1003911014709:topic:331'.",
-        },
-        models: {
-          type: "object",
-          description: "Model overrides keyed by configured role and level.",
-          additionalProperties: {
-            type: "object",
-            additionalProperties: {
-              type: "string",
-            },
-          },
-        },
-        projectExecution: {
-          type: "string",
-          enum: Object.values(EXECUTION_MODE),
-          description: "Project execution mode. Default: parallel.",
-        },
-        ejectDefaults: {
-          type: "boolean",
-          description: "Write all package defaults to workspace. Skips files that already exist.",
-        },
-        resetDefaults: {
-          type: "boolean",
-          description: "Force-write all package defaults to workspace, overwriting existing files. Creates .bak backups.",
-        },
-        refreshInstructions: {
-          type: "boolean",
-          description: "Refresh system instructions only, preserving .bak backups.",
-        },
-        dryRun: {
-          type: "boolean",
-          description: "Return the setup plan without writing OpenClaw or workspace configuration.",
-        },
-      },
-    },
+    parameters: toolInputParameters(setupInput),
 
-    async execute(_id: string, params: Record<string, unknown>) {
-      const input = setupInput.parse(params);
+    /** Parse the untrusted request before resolving context or performing effects.
+     * @param _id - SDK invocation identity used by commands requiring correlation.
+     * @param rawParams - Untrusted tool arguments.
+     */
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const input = setupInput.parse(rawParams);
       let result: Awaited<ReturnType<typeof runSetup>>;
       const channelBindingInput = input.channelBinding;
-
-      if (
-        channelBindingInput !== undefined
-        && !isSetupNotificationChannel(channelBindingInput)
-      ) {
-        throw new Error(`Unsupported setup channel: ${String(channelBindingInput)}.`);
-      }
 
       try {
         result = await runSetup({
@@ -116,10 +60,8 @@ export function createSetupTool(ctx: Pick<SetupOpts, "runtime" | "runCommand">):
           runCommand: ctx.runCommand,
           newAgentName: input.newAgentName,
           channelBinding: channelBindingInput ?? null,
-          channelAccountId:
-            typeof input.channelAccountId === "string" ? input.channelAccountId : undefined,
-          channelPeerId:
-            typeof input.channelPeerId === "string" ? input.channelPeerId : undefined,
+          channelAccountId: input.channelAccountId,
+          channelPeerId: input.channelPeerId,
           agentId: input.newAgentName ? undefined : toolCtx.agentId,
           workspacePath: input.newAgentName ? undefined : toolCtx.workspaceDir,
           models: input.models,
@@ -168,7 +110,6 @@ export function createSetupTool(ctx: Pick<SetupOpts, "runtime" | "runCommand">):
           : `Configured "${result.agentId}"`,
         "",
       ];
-
 
       lines.push("Models:");
       for (const [role, levels] of Object.entries(result.models)) {

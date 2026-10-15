@@ -6,6 +6,12 @@ Tool modules validate tool inputs, resolve runtime context, call application use
 cases, and format tool results for OpenClaw. They are the boundary between the
 agent-facing plugin API and deterministic DevClaw behavior.
 
+Each adapter owns a strict Zod input schema and derives its SDK JSON Schema from
+that same definition through `validation`. Parsing precedes context resolution and
+all effects. Shared primitives validate nonblank text and positive safe issue IDs;
+business eligibility and configured role/level/completion membership stay in application.
+Unknown arguments and non-boolean confirmation flags are rejected without coercion.
+
 ## Boundary Rules
 
 - Keep OpenClaw tool context handling here.

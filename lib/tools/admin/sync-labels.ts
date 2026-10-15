@@ -9,6 +9,7 @@
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
+import { z } from "zod";
 
 import { ensureWorkflowLabels } from "../../application/index.js";
 import { log as auditLog } from "../../audit.js";
@@ -22,6 +23,12 @@ import { createProvider } from "../../integrations/index.js";
 import { loadConfig } from "../../state/index.js";
 import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
+import { requiredTextInput, toolInputParameters } from "../validation/index.js";
+
+/** Validates sync-labels arguments before context resolution or effects. */
+const syncLabelsInput = z.strictObject({
+  projectSlug: requiredTextInput.describe("Canonical project slug to sync. Omit to sync all registered projects.").optional(),
+});
 
 /** Bind label synchronization to plugin-owned transport and application workflow projection.
  * @param ctx - Plugin dependencies used for explicit provider effects.
@@ -34,28 +41,16 @@ export function createSyncLabelsTool(ctx: PluginContext): OpenClawPluginToolFact
       "Sync GitHub/GitLab labels with the current workflow config. " +
       "Creates any missing state labels, role:level labels, and step routing labels. " +
       "Use after editing workflow.yaml to push label changes to your issue tracker.",
-    parameters: {
-      type: "object",
-      properties: {
-        projectSlug: {
-          type: "string",
-          description:
-            "Canonical project slug to sync. Omit to sync all registered projects.",
-        },
-      },
-    },
+    parameters: toolInputParameters(syncLabelsInput),
 
     /** Synchronize the selected registered projects without treating invalid input as all-project scope.
      * @param _id - SDK invocation identifier; synchronization does not depend on it.
-     * @param params - Optional exact canonical project selection supplied by the tool boundary.
+     * @param rawParams - Optional exact canonical project selection supplied by the tool boundary.
      */
-    async execute(_id: string, params: Record<string, unknown>) {
+    async execute(_id: string, rawParams: Record<string, unknown>) {
+      const params = syncLabelsInput.parse(rawParams);
       const workspaceDir = requireWorkspaceDir(toolCtx);
       const projectSlug = params.projectSlug;
-
-      if (projectSlug !== undefined && (typeof projectSlug !== "string" || !projectSlug)) {
-        throw new Error("projectSlug must be a non-empty string when supplied.");
-      }
 
       const data = await readProjects(workspaceDir);
       let slugs: string[];

@@ -7,13 +7,13 @@ import { z } from "zod";
 
 import { finishWork } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
-import { requireWorkspaceDir, resolveChannelId } from "../helpers.js";
-import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
+import { requireWorkspaceDir, resolveChannelId } from "../context/index.js";
+import { channelIdInput, issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
+import { WORK_FINISH_TOOL_NAME } from "./const.js";
 
 /** Validates work-finish arguments before context resolution or effects. */
 const workFinishInput = z.strictObject({
-  channelId: requiredTextInput.describe("YOUR chat/group ID — the numeric ID of the chat you are in right now " +
-    "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from."),
+  channelId: channelIdInput,
   role: requiredTextInput.describe("Configured worker role"),
   result: requiredTextInput.describe("Completion result"),
   summary: z.string().describe("Brief summary").optional(),
@@ -30,7 +30,7 @@ const workFinishInput = z.strictObject({
  */
 export function createWorkFinishTool(ctx: Pick<PluginContext, "runCommand" | "pluginConfig"> & Partial<Pick<PluginContext, "runtime">>): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
-    name: "work_finish",
+    name: WORK_FINISH_TOOL_NAME,
     label: "Work Finish",
     description:
       `Complete a task: Developer done (PR created, goes to review) or blocked. ` +

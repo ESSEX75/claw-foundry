@@ -16,7 +16,7 @@ import { registerCli } from "./lib/cli/register.js";
 import { DEVCLAW_PLUGIN_ID } from "./lib/const.js";
 import { createPluginContext } from "./lib/context.js";
 import { registerAttachmentHook, registerBootstrapHook } from "./lib/integrations/index.js";
-import { toolRegistry } from "./lib/tools/registry.js";
+import { toolRegistry } from "./lib/tools/index.js";
 
 const plugin = {
   id: DEVCLAW_PLUGIN_ID,

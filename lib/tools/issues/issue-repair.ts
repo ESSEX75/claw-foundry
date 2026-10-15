@@ -14,8 +14,9 @@ import {
 } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
 import { getProject, readProjects } from "../../state/index.js";
-import { requireWorkspaceDir } from "../helpers.js";
+import { requireWorkspaceDir } from "../context/index.js";
 import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
+import { ISSUE_REPAIR_TOOL_NAME } from "./const.js";
 
 /** Validates issue-repair arguments before context resolution or effects. */
 const issueRepairInput = z.strictObject({
@@ -32,7 +33,7 @@ const issueRepairInput = z.strictObject({
 /** Create the safe-by-default issue_repair plugin tool. */
 export function createIssueRepairTool(ctx: PluginContext): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
-    name: "issue_repair",
+    name: ISSUE_REPAIR_TOOL_NAME,
     label: "Issue Repair",
     description: "Plan or apply a verified repair between local managed issue state and provider projection.",
     parameters: toolInputParameters(issueRepairInput),

@@ -9,8 +9,9 @@ import { z } from "zod";
 import { migrateIssuePolicies } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
 import { REVIEW_POLICY, TEST_POLICY } from "../../domain/index.js";
-import { requireWorkspaceDir } from "../helpers.js";
+import { requireWorkspaceDir } from "../context/index.js";
 import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
+import { ISSUE_POLICY_MIGRATE_TOOL_NAME } from "./const.js";
 
 /** Validates issue-policy-migrate arguments before context resolution or effects. */
 const issuePolicyMigrateInput = z.strictObject({
@@ -26,7 +27,7 @@ const issuePolicyMigrateInput = z.strictObject({
 /** Create the issue_policy_migrate administrative tool. */
 export function createIssuePolicyMigrationTool(ctx: PluginContext): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
-    name: "issue_policy_migrate",
+    name: ISSUE_POLICY_MIGRATE_TOOL_NAME,
     label: "Issue Policy Migration",
     description: "Migrate review/test policy snapshots for existing active managed issues.",
     parameters: toolInputParameters(issuePolicyMigrateInput),

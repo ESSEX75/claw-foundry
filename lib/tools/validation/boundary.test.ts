@@ -5,8 +5,8 @@ import { describe, it } from "node:test";
 import { z } from "zod";
 
 import type { PluginContext } from "../../context.js";
-import { toolRegistry } from "../registry.js";
-import { resolveChannelId } from "../helpers.js";
+import { toolRegistry } from "../registration/index.js";
+import { resolveChannelId } from "../context/index.js";
 
 /** Validates the JSON Schema envelope without assuming an SDK-specific schema type. */
 const parameterSchema = z.object({

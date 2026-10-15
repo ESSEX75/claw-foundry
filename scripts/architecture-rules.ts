@@ -1,7 +1,7 @@
 /** Pure adapter boundary policy shared by the architecture checker and regression tests. */
 /** Adapters whose setup and diagnostic effects must pass through application commands. */
 const APPLICATION_ADAPTERS = new Set([
-  "lib/tools/admin/setup.ts", "lib/tools/admin/config.ts", "lib/tools/admin/onboard.ts",
+  "lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts",
   "lib/cli/commands/setup-command.ts", "lib/cli/commands/doctor-command.ts",
 ]);
 
@@ -28,6 +28,33 @@ export function checkApplicationDependencyDirection(sourceLayer: string, targetL
   }
   if (sourceLayer === "application" && ["tools", "cli"].includes(targetLayer ?? "")) {
     return "application must not depend on tool or CLI adapters";
+  }
+  return null;
+}
+
+/** Keep tool callers on the public root and internal capabilities on their owning APIs.
+ * @param source - Repository-relative importing file with either platform separator.
+ * @param target - Resolved repository-relative target file with either platform separator.
+ */
+export function checkToolsApiBoundary(source: string, target: string): string | null {
+  const importer = source.replaceAll("\\", "/");
+  const imported = target.replaceAll("\\", "/");
+  if (!imported.startsWith("lib/tools/")) return null;
+  if (!importer.startsWith("lib/tools/")) {
+    return imported === "lib/tools/index.ts" ? null : "external callers must use lib/tools/index.ts";
+  }
+  if (imported === "lib/tools/index.ts") return "tools must not import their own root barrel";
+  if (importer.startsWith("lib/tools/tasks/") && imported === "lib/tools/tasks/index.ts") {
+    return "task adapters must not import their ancestor barrel";
+  }
+  if (!importer.startsWith("lib/tools/tasks/") && imported.startsWith("lib/tools/tasks/")
+    && imported !== "lib/tools/tasks/index.ts") {
+    return "sibling capabilities must use the task adapter entrypoint";
+  }
+  const importerOwner = importer.slice(0, importer.lastIndexOf("/"));
+  const importedOwner = imported.slice(0, imported.lastIndexOf("/"));
+  if (importerOwner !== importedOwner && !imported.endsWith("/index.ts")) {
+    return "tool capabilities must use the target capability entrypoint";
   }
   return null;
 }

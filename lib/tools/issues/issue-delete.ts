@@ -9,8 +9,9 @@ import { z } from "zod";
 import { deleteManagedIssue, resolveProjectByRoute, resolveProvider, validateProjectRoute } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
 import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
-import { requireWorkspaceDir } from "../helpers.js";
+import { requireWorkspaceDir } from "../context/index.js";
 import { issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
+import { ISSUE_DELETE_TOOL_NAME } from "./const.js";
 
 /** Validates issue-delete arguments before context resolution or effects. */
 const issueDeleteInput = z.strictObject({
@@ -26,7 +27,7 @@ const issueDeleteInput = z.strictObject({
 /** Create the capability-aware issue_delete tool. */
 export function createIssueDeleteTool(ctx: PluginContext): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
-    name: "issue_delete",
+    name: ISSUE_DELETE_TOOL_NAME,
     label: "Delete Issue",
     description: "Preview or explicitly confirm deletion of one provider issue and archive a local tombstone.",
     parameters: toolInputParameters(issueDeleteInput),

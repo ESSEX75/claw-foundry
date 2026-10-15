@@ -5,7 +5,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { checkApplicationDependencyDirection, checkSetupAdapterBoundary } from "./architecture-rules.ts";
+import { checkApplicationDependencyDirection, checkSetupAdapterBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
 
 const root = process.cwd();
 const warnOnly = process.argv.includes("--warn-only");
@@ -173,6 +173,9 @@ function checkImportBoundary({ sourceFile, sourceLayer, targetFile, targetLayer,
 
   const adapterViolation = checkSetupAdapterBoundary(relative(sourceFile), targetLayer, specifier);
   if (adapterViolation) return adapterViolation;
+
+  const toolsViolation = checkToolsApiBoundary(relative(sourceFile), targetRelative);
+  if (toolsViolation) return toolsViolation;
 
   if (isLegacyRootImport(sourceFile, targetFile, specifier)) {
     return "legacy root package imports are forbidden after migration";

@@ -14,3 +14,9 @@ export const issueIdInput = z.number().int().positive().safe();
 export function toolInputParameters(schema: z.ZodObject) {
   return z.toJSONSchema(schema, { target: "draft-7", io: "input" });
 }
+
+/** Explicit conversation selection shared by channel-only task and project adapters. */
+export const channelIdInput = requiredTextInput.describe(
+  "YOUR chat/group ID - the numeric ID of the chat you are in right now "
+  + "(e.g. '-1003844794417'). Do NOT guess; use the ID of the conversation this message came from.",
+);

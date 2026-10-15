@@ -8,7 +8,7 @@ Complete reference for all tools registered by DevClaw. See [`index.ts`](../inde
 
 Advance a HOLD-state issue through its `APPROVE` transition to the configured queue. The heartbeat handles actual dispatch on its next cycle.
 
-**Source:** [`lib/tools/tasks/task-start.ts`](../lib/tools/tasks/task-start.ts)
+**Source:** [`lib/tools/tasks/lifecycle/task-start.ts`](../lib/tools/tasks/lifecycle/task-start.ts)
 
 **Parameters:**
 
@@ -84,7 +84,7 @@ Complete a task with a result. Called by workers (DEVELOPER/TESTER/ARCHITECT sub
 
 Create a new issue through a durable, idempotent operation.
 
-**Source:** [`lib/tools/tasks/task-create.ts`](../lib/tools/tasks/task-create.ts)
+**Source:** [`lib/tools/tasks/creation/task-create.ts`](../lib/tools/tasks/creation/task-create.ts)
 
 **Parameters:**
 
@@ -110,7 +110,7 @@ Create a new issue through a durable, idempotent operation.
 
 Set the target-role level on a HOLD-state issue (Planning, Refining).
 
-**Source:** [`lib/tools/tasks/task-set-level.ts`](../lib/tools/tasks/task-set-level.ts)
+**Source:** [`lib/tools/tasks/lifecycle/task-set-level.ts`](../lib/tools/tasks/lifecycle/task-set-level.ts)
 
 **Parameters:**
 
@@ -134,7 +134,7 @@ Only works on issues in HOLD states (Planning, Refining). The role and level are
 
 Add a comment to an issue for feedback, notes, or discussion.
 
-**Source:** [`lib/tools/tasks/task-comment.ts`](../lib/tools/tasks/task-comment.ts)
+**Source:** [`lib/tools/tasks/discussion/task-comment.ts`](../lib/tools/tasks/discussion/task-comment.ts)
 
 **Parameters:**
 
@@ -157,7 +157,7 @@ When `authorRole` is provided, the comment is prefixed with a role emoji and att
 
 Update issue title and/or description. Only allowed when the issue is in the initial workflow state (e.g. "Planning") or an active architect state (e.g. "Researching"). Prevents editing in-progress work.
 
-**Source:** [`lib/tools/tasks/task-edit-body.ts`](../lib/tools/tasks/task-edit-body.ts)
+**Source:** [`lib/tools/tasks/lifecycle/task-edit-body.ts`](../lib/tools/tasks/lifecycle/task-edit-body.ts)
 
 **Parameters:**
 
@@ -180,7 +180,7 @@ At least one of `title` or `body` must be provided.
 
 Claim ownership in local `issues.json`, then reconcile its `owner:{instanceName}` label projection. Omit `issueId` to select local queued issues; each candidate is rechecked under its issue lock. Provider-only issues are never candidates. Repeat a claim for the same owner to resume failed label projection. Results distinguish `claimed`, eligibility `skipped`, and operation `failed`; failures retain their cause and set `success: false`.
 
-**Source:** [`lib/tools/tasks/task-owner.ts`](../lib/tools/tasks/task-owner.ts)
+**Source:** [`lib/tools/tasks/lifecycle/task-owner.ts`](../lib/tools/tasks/lifecycle/task-owner.ts)
 
 **Parameters:**
 
@@ -203,7 +203,7 @@ Claim ownership in local `issues.json`, then reconcile its `owner:{instanceName}
 
 Full project dashboard showing all non-terminal state types with issue details.
 
-**Source:** [`lib/tools/tasks/tasks-status.ts`](../lib/tools/tasks/tasks-status.ts)
+**Source:** [`lib/tools/tasks/queries/tasks-status.ts`](../lib/tools/tasks/queries/tasks-status.ts)
 
 **Parameters:**
 
@@ -231,7 +231,7 @@ Unfinished durable creation operations appear separately as pending or failed an
 
 Instant local project info for the current channel. Returns registration details, channel bindings, worker slot states, workflow config, and execution settings — all from local data, no issue tracker API calls.
 
-**Source:** [`lib/tools/admin/project-status.ts`](../lib/tools/admin/project-status.ts)
+**Source:** [`lib/tools/projects/project-status.ts`](../lib/tools/projects/project-status.ts)
 
 **Parameters:**
 
@@ -259,7 +259,7 @@ Instant local project info for the current channel. Returns registration details
 
 Browse and search issues by workflow state. Returns individual issues grouped by state label.
 
-**Source:** [`lib/tools/tasks/task-list.ts`](../lib/tools/tasks/task-list.ts)
+**Source:** [`lib/tools/tasks/queries/task-list.ts`](../lib/tools/tasks/queries/task-list.ts)
 
 **Parameters:**
 
@@ -294,7 +294,7 @@ Provider labels are displayed for parity with GitHub/GitLab. For initialized Dev
 
 Worker health scan with optional auto-fix.
 
-**Source:** [`lib/tools/admin/health.ts`](../lib/tools/admin/health.ts)
+**Source:** [`lib/tools/health/health.ts`](../lib/tools/health/health.ts)
 
 **Parameters:**
 
@@ -321,7 +321,7 @@ Worker health scan with optional auto-fix.
 
 One-time project setup. Creates state labels, scaffolds project directory with override instructions, adds project to state.
 
-**Source:** [`lib/tools/admin/project-register.ts`](../lib/tools/admin/project-register.ts)
+**Source:** [`lib/tools/projects/project-register.ts`](../lib/tools/projects/project-register.ts)
 
 **Context:** Only works in the Telegram/WhatsApp group being registered.
 
@@ -358,7 +358,7 @@ Provider provisioning, registry commit and scaffolding are separate effects. A c
 
 Agent + workspace initialization.
 
-**Source:** [`lib/tools/admin/setup.ts`](../lib/tools/admin/setup.ts)
+**Source:** [`lib/tools/setup/setup.ts`](../lib/tools/setup/setup.ts)
 
 **Parameters:**
 
@@ -386,7 +386,7 @@ Agent + workspace initialization.
 
 Conversational onboarding guide. Returns step-by-step instructions for the agent to walk the user through setup.
 
-**Source:** [`lib/tools/admin/onboard.ts`](../lib/tools/admin/onboard.ts)
+**Source:** [`lib/tools/setup/onboard.ts`](../lib/tools/setup/onboard.ts)
 
 **Note:** Call this before `setup` to get step-by-step guidance.
 
@@ -416,7 +416,7 @@ when checking a different agent workspace.
 
 Reference guide for workflow configuration. Call before making any workflow changes.
 
-**Source:** [`lib/tools/admin/workflow-guide.ts`](../lib/tools/admin/workflow-guide.ts)
+**Source:** [`lib/tools/guidance/workflow-guide.ts`](../lib/tools/guidance/workflow-guide.ts)
 
 **Parameters:**
 
@@ -438,7 +438,7 @@ Reference guide for workflow configuration. Call before making any workflow chan
 
 Spawn an architect for a design investigation. Creates a `To Research` issue with rich context and dispatches an architect worker through `To Research` → `Researching` states.
 
-**Source:** [`lib/tools/tasks/research-task.ts`](../lib/tools/tasks/research-task.ts)
+**Source:** [`lib/tools/tasks/creation/research-task.ts`](../lib/tools/tasks/creation/research-task.ts)
 
 **Parameters:**
 
@@ -503,7 +503,7 @@ This ensures the pipeline clears its backlog before starting new work.
 
 Sync GitHub/GitLab labels with the current workflow config. Creates any missing state labels, role:level labels, and step routing labels from the resolved (three-layer merged) config.
 
-**Source:** [`lib/tools/admin/sync-labels.ts`](../lib/tools/admin/sync-labels.ts)
+**Source:** [`lib/tools/labels/sync-labels.ts`](../lib/tools/labels/sync-labels.ts)
 
 **Parameters:**
 
@@ -615,7 +615,7 @@ Terminal issues are archived immediately by lifecycle code; heartbeat retries in
 
 Link an exact account/chat route to a project after validating its OpenClaw binding and owning agent. Conflicting ownership is rejected.
 
-**Source:** [`lib/tools/admin/channel-link.ts`](../lib/tools/admin/channel-link.ts)
+**Source:** [`lib/tools/channels/channel-link.ts`](../lib/tools/channels/channel-link.ts)
 
 **Parameters:**
 
@@ -636,7 +636,7 @@ Link an exact account/chat route to a project after validating its OpenClaw bind
 
 Remove a channel from a project. Validates that the channel exists and prevents removing the last channel (projects must have at least one notification endpoint).
 
-**Source:** [`lib/tools/admin/channel-unlink.ts`](../lib/tools/admin/channel-unlink.ts)
+**Source:** [`lib/tools/channels/channel-unlink.ts`](../lib/tools/channels/channel-unlink.ts)
 
 **Parameters:**
 
@@ -651,7 +651,7 @@ Remove a channel from a project. Validates that the channel exists and prevents 
 
 List channels for a project or all projects. Shows channel type, ID, name, and event subscriptions.
 
-**Source:** [`lib/tools/admin/channel-list.ts`](../lib/tools/admin/channel-list.ts)
+**Source:** [`lib/tools/channels/channel-list.ts`](../lib/tools/channels/channel-list.ts)
 
 **Parameters:**
 
@@ -665,7 +665,7 @@ List channels for a project or all projects. Shows channel type, ID, name, and e
 
 Manage DevClaw workspace configuration. Supports three actions: reset config files to defaults, diff against defaults, and show version info.
 
-**Source:** [`lib/tools/admin/config.ts`](../lib/tools/admin/config.ts)
+**Source:** [`lib/tools/setup/config.ts`](../lib/tools/setup/config.ts)
 
 **Parameters:**
 

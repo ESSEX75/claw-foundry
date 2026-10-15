@@ -43,9 +43,9 @@ changes.
 | [lib/state/projects/projects.test.ts](../lib/state/projects/projects.test.ts) | Project state: read/write, worker state, atomic file operations |
 | [lib/integrations/openclaw/bootstrap-hook.test.ts](../lib/integrations/openclaw/bootstrap-hook.test.ts) | Bootstrap hook: role instruction loading, source tracking, overloads |
 | [lib/application/tasks/attachments.test.ts](../lib/application/tasks/attachments.test.ts) | File attachment handling |
-| [lib/tools/tasks/task-set-level.test.ts](../lib/tools/tasks/task-set-level.test.ts) | Task set level tool: level hints, label detection |
-| [lib/tools/tasks/task-edit-body.test.ts](../lib/tools/tasks/task-edit-body.test.ts) | Task edit body tool: title/body editing, state guards |
-| [lib/tools/tasks/research-task.test.ts](../lib/tools/tasks/research-task.test.ts) | Research task tool: architect dispatch |
+| [lib/tools/tasks/lifecycle/task-set-level.test.ts](../lib/tools/tasks/lifecycle/task-set-level.test.ts) | Task set level tool: level hints, label detection |
+| [lib/tools/tasks/lifecycle/task-edit-body.test.ts](../lib/tools/tasks/lifecycle/task-edit-body.test.ts) | Task edit body tool: title/body editing, state guards |
+| [lib/tools/tasks/creation/research-task.test.ts](../lib/tools/tasks/creation/research-task.test.ts) | Research task tool: architect dispatch |
 | [lib/tools/admin/queue-status.test.ts](../lib/tools/admin/queue-status.test.ts) | Queue status formatting |
 | [lib/tools/worker/group-isolation.test.ts](../lib/tools/worker/group-isolation.test.ts) | Worker group isolation |
 | [lib/application/heartbeat/health.test.ts](../lib/application/heartbeat/health.test.ts) | Heartbeat health pass: zombie detection, stale workers |

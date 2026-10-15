@@ -7,114 +7,14 @@
  * Replaces the manual steps of running glab/gh label create + editing projects.json.
  */
 
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
 import { z } from "zod";
 
-import { ensureWorkflowLabels } from "../../application/index.js";
-import {
-  validateDestinationAvailability,
-  validateProjectRoute,
-} from "../../application/index.js";
-import { log as auditLog } from "../../audit.js";
+import { registerProject } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
-import {
-  emptyRoleWorkerState,
-  getRoleLabels,
-  getStateLabels,
-  getStepRoutingLabels,
-  ISSUE_PROVIDER,
-  NOTIFICATION_CHANNEL,
-  type NotificationEndpoint,
-  type RoleWorkerState,
-} from "../../domain/index.js";
-import { createProvider } from "../../integrations/index.js";
-import { getConfiguredRoleIds, getLevelMaxWorkers, loadConfig } from "../../state/index.js";
-import {
-  parseNotificationEndpoint,
-  parseProjectSlug,
-  readProjects,
-  resolveRepoPath,
-  updateProjects,
-} from "../../state/index.js";
-import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../state/index.js";
+import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
+import { requireWorkspaceDir } from "../helpers.js";
 import { requiredTextInput, toolInputParameters } from "../validation/index.js";
-
-/**
- * Scaffold a canonical project directory with a prompts folder and override documentation.
- * Reports whether the project documentation was created by this call.
- *
- * @param workspaceDir - Workspace receiving the project-local configuration directory.
- * @param projectSlug - Canonical lowercase kebab-case project slug used for the directory.
- * @param roleIds - Configured roles listed in the generated override documentation.
- */
-async function scaffoldPromptFiles(
-  workspaceDir: string,
-  projectSlug: string,
-  roleIds: readonly string[],
-): Promise<boolean> {
-  const projectDir = path.join(workspaceDir, DATA_DIR, PROJECTS_DIRECTORY_NAME, projectSlug);
-  const promptsDir = path.join(projectDir, "prompts");
-
-  await fs.mkdir(promptsDir, { recursive: true });
-
-  const readmePath = path.join(projectDir, "README.md");
-
-  try {
-    await fs.access(readmePath);
-
-    return false;
-  } catch {
-    const roles = roleIds.join(", ");
-
-    await fs.writeFile(readmePath, `# Project Overrides
-
-This directory holds project-specific configuration that overrides the workspace defaults.
-
-## Prompt Overrides
-
-To override default worker instructions, create \`prompts/<role>.md\`:
-
-Available roles: ${roles}
-
-Example: \`prompts/developer.md\` overrides the default developer instructions for this project only.
-Files here take priority over the workspace defaults in \`devclaw/prompts/\`.
-
-## Workflow Overrides
-
-To override the default workflow configuration, create \`workflow.yaml\` in this directory.
-
-Only include the keys you want to override — everything else inherits from the workspace-level \`devclaw/workflow.yaml\`. The three-layer system is:
-
-1. **Built-in defaults** (code)
-2. **Workspace** — \`devclaw/workflow.yaml\`
-3. **Project** — \`devclaw/projects/${projectSlug}/workflow.yaml\` (this directory)
-
-Example — use a different review policy for this project:
-
-\`\`\`yaml
-workflow:
-  reviewPolicy: agent
-\`\`\`
-
-Example — override model for senior developer:
-
-\`\`\`yaml
-roles:
-  developer:
-    levels:
-      senior:
-        model: claude-sonnet-4-5-20250514
-\`\`\`
-
-Call \`workflow_guide\` for the full config reference.
-`, "utf-8");
-
-    return true;
-  }
-}
 
 /** Validates project-register arguments before context resolution or effects. */
 const projectRegisterInput = z.strictObject({
@@ -146,224 +46,32 @@ export function createProjectRegisterTool(ctx: PluginContext): OpenClawPluginToo
      */
     async execute(_id: string, rawParams: Record<string, unknown>) {
       const params = projectRegisterInput.parse(rawParams);
-      const channelId = params.channelId;
-      const accountId = params.accountId.trim();
-      const name = params.name;
-      const repo = params.repo;
-      const channel = params.channel ?? NOTIFICATION_CHANNEL.TELEGRAM;
-      const threadId = params.threadId?.trim();
-      const baseBranch = params.baseBranch;
-      const deployBranch = params.deployBranch ?? baseBranch;
-      const workspaceDir = toolCtx.workspaceDir;
       const agentId = toolCtx.agentId;
 
       if (!agentId) throw new Error("DevClaw project registration requires an agent context.");
-
-      const requestedEndpoint = parseNotificationEndpoint({
-        channelId,
-        channel,
-        name: "validation",
-        accountId,
-        ...(threadId ? { threadId } : {}),
+      const result = await registerProject({
+        workspaceDir: requireWorkspaceDir(toolCtx), name: params.name, repo: params.repo,
+        baseBranch: params.baseBranch, deployBranch: params.deployBranch, agentId,
+        route: { channel: params.channel ?? NOTIFICATION_CHANNEL.TELEGRAM, accountId: params.accountId.trim(),
+          channelId: params.channelId, threadId: params.threadId?.trim() },
+        getConfig: () => ctx.runtime.config.current(), runCommand: ctx.runCommand,
       });
-
-      validateProjectRoute(ctx.runtime.config.current(), agentId, requestedEndpoint);
-
-      if (!workspaceDir) {
-        throw new Error("No workspace directory available in tool context");
-      }
-
-      // Generate slug from project name
-      const slug = parseProjectSlug(name.toLowerCase().trim().replace(/\s+/g, "-"));
-
-      // 1. Check project exists or can be created
-      const data = await readProjects(workspaceDir);
-      const existing = data.projects[slug];
-
-      if (existing && existing.agentId !== agentId) {
-        throw new Error(`Project "${existing.name}" belongs to agent "${existing.agentId}", not "${agentId}".`);
-      }
-
-      validateDestinationAvailability(data, slug, requestedEndpoint);
-
-      // If project exists, check if this channelId is already registered
-      if (existing) {
-        const channelExists = existing.channels.some((candidate) => (
-          candidate.channel === channel
-          && candidate.accountId === accountId
-          && candidate.channelId === channelId
-          && candidate.threadId === threadId
-        ));
-
-        if (channelExists) {
-          throw new Error(
-            `Channel ${channelId}${threadId ? ` thread ${threadId}` : ""} is already registered for project "${name}". Each channel/thread can only register once per project.`,
-          );
-        }
-        // Adding a new channel to an existing project
-      }
-
-      // 2. Resolve repo path
-      const repoPath = resolveRepoPath(repo);
-      const resolvedConfig = await loadConfig(workspaceDir, slug);
-
-      // 3. Create provider and verify it works
-      const { provider, type: providerType } = await createProvider({ repo, runCommand: ctx.runCommand });
-
-      const healthy = await provider.healthCheck();
-
-      if (!healthy) {
-        const cliName = providerType === ISSUE_PROVIDER.GITHUB ? "gh" : "glab";
-        const cliInstallUrl = providerType === ISSUE_PROVIDER.GITHUB
-          ? "https://cli.github.com"
-          : "https://gitlab.com/gitlab-org/cli";
-
-        throw new Error(
-          `${providerType.toUpperCase()} health check failed for ${repoPath}. ` +
-          `Detected provider: ${providerType}. ` +
-          `Ensure '${cliName}' CLI is installed, authenticated (${cliName} auth status), ` +
-          `and the repo has a ${providerType.toUpperCase()} remote. ` +
-          `Install ${cliName} from: ${cliInstallUrl}`
-        );
-      }
-
-      // 4. Create all state labels (idempotent)
-      await ensureWorkflowLabels(provider, resolvedConfig.workflow);
-
-      // 4b. Create role:level + step routing labels (e.g. developer:junior, review:human, test:skip)
-      const roleLabels = getRoleLabels(resolvedConfig.roles);
-      const routingLabels = getStepRoutingLabels();
-      const labelsCreated = getStateLabels(resolvedConfig.workflow).length
-        + roleLabels.length
-        + routingLabels.length;
-
-      for (const { name: labelName, color } of [...roleLabels, ...routingLabels]) {
-        await provider.ensureLabel(labelName, color);
-      }
-
-      // 5. Add or update project in projects.json
-      if (existing) {
-        // Add channel to existing project
-        const newChannel: NotificationEndpoint = parseNotificationEndpoint({
-          channelId,
-          channel,
-          name: `channel-${existing.channels.length + 1}`,
-          accountId,
-          ...(threadId ? { threadId } : {}),
-        });
-
-        existing.channels.push(newChannel);
-      } else {
-        // Create new project with slots derived from resolved level capacities.
-        const workers: Record<string, RoleWorkerState> = {};
-
-        for (const role of getConfiguredRoleIds(resolvedConfig)) {
-          const levelMaxWorkers = getLevelMaxWorkers(resolvedConfig.roles[role]);
-
-          workers[role] = emptyRoleWorkerState(levelMaxWorkers);
-        }
-
-        const newChannel: NotificationEndpoint = parseNotificationEndpoint({
-          channelId,
-          channel,
-          name: "primary",
-          accountId,
-          ...(threadId ? { threadId } : {}),
-        });
-
-        data.projects[slug] = {
-          slug,
-          name,
-          agentId,
-          repo,
-          baseBranch,
-          deployBranch,
-          channels: [newChannel],
-          provider: providerType,
-          workers,
-        };
-      }
-
-      const preparedProject = data.projects[slug]!;
-
-      await updateProjects(workspaceDir, (current) => {
-        const next = structuredClone(current);
-        const currentProject = next.projects[slug];
-
-        if (currentProject && currentProject.agentId !== agentId) {
-          throw new Error(`Project "${currentProject.name}" belongs to agent "${currentProject.agentId}", not "${agentId}".`);
-        }
-
-        validateDestinationAvailability(next, slug, requestedEndpoint);
-
-        if (existing) {
-          if (!currentProject) throw new Error(`Project "${slug}" no longer exists.`);
-          const newChannel = preparedProject.channels[preparedProject.channels.length - 1]!;
-
-          if (currentProject.channels.some((candidate) => (
-            candidate.channel === newChannel.channel
-            && candidate.accountId === newChannel.accountId
-            && candidate.channelId === newChannel.channelId
-            && candidate.threadId === newChannel.threadId
-          ))) throw new Error(`Channel ${channelId} is already registered for project "${name}".`);
-          currentProject.channels.push(newChannel);
-        } else {
-          if (currentProject) throw new Error(`Project "${slug}" was registered concurrently.`);
-          next.projects[slug] = preparedProject;
-        }
-
-        return { data: next, result: undefined };
-      });
-
-      // 6. Scaffold prompt files
-      const promptsCreated = await scaffoldPromptFiles(
-        workspaceDir,
-        slug,
-        getConfiguredRoleIds(resolvedConfig),
-      );
-
-      // 7. Audit log
-      await auditLog(workspaceDir, "project_register", {
-        project: name,
-        projectSlug: slug,
-        channelId,
-        accountId,
-        agentId,
-        threadId,
-        repo,
-        baseBranch,
-        deployBranch,
-        isNewProject: !existing,
-      });
-
-      // 8. Return announcement
-      const promptsNote = promptsCreated ? " Prompt files scaffolded." : "";
-      const action = existing ? `Channel added to existing project` : `Project "${name}" created`;
-      const announcement = `${action}. Labels ensured.${promptsNote} Ready for tasks.`;
-
-      // Active workflow info for the orchestrator to mention
-      const activeWorkflow = {
-        reviewPolicy: resolvedConfig.workflow.reviewPolicy ?? "human",
-        testPhase: Object.values(resolvedConfig.workflow.states).some(
-          (s) => s.role === "tester" && (s.type === "queue" || s.type === "active"),
-        ),
-        hint: "The user can change the review policy or enable the test phase — call workflow_guide for the full reference.",
-      };
+      const { project, endpoint } = result;
 
       return jsonResult({
-        success: true,
-        project: name,
-        projectSlug: slug,
-        channelId,
-        threadId,
-        repo,
-        baseBranch,
-        deployBranch,
-        labelsCreated,
-        promptsScaffolded: promptsCreated,
-        isNewProject: !existing,
-        activeWorkflow,
-        announcement,
+        success: !result.scaffoldError, status: result.scaffoldError ? "scaffold_pending" : "ready",
+        registrationCommitted: true, project: project.name, projectSlug: project.slug,
+        repo: project.repo, baseBranch: project.baseBranch, deployBranch: project.deployBranch,
+        channelId: endpoint.channelId, accountId: endpoint.accountId, threadId: endpoint.threadId,
+        labelsCreated: result.labelsEnsured, promptsScaffolded: result.promptsScaffolded, isNewProject: result.isNewProject,
+        activeWorkflow: {
+          reviewPolicy: result.workflow.reviewPolicy,
+          testPhase: Object.values(result.workflow.states).some(state => state.role === "tester" && (state.type === "queue" || state.type === "active")),
+          hint: "Call workflow_guide to change review policy or enable testing.",
+        },
+        error: result.scaffoldError, recovery: result.scaffoldError ? "Retry the same registration to finish scaffolding." : undefined,
+        announcement: result.scaffoldError ? `Project "${project.name}" is registered; scaffold is pending: ${result.scaffoldError}`
+          : `Project "${project.name}" registered. Labels ensured. Ready for tasks.`,
       });
     },
   });

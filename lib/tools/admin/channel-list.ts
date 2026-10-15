@@ -8,6 +8,7 @@
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
 import { z } from "zod";
 
+import { selectProject } from "../../application/index.js";
 import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
 import { requiredTextInput, toolInputParameters } from "../validation/index.js";
@@ -38,23 +39,7 @@ export function createChannelListTool(): OpenClawPluginToolFactory {
       const data = await readProjects(workspaceDir);
 
       if (projectRef) {
-        // List channels for a specific project
-        const slug = projectRef.toLowerCase().replace(/\s+/g, "-");
-        const target =
-          data.projects[slug] ??
-          Object.values(data.projects).find(
-            (p) => p.name.toLowerCase() === projectRef.toLowerCase(),
-          );
-
-        if (!target) {
-          const available = Object.values(data.projects)
-            .map((p) => p.name)
-            .join(", ");
-
-          throw new Error(
-            `Project "${projectRef}" not found. Available projects: ${available || "none"}.`,
-          );
-        }
+        const target = selectProject(data, projectRef);
 
         const channels = target.channels.map((ch) => ({
           channelId: ch.channelId,

@@ -9,17 +9,9 @@
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
 import { z } from "zod";
 
-import {
-  validateDestinationAvailability,
-  validateProjectRoute,
-} from "../../application/index.js";
-import { log as auditLog } from "../../audit.js";
+import { linkProjectChannel } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
-import {
-  NOTIFICATION_CHANNEL,
-  type NotificationEndpoint,
-} from "../../domain/index.js";
-import { readProjects, updateProjects } from "../../state/index.js";
+import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
 import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
@@ -52,111 +44,18 @@ export function createChannelLinkTool(ctx: PluginContext): OpenClawPluginToolFac
      */
     async execute(_id: string, rawParams: Record<string, unknown>) {
       const params = channelLinkInput.parse(rawParams);
-      const channelId = params.channelId;
-      const accountId = params.accountId.trim();
-      const projectRef = params.project;
-      const channelType = params.channel ?? NOTIFICATION_CHANNEL.TELEGRAM;
-      const threadId = params.threadId?.trim();
-      const channelName = params.name;
-      const workspaceDir = requireWorkspaceDir(toolCtx);
       const agentId = toolCtx.agentId;
 
       if (!agentId) throw new Error("Channel linking requires an agent context.");
+      const result = await linkProjectChannel({ workspaceDir: requireWorkspaceDir(toolCtx), projectRef: params.project,
+        agentId, getConfig: () => ctx.runtime.config.current(), name: params.name,
+        route: { channel: params.channel ?? NOTIFICATION_CHANNEL.TELEGRAM, accountId: params.accountId.trim(),
+          channelId: params.channelId, threadId: params.threadId?.trim() } });
 
-      const data = await readProjects(workspaceDir);
-
-      // Resolve target project by slug or name
-      const slug = projectRef.toLowerCase().replace(/\s+/g, "-");
-      const target =
-        data.projects[slug] ??
-        Object.values(data.projects).find(
-          (p) => p.name.toLowerCase() === projectRef.toLowerCase(),
-        );
-
-      if (!target) {
-        const available = Object.values(data.projects)
-          .map((p) => p.name)
-          .join(", ");
-
-        throw new Error(
-          `Project "${projectRef}" not found. Available projects: ${available || "none"}. ` +
-          `Register a project first with project_register.`,
-        );
-      }
-
-      if (target.agentId !== agentId) {
-        throw new Error(`Project "${target.name}" belongs to agent "${target.agentId}", not "${agentId}".`);
-      }
-
-      const newChannel: NotificationEndpoint = {
-        channelId,
-        channel: channelType,
-        name: channelName ?? `channel-${target.channels.length + 1}`,
-        accountId,
-        ...(threadId ? { threadId } : {}),
-      };
-
-      validateProjectRoute(ctx.runtime.config.current(), agentId, newChannel);
-      validateDestinationAvailability(data, target.slug, newChannel);
-
-      // Already linked to this project?
-      const alreadyLinked = target.channels.some(
-        (ch) => ch.channel === channelType
-          && ch.accountId === accountId
-          && ch.channelId === channelId
-          && ch.threadId === threadId,
-      );
-
-      if (alreadyLinked) {
-        return jsonResult({
-          success: true,
-          changed: false,
-          project: target.name,
-          projectSlug: target.slug,
-          channelId,
-          threadId,
-          announcement: `Channel already linked to "${target.name}".`,
-        });
-      }
-
-      const updatedTarget = await updateProjects(workspaceDir, (current) => {
-        const next = structuredClone(current);
-        const currentTarget = next.projects[target.slug];
-
-        if (!currentTarget) throw new Error(`Project "${target.slug}" no longer exists.`);
-
-        validateDestinationAvailability(next, currentTarget.slug, newChannel);
-        if (!currentTarget.channels.some((candidate) => (
-          candidate.channel === newChannel.channel
-          && candidate.accountId === newChannel.accountId
-          && candidate.channelId === newChannel.channelId
-          && candidate.threadId === newChannel.threadId
-        ))) currentTarget.channels.push(newChannel);
-
-        return { data: next, result: currentTarget };
-      });
-
-      await auditLog(workspaceDir, "channel_link", {
-        project: updatedTarget.name,
-        projectSlug: updatedTarget.slug,
-        channelId,
-        accountId,
-        agentId,
-        threadId,
-        channelType,
-        channelName: newChannel.name,
-      });
-
-      return jsonResult({
-        success: true,
-        changed: true,
-        project: updatedTarget.name,
-        projectSlug: updatedTarget.slug,
-        channelId,
-        threadId,
-        channelName: newChannel.name,
-        announcement: `Channel linked to "${updatedTarget.name}".`,
-      });
+      return jsonResult({ success: true, changed: result.changed, project: result.project.name, projectSlug: result.project.slug,
+        channelId: result.endpoint.channelId, accountId: result.endpoint.accountId, threadId: result.endpoint.threadId,
+        channelName: result.endpoint.name,
+        announcement: result.changed ? `Channel linked to "${result.project.name}".` : `Channel already linked to "${result.project.name}".` });
     },
   });
 }

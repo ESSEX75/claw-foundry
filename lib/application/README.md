@@ -28,6 +28,12 @@ initialization or repair. Run `npm run arch:check:strict` after boundary changes
 
 ## Capability contracts
 
+Project registration and channel commands belong to `projects`. Registration checks
+existing repository/branch/agent identity before provisioning, rechecks route ownership
+under the registry lock, and reports post-commit scaffold failures for explicit retry.
+Channel names are allocated from fresh locked state; unlink uses exact route identity
+and retains at least one endpoint. Existing administrative authorization is preserved.
+
 This README is the single application-layer contract; subpackages do not maintain
 separate READMEs. Their file responsibilities and API details belong in source JSDoc.
 

@@ -21,6 +21,9 @@ Unknown arguments and non-boolean confirmation flags are rejected without coerci
 - Workflow label synchronization calls application/projection with resolved configuration;
   tool adapters validate project selection and format results, while providers apply explicit labels.
 - Register public tool factories in `lib/tools/registry.ts`.
+- Project registration and channel mutations call application/projects. Filesystem
+  scaffolding is state-owned; a committed registration with failed scaffolding is
+  returned as `scaffold_pending` and can be completed by repeating the same request.
 - Creation adapters must call the shared durable use case and report pending or
   manual-repair states honestly; only a `ready` operation is successful.
 - Channel-only task adapters reject ambiguous destinations. Adapters with a full

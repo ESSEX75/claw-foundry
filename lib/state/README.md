@@ -102,6 +102,10 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 
 ## Setup Files
 
+Project override scaffolding validates the slug and exclusively creates documentation;
+existing regular files are preserved. Non-file collisions and write failures propagate
+so application can report a committed registration with pending scaffolding.
+
 - Template loading is explicit and asynchronous; import-time filesystem reads are forbidden.
 - Initialization is create-only, while system instruction refresh and default reset are explicit capabilities.
 - Reset preserves adjacent `.bak` files as a recovery feature, not as a compatibility mechanism.

@@ -62,8 +62,8 @@ export type CreateManagedTaskInput = {
   provider: CreationProvider;
   /** Resolved workflow for initial state validation. */
   workflow: WorkflowConfig;
-  /** Configured role IDs used to project labels. */
-  roles?: string[];
+  /** Explicit configured role IDs used to project labels without owning unrelated namespaces. */
+  roles: string[];
   /** Requested provider issue title. */
   title: string;
   /** Requested provider issue body. */

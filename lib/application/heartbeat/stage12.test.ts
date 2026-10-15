@@ -87,6 +87,44 @@ describe("heartbeat stage 12", () => {
     } finally { await harness.cleanup(); }
   });
 
+  it("audits a failed model patch with issue context without sending a worker turn", async () => {
+    const harness = await createTestHarness();
+
+    try {
+      const issue = harness.provider.seedIssue({ iid: 113, labels: ["To Do"],
+        description: renderIssueMetadata({ projectSlug: harness.project.slug, issueId: 113 }) });
+
+      await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue,
+        providerType: harness.project.provider, workflow: harness.workflow, workflowState: "todo", workflowLabel: "To Do" });
+
+      const runCommand: typeof harness.runCommand = async (argv, options) => {
+        if (argv[3] === "sessions.patch") {
+          return { stdout: "{}", stderr: "model not allowed; token=supersecret", code: 1,
+            signal: null, killed: false, termination: "exit" };
+        }
+
+        return harness.runCommand(argv, options);
+      };
+      const result = await tick({ workspaceDir: harness.workspaceDir, agentId: harness.project.agentId,
+        config: { enabled: true, intervalSeconds: 60, maxPickupsPerTick: 1 },
+        providerFactory: async () => harness.provider, sessions: null,
+        logger: { info() {}, warn() {} }, runCommand });
+      const audit = (await fs.readFile(path.join(harness.workspaceDir, DATA_DIR, "log", "audit.log"), "utf8"))
+        .trim().split("\n").map((line) => JSON.parse(line) as Record<string, unknown>);
+      const heartbeat = audit.reverse().find((entry) => entry.event === "heartbeat_tick");
+
+      assert.equal(result.totalPickups, 0);
+      assert.equal(result.totalSkipped, 1);
+      assert.deepEqual(result.skipDetails.map(({ project, role, issueId, code }) => ({ project, role, issueId, code })),
+        [{ project: harness.project.slug, role: "developer", issueId: 113, code: "dispatch_failed" }], JSON.stringify(result.skipDetails));
+      assert.match(result.skipDetails[0]?.reason ?? "", /model not allowed/);
+      assert.doesNotMatch(JSON.stringify(heartbeat), /supersecret/);
+      assert.deepEqual(heartbeat?.skipDetails, result.skipDetails);
+      assert.equal(harness.commands.taskMessages().length, 0);
+      assert.equal((await readIssueStateStore(harness.workspaceDir, harness.project.slug)).issues["113"]?.workflowState, "todo");
+    } finally { await harness.cleanup(); }
+  });
+
   it("does not start an earlier idle project when a later project owns an active slot", async () => {
     const harness = await createTestHarness();
 

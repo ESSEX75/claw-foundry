@@ -42,6 +42,12 @@ separate READMEs. Their file responsibilities and API details belong in source J
   before provider mutation. Unknown creation without durable provider identity needs
   manual repair. Projection and provider read-back precede the local ready-state commit.
   Lifecycle commands lock and recheck readiness; body edits preserve managed metadata.
+  Creation receives an explicit configured role list and rejects nested or unterminated
+  submitted managed comments before recording intent or submitting a provider create.
+  Original submitted bodies remain bound to idempotency; projection removes copied
+  identity and read-back compares the resulting user content. Known-issue recovery
+  restores creation identity from the durable operation. Body edits retain creation
+  identity from local state, never from a provider-only marker.
   Attachment capture requires exact project/route identity and saves bytes before upload.
 - Application/projection selects exact workflow labels and colors from resolved configuration.
   Workflow label effects add the selected target before removing obsolete configured labels;

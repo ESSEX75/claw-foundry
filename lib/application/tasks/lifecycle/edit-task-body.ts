@@ -2,7 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { DEFAULT_ROLES, getInitialStateLabel, STATE_TYPE } from "../../../domain/index.js";
-import { composeManagedIssueBody, extractIssueCreationMarker } from "../../../projection/index.js";
+import { composeManagedIssueBody } from "../../../projection/index.js";
 import { isIssueCreationReady, loadConfig, withIssueOrchestrationLock } from "../../../state/index.js";
 import { ISSUE_RUNTIME_KIND } from "../../issue-runtime/const.js";
 import { resolveIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -83,7 +83,7 @@ async function editTaskBodyLocked(input: EditTaskBodyInput) {
 
   const desiredBody = composeManagedIssueBody(newBody ?? issue.description, {
     projectSlug: project.slug, issueId,
-  }, runtimeState.state.creationOperationId ?? extractIssueCreationMarker(issue.description));
+  }, runtimeState.state.creationOperationId);
   const changes: Record<string, ContentChange> = {};
 
   if (newTitle !== undefined && newTitle !== issue.title) {

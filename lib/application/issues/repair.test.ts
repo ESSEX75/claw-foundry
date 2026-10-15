@@ -10,7 +10,7 @@ import {
   NOTIFICATION_CHANNEL,
   type IssueRuntimeState,
 } from "../../domain/index.js";
-import { renderIssueMetadata } from "../../projection/index.js";
+import { extractIssueMetadata, renderIssueMetadata } from "../../projection/index.js";
 import { readIssueStateStore } from "../../state/index.js";
 import {
   createTestHarness,
@@ -65,6 +65,30 @@ async function seedState(workspaceDir: string, issue: IssueRuntimeState): Promis
 }
 
 describe("repairManagedIssue", () => {
+  it("repairs conflicting metadata even when its first block already matches local identity", async () => {
+    const h = await createTestHarness();
+    try {
+      await seedState(h.workspaceDir, state(h.project.slug));
+      const expected = { projectSlug: h.project.slug, issueId: 123 };
+      h.provider.seedIssue({ iid: 123, labels: ["To Do"], description: [
+        "User content", renderIssueMetadata(expected), renderIssueMetadata({ projectSlug: "foreign", issueId: 999 }),
+      ].join("\n\n") });
+      const input = { workspaceDir: h.workspaceDir, projectSlug: h.project.slug, issueId: 123,
+        source: ISSUE_REPAIR_SOURCE.LOCAL_STATE, actor: "test", provider: h.provider, runCommand: h.runCommand };
+      const plan = await repairManagedIssue(input);
+
+      assert.equal(plan.metadataAction, "replace");
+      const applied = await repairManagedIssue({ ...input, apply: true, planToken: plan.planToken });
+      const issue = await h.provider.getIssue(123);
+
+      assert.equal(applied.success, true);
+      assert.deepEqual(extractIssueMetadata(issue.description), expected);
+      assert.equal(issue.description.match(/<!-- devclaw:issue-metadata\b/g)?.length, 1);
+      assert.ok(issue.description.includes("User content"));
+      assert.equal((await repairManagedIssue(input)).changed, false);
+    } finally { await h.cleanup(); }
+  });
+
   it("rejects a plan when resolved workflow changed despite unchanged issue snapshots", async () => {
     const h = await createTestHarness();
     try {

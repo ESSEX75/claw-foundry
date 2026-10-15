@@ -96,6 +96,8 @@ export type QueueClaim = {
 type QueueSkip = {
   /** Configured role, absent for project-wide failures. */
   role?: string;
+  /** Selected candidate, when lookup reached a concrete issue. */
+  issueId?: number;
   /** Operator-readable context. */
   reason: string;
   /** Queue constraint or unchanged provider lookup classification. */

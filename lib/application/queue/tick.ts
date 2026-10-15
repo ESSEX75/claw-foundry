@@ -57,6 +57,8 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
   let pickupCount = 0;
 
   for (const role of roles) {
+    let candidateIssueId: number | undefined;
+
     if (!enabledRoles.includes(role)) {
       skipped.push({ role, code: QUEUE_REASON.ROLE_UNAVAILABLE, reason: "Role is not configured or is disabled" });
       continue;
@@ -86,6 +88,7 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
       const next = await findNextIssueForRole(provider, role, workflow, instanceName, { workspaceDir, projectSlug });
 
       if (!next) continue;
+      candidateIssueId = next.issue.iid;
 
       const claim = await withIssueOrchestrationLock(
         workspaceDir,
@@ -190,7 +193,7 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
       );
 
       if (!claim.action) {
-        skipped.push({ role, code: claim.code, reason: claim.reason ?? "Issue claim changed" });
+        skipped.push({ role, issueId: candidateIssueId, code: claim.code, reason: claim.reason ?? "Issue claim changed" });
         continue;
       }
 
@@ -200,7 +203,7 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
       const message = error instanceof Error ? error.message : String(error);
 
       skipped.push({
-        role, code: isProviderIssueLookupError(error) ? error.code : QUEUE_REASON.DISPATCH_FAILED,
+        role, issueId: candidateIssueId, code: isProviderIssueLookupError(error) ? error.code : QUEUE_REASON.DISPATCH_FAILED,
         reason: `Queue ${role} failed: ${message}`
       });
       continue;

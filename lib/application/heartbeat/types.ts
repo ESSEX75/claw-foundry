@@ -126,6 +126,8 @@ export type HeartbeatTickResult = {
   totalHealthFixes: number;
   /** Skipped projects and queue candidates. */
   totalSkipped: number;
+  /** Bounded diagnostics for each counted skip. */
+  skipDetails: Array<{ project: string; role?: string; issueId?: number; code: string; reason: string }>;
   /** Successful human review transitions. */
   totalReviewTransitions: number;
   /** Successful review skip transitions. */

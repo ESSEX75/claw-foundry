@@ -18,6 +18,17 @@ import { mayScheduleProject } from "./scheduler.js";
 import { testSkipPass } from "./test/index.js";
 import type { HeartbeatRunInput, HeartbeatTickResult } from "./types.js";
 
+const MAX_SKIP_REASON_LENGTH = 300;
+
+function auditSkipReason(reason: string): string {
+  return reason
+    .replace(/\b(Bearer|Basic)\s+\S+/gi, "$1 [REDACTED]")
+    .replace(/(https?:\/\/)[^\s/@]+@/gi, "$1[REDACTED]@")
+    .replace(/([?&](?:token|key|secret|password|access_token|api_key)=)[^\s&#]+/gi, "$1[REDACTED]")
+    .replace(/\b(authorization|token|api[_-]?key|password|secret)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]")
+    .slice(0, MAX_SKIP_REASON_LENGTH);
+}
+
 // ---------------------------------------------------------------------------
 // Tick (Main Heartbeat Loop)
 // ---------------------------------------------------------------------------
@@ -40,6 +51,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
       totalPickups: 0,
       totalHealthFixes: 0,
       totalSkipped: 0,
+      skipDetails: [],
       totalReviewTransitions: 0,
       totalReviewSkipTransitions: 0,
       totalTestSkipTransitions: 0,
@@ -55,6 +67,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
     totalPickups: 0,
     totalHealthFixes: 0,
     totalSkipped: 0,
+    skipDetails: [],
     totalReviewTransitions: 0,
     totalReviewSkipTransitions: 0,
     totalTestSkipTransitions: 0,
@@ -105,7 +118,12 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
       ], result.passes);
 
       if (!recovered) {
-        opts.logger.warn(`Heartbeat pass failed for project ${slug}: ${result.passes.at(-1)?.errors.join("; ")}`);
+        const failedPass = result.passes.at(-1);
+        const reason = `${failedPass?.name ?? "unknown"}: ${failedPass?.errors.join("; ") ?? "unknown error"}`;
+
+        opts.logger.warn(`Heartbeat pass failed for project ${slug}: ${reason}`);
+
+        result.skipDetails.push({ project: slug, code: "pass_failed", reason: auditSkipReason(reason) });
         result.totalSkipped++;
         continue;
       }
@@ -131,6 +149,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
           .map((pass) => `${pass.name}: ${pass.errors.join("; ")}`);
 
         opts.logger.warn(`Heartbeat workflow failed for project ${slug}: ${failures.join("; ")}`);
+        result.skipDetails.push({ project: slug, code: "workflow_pass_failed", reason: auditSkipReason(failures.join("; ")) });
         result.totalSkipped++;
         continue;
       }
@@ -145,6 +164,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
       const freshProjects = await readProjects(workspaceDir);
 
       if (!mayScheduleProject(slug, freshProjects.projects, projectExecution)) {
+        result.skipDetails.push({ project: slug, code: "project_blocked", reason: "Project execution limit reached" });
         result.totalSkipped++;
         continue;
       }
@@ -154,6 +174,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
         workspaceDir,
         projectSlug: slug,
         agentId,
+        provider,
         pluginConfig,
         maxPickups: remaining,
         instanceName,
@@ -163,12 +184,21 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
 
       result.totalPickups += tickResult.pickups.length;
       result.totalSkipped += tickResult.skipped.length;
+      result.skipDetails.push(...tickResult.skipped.map((skip) => ({
+        project: slug,
+        ...(skip.role === undefined ? {} : { role: skip.role }),
+        ...(skip.issueId === undefined ? {} : { issueId: skip.issueId }),
+        code: skip.code ?? "queue_skipped",
+        reason: auditSkipReason(skip.reason),
+      })));
 
     } catch (err) {
       // Per-project isolation: one failing project doesn't crash the entire tick
-      opts.logger.warn(
-        `Heartbeat tick failed for project ${slug}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      const reason = err instanceof Error ? err.message : String(err);
+
+      opts.logger.warn(`Heartbeat tick failed for project ${slug}: ${reason}`);
+
+      result.skipDetails.push({ project: slug, code: "tick_failed", reason: auditSkipReason(reason) });
       result.totalSkipped++;
     }
   }
@@ -182,6 +212,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
     archived: result.totalArchived,
     pickups: result.totalPickups,
     skipped: result.totalSkipped,
+    skipDetails: result.skipDetails,
   });
 
   return result;

@@ -28,6 +28,7 @@ export async function processAllAgents(
     totalPickups: 0,
     totalHealthFixes: 0,
     totalSkipped: 0,
+    skipDetails: [],
     totalReviewTransitions: 0,
     totalReviewSkipTransitions: 0,
     totalTestSkipTransitions: 0,
@@ -59,6 +60,7 @@ export async function processAllAgents(
   for (const { agentId, workspace } of agents) {
     if (failedWorkspaces.has(workspace)) {
       result.totalSkipped++;
+      result.skipDetails.push({ project: agentId, code: "workspace_refresh_failed", reason: "Workspace refresh failed" });
       continue;
     }
 
@@ -77,6 +79,7 @@ export async function processAllAgents(
       });
     } catch (error) {
       result.totalSkipped++;
+      result.skipDetails.push({ project: agentId, code: "agent_tick_failed", reason: "Agent tick failed" });
       logger.warn(`Heartbeat agent ${agentId} failed in ${workspace}: ${error instanceof Error ? error.message : String(error)}`);
       continue;
     }
@@ -85,6 +88,7 @@ export async function processAllAgents(
     result.totalPickups += agentResult.totalPickups;
     result.totalHealthFixes += agentResult.totalHealthFixes;
     result.totalSkipped += agentResult.totalSkipped;
+    result.skipDetails.push(...agentResult.skipDetails);
     result.totalReviewTransitions += agentResult.totalReviewTransitions;
     result.totalReviewSkipTransitions += agentResult.totalReviewSkipTransitions;
     result.totalTestSkipTransitions += agentResult.totalTestSkipTransitions;

@@ -9,9 +9,11 @@
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
 
 import { log as auditLog } from "../../audit.js";
+import { isNotificationChannel, NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { readProjects, updateProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
 
+/** Remove only the explicitly selected complete route, rechecking it under the registry lock. */
 export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "channel_unlink",
@@ -21,8 +23,17 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
       "removing the last channel (projects must have at least one notification endpoint).",
     parameters: {
       type: "object",
-      required: ["channelId", "project"],
+      required: ["channel", "accountId", "channelId", "project"],
       properties: {
+        channel: {
+          type: "string",
+          enum: Object.values(NOTIFICATION_CHANNEL),
+          description: "Transport of the exact endpoint to remove.",
+        },
+        accountId: {
+          type: "string",
+          description: "Explicit account ID of the exact endpoint to remove.",
+        },
         channelId: {
           type: "string",
           description: "Channel ID to remove (e.g., Telegram group ID)",
@@ -44,6 +55,12 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
     },
 
     async execute(_id: string, params: Record<string, unknown>) {
+      const channelType = params.channel;
+
+      if (!isNotificationChannel(channelType)) throw new Error("A valid channel is required.");
+      const accountId = typeof params.accountId === "string" ? params.accountId.trim() : "";
+
+      if (!accountId) throw new Error("accountId is required.");
       const channelId = params.channelId as string;
       const projectRef = params.project as string;
       const threadId = typeof params.threadId === "string" && params.threadId.trim()
@@ -76,7 +93,8 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
       }
 
       // Find the channel
-      const idx = target.channels.findIndex((ch) => ch.channelId === channelId && ch.threadId === threadId);
+      const idx = target.channels.findIndex((ch) => ch.channel === channelType && ch.accountId === accountId
+        && ch.channelId === channelId && ch.threadId === threadId);
 
       if (idx === -1) {
         const threadNote = threadId ? ` thread ${threadId}` : "";
@@ -103,6 +121,7 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
           project: target.name,
           projectSlug: target.slug,
           channelId,
+          accountId,
           threadId,
           channelName: channel.name,
           channelType: channel.channel,
@@ -119,7 +138,8 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
 
         if (!currentTarget) throw new Error(`Project "${target.slug}" no longer exists.`);
         const currentIndex = currentTarget.channels.findIndex((candidate) => (
-          candidate.channelId === channelId && candidate.threadId === threadId
+          candidate.channel === channelType && candidate.accountId === accountId
+          && candidate.channelId === channelId && candidate.threadId === threadId
         ));
 
         if (currentIndex === -1) throw new Error(`Channel ${channelId} is no longer linked.`);
@@ -133,6 +153,7 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
         project: target.name,
         projectSlug: target.slug,
         channelId,
+        accountId,
         threadId,
         channelName: channel.name,
         channelType: channel.channel,
@@ -143,6 +164,7 @@ export function createChannelUnlinkTool(): OpenClawPluginToolFactory {
         project: target.name,
         projectSlug: target.slug,
         channelId,
+        accountId,
         threadId,
         channelName: channel.name,
         channelType: channel.channel,

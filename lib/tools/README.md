@@ -20,6 +20,8 @@ agent-facing plugin API and deterministic DevClaw behavior.
 - Channel-only task adapters reject ambiguous destinations. Adapters with a full
   account/channel/conversation/thread identity use application project context
   resolution and never choose the first project or endpoint.
+- Channel removal requires channel, account, conversation and optional thread identity;
+  it rechecks that exact endpoint and the last-channel constraint under the registry lock.
 
 Use `npm run arch:check:strict` after adding or changing tool factories.
 

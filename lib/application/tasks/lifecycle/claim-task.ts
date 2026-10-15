@@ -1,9 +1,10 @@
 /** Owns a managed task lifecycle operation or its pure transition decision. */
 
-import { ISSUE_INTEGRITY_STATUS, STATE_TYPE } from "../../../domain/index.js";
+import { findSlotByIssue, ISSUE_INTEGRITY_STATUS, STATE_TYPE } from "../../../domain/index.js";
 import {
   isIssueCreationReady,
   readIssueStateStore,
+  readProjects,
   withIssueOrchestrationLock,
 } from "../../../state/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -35,6 +36,13 @@ export async function claimManagedTask(input: ClaimManagedTaskInput): Promise<Cl
         if (configured?.type !== STATE_TYPE.QUEUE || configured.label !== state.workflowLabel
           || state.activeWorker || state.pendingWorkerRelease || state.providerMissing) {
           return { claimed: false, reason: "Issue is no longer an available local queue candidate" };
+        }
+
+        const project = (await readProjects(input.workspaceDir)).projects[input.project.slug];
+
+        if (!project) return { claimed: false, reason: "Project is no longer registered" };
+        if (Object.values(project.workers).some(worker => findSlotByIssue(worker, input.issueId) !== null)) {
+          return { claimed: false, reason: "Issue is reserved by a project worker slot" };
         }
       }
 

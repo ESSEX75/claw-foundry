@@ -84,3 +84,15 @@ recheck eligibility under the issue lock, retain individual failures and resume 
 already committed owner's failed label projection. Provider labels/body metadata
 never initialize or select managed workflow state implicitly. Project slots expose
 reservation evidence separately from authoritative issue workflow state.
+
+## Verification ownership
+
+Tool tests execute real factories and `execute` methods to verify SDK context,
+input rejection before effects, application delegation, result formatting and failures.
+They replace external provider capabilities with test-scoped fakes while retaining
+real application decisions and persistence. Do not simulate production decisions in
+local copies or use unconditional assertions. Domain/role tests live with pure
+semantics; creation, projection summaries, lifecycle locks and worker recovery tests
+live beside their application owners. Root registration tests exercise the external
+public API and preserve the exact registered names. Broad architectural refactors
+must pass arch/check/build/full tests and a logic review before committing.

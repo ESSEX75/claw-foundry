@@ -43,10 +43,10 @@ changes.
 | [lib/state/projects/projects.test.ts](../lib/state/projects/projects.test.ts) | Project state: read/write, worker state, atomic file operations |
 | [lib/integrations/openclaw/bootstrap-hook.test.ts](../lib/integrations/openclaw/bootstrap-hook.test.ts) | Bootstrap hook: role instruction loading, source tracking, overloads |
 | [lib/application/tasks/attachments.test.ts](../lib/application/tasks/attachments.test.ts) | File attachment handling |
-| [lib/tools/tasks/lifecycle/task-set-level.test.ts](../lib/tools/tasks/lifecycle/task-set-level.test.ts) | Task set level tool: level hints, label detection |
-| [lib/tools/tasks/lifecycle/task-edit-body.test.ts](../lib/tools/tasks/lifecycle/task-edit-body.test.ts) | Task edit body tool: title/body editing, state guards |
-| [lib/tools/tasks/creation/research-task.test.ts](../lib/tools/tasks/creation/research-task.test.ts) | Research task tool: architect dispatch |
-| [lib/tools/admin/queue-status.test.ts](../lib/tools/admin/queue-status.test.ts) | Queue status formatting |
+| [lib/tools/tasks/lifecycle/lifecycle.test.ts](../lib/tools/tasks/lifecycle/lifecycle.test.ts) | Real lifecycle adapters: configured levels, edits, source-of-truth guards and failures |
+| [lib/application/tasks/lifecycle/edit-task-body.test.ts](../lib/application/tasks/lifecycle/edit-task-body.test.ts) | Application body edits: metadata preservation and locked state rechecks |
+| [lib/application/tasks/research/research.test.ts](../lib/application/tasks/research/research.test.ts) | Application research: creation, delivery, retries and configured scheduling |
+| [lib/tools/tasks/queries/queries.test.ts](../lib/tools/tasks/queries/queries.test.ts) | Real browsing adapters: local grouping, provider-only exclusions, limits and failures |
 | [lib/tools/worker/group-isolation.test.ts](../lib/tools/worker/group-isolation.test.ts) | Worker group isolation |
 | [lib/application/heartbeat/health.test.ts](../lib/application/heartbeat/health.test.ts) | Heartbeat health pass: zombie detection, stale workers |
 | [lib/integrations/providers/provider-pr-status.test.ts](../lib/integrations/providers/provider-pr-status.test.ts) | PR status polling and detection |

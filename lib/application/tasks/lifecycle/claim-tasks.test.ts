@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER } from "../../../domain/index.js";
-import { loadConfig, readIssueStateStore, updateIssueRuntimeRecord } from "../../../state/index.js";
+import { loadConfig, readIssueStateStore, updateIssueRuntimeRecord, updateSlot } from "../../../state/index.js";
 import { createTestHarness } from "../../../testing/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
 import { claimManagedTasks } from "./claim-tasks.js";
@@ -80,4 +80,21 @@ describe("ownership commands", () => {
       assert.equal(h.provider.callsTo("getIssue").filter(call => call.args.issueId === 2).length, 0);
     } finally { await h.cleanup(); }
   });
+  it("rechecks fresh project reservations when local queue state has no active worker", async () => {
+    const h = await createTestHarness();
+    try {
+      const input = await setup(h, 1);
+      await updateSlot(h.workspaceDir, h.project.slug, "developer", "medior", 0, slot => ({
+        ...slot, active: true, issueId: 1, sessionKey: "reserved-before-local-commit", startTime: new Date().toISOString(),
+      }));
+      const before = await readIssueStateStore(h.workspaceDir, h.project.slug);
+      assert.equal(before.issues["1"].activeWorker, null);
+      const result = await claimManagedTasks({ ...input, force: true });
+      assert.deepEqual(result.claimed, []);
+      assert.match(result.skipped[0].reason, /project worker slot/);
+      assert.deepEqual(await readIssueStateStore(h.workspaceDir, h.project.slug), before);
+      assert.equal(h.provider.calls.length, 0);
+    } finally { await h.cleanup(); }
+  });
+
 });

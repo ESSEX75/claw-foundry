@@ -40,9 +40,9 @@ Use cases:
 - Cross-referencing related issues or PRs
 
 Examples:
-- Simple: { issueId: 42, body: "Found an edge case with null inputs" }
-- With role: { issueId: 42, body: "LGTM!", authorRole: "tester" }
-- Detailed: { issueId: 42, body: "## Notes\\n\\n- Tested on staging\\n- All checks passing", authorRole: "developer" }`,
+- Simple: { channelId: "-1003844794417", issueId: 42, body: "Found an edge case with null inputs" }
+- With role: { channelId: "-1003844794417", issueId: 42, body: "LGTM!", authorRole: "tester" }
+- Detailed: { channelId: "-1003844794417", issueId: 42, body: "## Notes\\n\\n- Tested on staging\\n- All checks passing", authorRole: "developer" }`,
     parameters: toolInputParameters(taskCommentInput),
 
     /** Parse the untrusted request before resolving context or performing effects.

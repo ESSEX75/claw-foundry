@@ -1,8 +1,14 @@
+/** Verifies local-truth projection diagnostics independently of SDK tool formatting. */
+
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { DEFAULT_WORKFLOW, ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../domain/index.js";
-import { summarizeTaskIssue, type ProjectionViewContext } from "../../application/index.js";
+import { DEFAULT_WORKFLOW, ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../../domain/index.js";
+import { summarizeTaskIssue } from "./projection-summary.js";
+import type { ProjectionViewContext } from "./types.js";
 
+/** Build a complete authoritative local issue fixture.
+ * @param overrides - Scenario-specific state fields.
+ */
 function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
   return {
     projectSlug: "devclaw",
@@ -28,6 +34,9 @@ function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
   };
 }
 
+/** Bind the local record and configured workflow used by pure projection diagnostics.
+ * @param issueState - Initialized issue, omitted for provider-only diagnostics.
+ */
 function ctx(issueState?: IssueRuntimeState): ProjectionViewContext {
   return {
     states: issueState ? { [String(issueState.issueId)]: issueState } : {},

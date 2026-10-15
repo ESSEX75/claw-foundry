@@ -2,6 +2,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { z } from "zod";
 import type { PluginContext } from "../context.js";
 import { toolRegistry } from "../tools/index.js";
 
@@ -34,6 +35,13 @@ describe("tools public registration API", () => {
       assert.ok(tool && !Array.isArray(tool));
       assert.deepEqual([...entry.names], [tool.name]);
       assert.equal(typeof tool.execute, "function");
+      const schema = z.fromJSONSchema(z.record(z.string(), z.unknown()).parse(tool.parameters));
+      const description = tool.description;
+      const inlineExamples = [...description.matchAll(/\{[^\r\n{}]*\}/g)]
+        .map(match => match[0]).filter(example => /^\{\s*\w+\s*:/.test(example))
+        .map(example => example.replace(/([,{]\s*)(\w+)\s*:/g, '$1"$2":'));
+      const jsonExamples = [...description.matchAll(/```json\r?\n([\s\S]*?)\r?\n```/g)].map(match => match[1]);
+      for (const example of [...inlineExamples, ...jsonExamples]) schema.parse(JSON.parse(example));
     }
   });
 });

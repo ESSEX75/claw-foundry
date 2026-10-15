@@ -35,9 +35,9 @@ Logs the edit to the audit trail with timestamp, caller, and a diff summary.
 Optionally posts an auto-comment on the issue for traceability.
 
 Examples:
-- Fix typo: { issueId: 42, title: "Fix login timeout bug" }
-- Clarify scope: { issueId: 42, body: "Updated requirements...", reason: "Clarified after meeting" }
-- Silent edit: { issueId: 42, body: "...", addComment: false }`,
+- Fix typo: { channelId: "-1003844794417", issueId: 42, title: "Fix login timeout bug" }
+- Clarify scope: { channelId: "-1003844794417", issueId: 42, body: "Updated requirements...", reason: "Clarified after meeting" }
+- Silent edit: { channelId: "-1003844794417", issueId: 42, body: "...", addComment: false }`,
     parameters: toolInputParameters(taskEditBodyInput),
 
     /** Parse the untrusted request before resolving context or performing effects.

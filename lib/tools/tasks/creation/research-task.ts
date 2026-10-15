@@ -2,8 +2,7 @@
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
 import { z } from "zod";
 
-import { researchTask } from "../../../application/index.js";
-import type { PluginContext } from "../../../context.js";
+import { researchTask, type ResearchTaskInput } from "../../../application/index.js";
 import { TASK_COMPLEXITY } from "../../../roles/index.js";
 import { requireWorkspaceDir } from "../../context/index.js";
 import { channelIdInput, requiredTextInput, toolInputParameters } from "../../validation/index.js";
@@ -24,9 +23,9 @@ const researchTaskInput = z.strictObject({
 });
 
 /** Create the research adapter with explicit complexity validation before task effects.
- * @param ctx - Plugin runtime dependencies used for project resolution and dispatch.
+ * @param ctx - Command transport and optional notification runtime used by the application; gateway dispatch also works through CLI.
  */
-export function createResearchTaskTool(ctx: PluginContext): OpenClawPluginToolFactory {
+export function createResearchTaskTool(ctx: Pick<ResearchTaskInput, "runCommand" | "runtime" | "pluginConfig">): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: RESEARCH_TASK_TOOL_NAME,
     label: "Research Task",
@@ -43,15 +42,17 @@ The architect will:
 3. Create implementation tasks via task_create in the configured initial state
 4. Call work_finish with the configured completion result and findings summary
 
-Example:
-  research_task({
-    idempotencyKey: "session-persistence-research",
-    title: "Research: Session persistence strategy",
-    description: "Sessions are lost on restart. Current impl uses in-memory Map in session-store.ts. " +
-      "Constraints: must work with SQLite (already a dep), max 50ms latency on read. Prior discussion in #42 ruled out Redis.",
-    focusAreas: ["SQLite vs file-based", "migration path", "cache invalidation"],
-    complexity: "complex"
-  })`,
+Example arguments:
+\`\`\`json
+{
+  "channelId": "-1003844794417",
+  "idempotencyKey": "session-persistence-research",
+  "title": "Research: Session persistence strategy",
+  "description": "Sessions are lost on restart. Current implementation uses an in-memory Map. Compare persistent storage with a 50ms read latency limit.",
+  "focusAreas": ["SQLite vs file-based", "migration path", "cache invalidation"],
+  "complexity": "complex"
+}
+\`\`\``,
     parameters: toolInputParameters(researchTaskInput),
 
     /** Parse the untrusted request before resolving context or performing effects.

@@ -35,9 +35,9 @@ export function createTaskAttachTool(ctx: PluginContext): OpenClawPluginToolFact
     description: `Manage file attachments on issues. List existing attachments or add new ones from local files.
 
 Use cases:
-- List attachments: { issueId: 42, action: "list" }
-- Attach file: { issueId: 42, action: "add", filePath: "/path/to/file.png" }
-- Get attachment path: { issueId: 42, action: "get", attachmentId: "abc-123" }`,
+- List attachments: { channelId: "-1003844794417", issueId: 42, action: "list" }
+- Attach file: { channelId: "-1003844794417", issueId: 42, action: "add", filePath: "/path/to/file.png" }
+- Get attachment path: { channelId: "-1003844794417", issueId: 42, action: "get", attachmentId: "abc-123" }`,
     parameters: toolInputParameters(taskAttachInput),
 
     /** Validate the request and format the shared application result.

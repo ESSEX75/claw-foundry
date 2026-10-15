@@ -35,8 +35,8 @@ export function createTaskSetLevelTool(ctx: PluginContext): OpenClawPluginToolFa
       `The assignment is saved in local issue state and used when task_start advances the issue.
 
 Examples:
-- { issueId: 42, level: "senior" }
-- { issueId: 42, level: "junior", reason: "Simple typo fix" }`,
+- { channelId: "-1003844794417", issueId: 42, level: "senior" }
+- { channelId: "-1003844794417", issueId: 42, level: "junior", reason: "Simple typo fix" }`,
     parameters: toolInputParameters(taskSetLevelInput),
 
     /** Parse the untrusted request before resolving context or performing effects.

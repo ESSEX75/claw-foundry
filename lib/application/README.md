@@ -140,8 +140,9 @@ shared runtime types come from root `types.ts`, and root contracts may import ch
 `types.ts` directly to avoid barrel cycles.
 
 Task ownership commands select bulk candidates only from local configured queues and
-recheck the queue pair, provider availability and worker reservations under each issue
-lock. Explicit single-issue claims retain their wider scope. Ownership commits before
+recheck the queue pair, provider availability, local active/release ownership and fresh
+project worker-slot reservations under each issue lock. A queue record with a reserved
+slot remains unavailable even if dispatch has not yet committed its local active frame. Explicit single-issue claims retain their wider scope. Ownership commits before
 label projection; repeating a claim for the same owner resumes projection, including
 label-owned integrity failures, without transferring ownership again. Bulk results
 retain independent failures and distinguish them from eligibility refusals. Discussion

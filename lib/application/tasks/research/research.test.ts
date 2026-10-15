@@ -67,7 +67,7 @@ describe("research command", () => {
     } finally { await h.cleanup(); }
   });
 
-  it("keeps pending delivery distinct and never restarts a completed research request", async () => {
+  it("keeps pending delivery distinct and never restarts a completed research request", { timeout: 15_000 }, async t => {
     const h = await createTestHarness();
     let accept = () => {};
     const response = new Promise<void>(resolve => { accept = resolve; });
@@ -86,12 +86,16 @@ describe("research command", () => {
       assert.equal(h.commands.taskMessages().length, 1);
       const issueId = first.issue?.iid;
       assert.ok(issueId);
+      const reactToIssue = h.provider.reactToIssue.bind(h.provider);
+      let settlementObserved = () => {};
+      const settled = new Promise<void>(resolve => { settlementObserved = resolve; });
+      t.mock.method(h.provider, "reactToIssue", async (...args: Parameters<typeof reactToIssue>) => {
+        await reactToIssue(...args);
+        settlementObserved();
+      });
+      // Accepted delivery persists both ownership views before acknowledging the issue.
       accept();
-      for (let attempt = 0; attempt < 100; attempt++) {
-        const state = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues[String(issueId)];
-        if (!state?.activeWorker?.delivery) break;
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
+      await settled;
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues[String(issueId)]?.activeWorker?.delivery, undefined);
       await updateIssueRuntimeRecord(h.workspaceDir, h.project.slug, issueId, state => {
         assert.ok(state);

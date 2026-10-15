@@ -7,14 +7,21 @@ import path from "node:path";
 import os from "node:os";
 import { readIssueStateStore } from "../../../state/index.js";
 import { extractIssueMetadata } from "../../../projection/index.js";
-import { TestProvider } from "../../../testing/test-provider.js";
+import { TestProvider } from "../../../testing/index.js";
 import { ISSUE_PROVIDER, NOTIFICATION_CHANNEL, STATE_TYPE, type WorkflowConfig, WORKFLOW_EVENT } from "../../../domain/index.js";
 import { DEFAULT_WORKFLOW } from "../../../domain/index.js";
-import { createManagedTaskIssue } from "../../../application/index.js";
+import { createManagedTaskIssue } from "./command.js";
+
+/** Isolated workspace prefixes for the managed creation scenarios. */
+const FIXTURE_PREFIX = {
+  HOLD: "devclaw-task-create-hold-",
+  CUSTOM: "devclaw-task-create-custom-",
+  DEFAULT: "devclaw-task-create-",
+} as const;
 
 describe("task_create managed initial-state flow", () => {
   it("preserves a custom hold initial state without resolving its queue transition", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-task-create-hold-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), FIXTURE_PREFIX.HOLD));
     const workflow: WorkflowConfig = {
       initial: "triage",
       states: {
@@ -56,7 +63,7 @@ describe("task_create managed initial-state flow", () => {
   });
 
   it("persists a validated custom initial state key, label, and role", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-task-create-custom-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), FIXTURE_PREFIX.CUSTOM));
     const workflow: WorkflowConfig = {
       initial: "designQueue",
       states: {
@@ -113,7 +120,7 @@ describe("task_create managed initial-state flow", () => {
   });
 
   it("creates ordinary tasks in the default hold state with local state projection", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-task-create-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), FIXTURE_PREFIX.DEFAULT));
     try {
       const provider = new TestProvider();
 

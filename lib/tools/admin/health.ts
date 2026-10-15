@@ -23,7 +23,10 @@ import { getConfiguredRoleIds, loadConfig } from "../../state/index.js";
 import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
 
-export function createHealthTool(ctx: PluginContext): OpenClawPluginToolFactory {
+/** Create manual health inspection with the same resolved policy as the heartbeat.
+ * @param ctx - Command transport for provider observations and worker remediation.
+ */
+export function createHealthTool(ctx: Pick<PluginContext, "runCommand">): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "health",
     label: "Health",
@@ -72,6 +75,10 @@ export function createHealthTool(ctx: PluginContext): OpenClawPluginToolFactory 
             sessions,
             autoFix: fix,
             provider,
+            workflow: resolvedConfig.workflow,
+            staleWorkerHours: resolvedConfig.timeouts.staleWorkerHours,
+            stallTimeoutMinutes: resolvedConfig.timeouts.stallTimeoutMinutes,
+            agentId: project.agentId,
             runCommand: ctx.runCommand,
           });
 

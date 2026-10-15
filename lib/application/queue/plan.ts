@@ -1,7 +1,7 @@
 /** Plans local policy gating, role level, and free slot without I/O. */
 
-import { findFreeSlot } from "../../domain/index.js";
-import { resolveRoleLevel } from "../tasks/index.js";
+import { findAvailableWorkerSlot } from "../../domain/index.js";
+import { resolveRoleLevel } from "../tasks/lifecycle/index.js";
 import { WORKER_SESSION_ACTION } from "../workers/const.js";
 import { QUEUE_PLAN, QUEUE_REASON } from "./const.js";
 import { queuePolicyBlock } from "./policy.js";
@@ -26,12 +26,10 @@ export function planQueuePickup(input: QueuePickupPlanInput): QueuePickupDecisio
     issueTitle: issue.title,
     issueDescription: issue.description ?? "",
   });
-  const slotIndex = findFreeSlot(worker, level);
-
   const capacity = roleConfig.levels[level]?.maxWorkers ?? 0;
-  const activeCount = worker.levels[level]?.filter(slot => slot.active).length ?? 0;
+  const slotIndex = findAvailableWorkerSlot(worker, level, capacity);
 
-  if (slotIndex === null || slotIndex >= capacity || activeCount >= capacity) {
+  if (slotIndex === null) {
     return { kind: QUEUE_PLAN.BLOCKED, code: QUEUE_REASON.CAPACITY, reason: `${level} slots full` };
   }
 

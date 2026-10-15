@@ -34,6 +34,13 @@ under the registry lock, and reports post-commit scaffold failures for explicit 
 Channel names are allocated from fresh locked state; unlink uses exact route identity
 and retains at least one endpoint. Existing administrative authorization is preserved.
 
+`tasks/research` owns stable-key research creation and exact-issue scheduling. It selects
+an architect queue by its configured state key and validates its PICKUP target, rejects
+ambiguous queues, and returns creation recovery and gateway delivery evidence separately.
+Retries lock the issue and retain existing or uncertain reservations; provider labels
+never select a retry transition. Workers consume task context/attachment capability APIs
+directly so task orchestration can call worker commands without ancestor-barrel cycles.
+
 This README is the single application-layer contract; subpackages do not maintain
 separate READMEs. Their file responsibilities and API details belong in source JSDoc.
 

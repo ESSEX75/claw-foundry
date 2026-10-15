@@ -8,7 +8,7 @@ import type { ResolvedRoleConfig } from "../../../state/index.js";
 import type { ValueOf } from "../../../types.js";
 import type { NotificationRuntime } from "../../notifications/index.js";
 import type { PrFeedback } from "../../review/index.js";
-import type { TaskContextBudget } from "../../tasks/index.js";
+import type { TaskContextBudget } from "../../tasks/context/index.js";
 import type { WORKER_SESSION_ACTION } from "../const.js";
 
 /** Immutable inputs used to plan one worker session assignment. */

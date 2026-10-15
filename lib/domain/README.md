@@ -28,6 +28,10 @@ local ownership views can represent an unconfirmed worker turn.
 
 ## Boundary Rules
 
+Projects own pure available-slot selection and sequential execution exclusions. Both
+preview planning and locked state reservation use these rules; slot references requiring
+reconciliation are never recycled merely because their active flag is false.
+
 - Do not import from `lib/application`, `lib/state`, `lib/integrations`,
   `lib/tools`, or `lib/cli`.
 - Do not perform IO.

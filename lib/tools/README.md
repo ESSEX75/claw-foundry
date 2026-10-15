@@ -26,6 +26,9 @@ Unknown arguments and non-boolean confirmation flags are rejected without coerci
   returned as `scaffold_pending` and can be completed by repeating the same request.
 - Creation adapters must call the shared durable use case and report pending or
   manual-repair states honestly; only a `ready` operation is successful.
+- Research requires a stable caller idempotency key and optionally an explicit queue
+  state key. It calls application/tasks and reports creation and delivery separately,
+  including exact unresolved submission IDs; a retry never blindly resends a worker turn.
 - Channel-only task adapters reject ambiguous destinations. Adapters with a full
   account/channel/conversation/thread identity use application project context
   resolution and never choose the first project or endpoint.

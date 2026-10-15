@@ -8,3 +8,4 @@ export { createManagedTaskIssue, reconcileManagedTaskCreations } from "./creatio
 export { claimManagedTask, editTaskBody, resolveRoleLevel, setTaskLevel, startTask } from "./lifecycle/index.js";
 export type { ProjectionViewContext } from "./queries/index.js";
 export { ALL_TASK_STATES, getManagedTaskStatus, listManagedTasks, summarizeTaskIssue } from "./queries/index.js";
+export * from "./research/index.js";

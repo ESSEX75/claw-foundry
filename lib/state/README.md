@@ -85,6 +85,8 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 - Worker activation checks optional configured capacity and cross-role sequential
   exclusivity inside the same registry transaction that reserves the slot. Lingering
   active roles also block exclusivity, even if disabled in the current configuration.
+- Optional cross-project sequential execution is checked in the same registry transaction
+  as reservation; concurrent dispatches cannot both claim different projects.
 - Project queries and mutations accept only the canonical project slug; notification routing is resolved before entering state.
 - Canonical slugs use strict lowercase kebab-case and must match their registry key; display names never address files or registry entries.
 - The registry accepts only its current schema and performs no legacy field or identifier normalization.

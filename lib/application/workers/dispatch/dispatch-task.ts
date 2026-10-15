@@ -17,7 +17,7 @@ import { getNotificationConfig, notify } from "../../notifications/index.js";
 import { resolveIssueNotificationEndpoint } from "../../notifications/resolve-endpoint.js";
 import { transitionWorkflowLabel } from "../../projection/index.js";
 import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageReviewSummaryDelivery } from "../../review/index.js";
-import { buildAnnouncement, formatSessionLabel } from "../../tasks/index.js";
+import { buildAnnouncement, formatSessionLabel } from "../../tasks/context/index.js";
 import { REVIEW_SUMMARY_RECEIPT_STEP, WORKER_AUDIT_EVENT } from "../const.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
 import { recordSlotDelivery } from "../delivery-state.js";

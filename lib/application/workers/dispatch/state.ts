@@ -1,7 +1,7 @@
 /** Owns worker-slot reservation and the authoritative issue runtime commit. */
 
 import type { WorkerDeliveryState } from "../../../domain/index.js";
-import { hasTestPhase, ISSUE_PROVIDER, producesReviewableWork, REVIEW_POLICY, TEST_POLICY, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
+import { EXECUTION_MODE, hasTestPhase, ISSUE_PROVIDER, producesReviewableWork, REVIEW_POLICY, TEST_POLICY, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import type { ResolvedConfig } from "../../../state/index.js";
 import { activateWorker, getLevelMaxWorkers, readIssueStateStore, updateSlot } from "../../../state/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -25,6 +25,7 @@ export async function reserveDispatchSlot(opts: DispatchOpts, plan: DispatchAtte
     slotIndex: plan.slotIndex,
     name: plan.botName,
     roleExecution: opts.roleExecution ?? config.workflow.roleExecution,
+    projectExecution: opts.pluginConfig?.projectExecution === EXECUTION_MODE.SEQUENTIAL ? EXECUTION_MODE.SEQUENTIAL : EXECUTION_MODE.PARALLEL,
     maxWorkers: getLevelMaxWorkers(config.roles[plan.role])[plan.level] ?? 0,
     delivery: {
       operationId: plan.deliveryId,

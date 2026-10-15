@@ -137,3 +137,12 @@ Within workers, shared root evidence and session policy operations/constants may
 to avoid command-barrel cycles; recovery must not depend on dispatch. In setup,
 shared runtime types come from root `types.ts`, and root contracts may import child
 `types.ts` directly to avoid barrel cycles.
+
+Task ownership commands select bulk candidates only from local configured queues and
+recheck the queue pair, provider availability and worker reservations under each issue
+lock. Explicit single-issue claims retain their wider scope. Ownership commits before
+label projection; repeating a claim for the same owner resumes projection, including
+label-owned integrity failures, without transferring ownership again. Bulk results
+retain independent failures and distinguish them from eligibility refusals. Discussion
+commands validate configured attribution and publish comments without requiring or
+initializing local workflow state. Comments are never automatically replayed.

@@ -159,6 +159,8 @@ export type ClaimManagedTaskInput = {
   workflow: WorkflowConfig;
   /** Effective role identifiers or resolved role configurations. */
   roles: string[];
+  /** Bulk-only guard: recheck current queue state and absence of worker ownership under lock. */
+  queuedOnly?: boolean;
 };
 
 /** Inputs consumed by resolveRoleLevel after adapter validation. */
@@ -193,4 +195,30 @@ export type ResolveStartTaskDecisionInput = {
   issueTitle: string;
   /** Provider description used for worker context or level selection. */
   issueDescription: string;
+};
+
+/** One task that was refused or failed, retaining the actionable cause. */
+export type TaskClaimDiagnostic = {
+  /** Provider-local issue identity. */
+  issueId: number;
+  /** Fresh refusal or underlying operation failure. */
+  reason: string;
+};
+
+/** Single or bulk ownership command using already resolved runtime dependencies. */
+export type ClaimManagedTasksInput = Omit<ClaimManagedTaskInput, "issueId" | "queuedOnly"> & {
+  /** Omit to select locally queued records; provider-only issues are never candidates. */
+  issueId?: number;
+};
+
+/** Ownership changes and independent refusal/failure outcomes. */
+export type ClaimManagedTasksResult = {
+  /** False if any attempted operation failed; eligibility refusals remain ordinary skips. */
+  success: boolean;
+  /** Issues whose ownership and label projection completed. */
+  claimed: number[];
+  /** Tasks refused by fresh local eligibility checks. */
+  skipped: TaskClaimDiagnostic[];
+  /** Failed operations, including projection failures after a local ownership commit. */
+  failed: TaskClaimDiagnostic[];
 };

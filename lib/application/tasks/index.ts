@@ -5,7 +5,8 @@ export type { SelectTaskContextInput, TaskContextBudget, TaskContextSelection } 
 export { buildAnnouncement, buildConflictFixMessage, buildTaskMessage, formatSessionLabel, TASK_COMMENT_LIMIT } from "./context/index.js";
 export { assertTaskInputFits, estimateTaskInputTokens, selectTaskContext } from "./context/index.js";
 export { createManagedTaskIssue, reconcileManagedTaskCreations } from "./creation/index.js";
-export { claimManagedTask, editTaskBody, resolveRoleLevel, setTaskLevel, startTask } from "./lifecycle/index.js";
+export * from "./discussion/index.js";
+export * from "./lifecycle/index.js";
 export type { ProjectionViewContext } from "./queries/index.js";
 export { ALL_TASK_STATES, getManagedTaskStatus, listManagedTasks, summarizeTaskIssue } from "./queries/index.js";
 export * from "./research/index.js";

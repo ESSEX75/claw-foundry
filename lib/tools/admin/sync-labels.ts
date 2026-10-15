@@ -11,17 +11,8 @@
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
 import { z } from "zod";
 
-import { ensureWorkflowLabels } from "../../application/index.js";
-import { log as auditLog } from "../../audit.js";
+import { syncProjectLabels } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
-import {
-  getRoleLabels,
-  getStateLabels,
-  getStepRoutingLabels,
-} from "../../domain/index.js";
-import { createProvider } from "../../integrations/index.js";
-import { loadConfig } from "../../state/index.js";
-import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
 import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
@@ -50,85 +41,8 @@ export function createSyncLabelsTool(ctx: PluginContext): OpenClawPluginToolFact
     async execute(_id: string, rawParams: Record<string, unknown>) {
       const params = syncLabelsInput.parse(rawParams);
       const workspaceDir = requireWorkspaceDir(toolCtx);
-      const projectSlug = params.projectSlug;
 
-      const data = await readProjects(workspaceDir);
-      let slugs: string[];
-
-      if (projectSlug) {
-        const project = data.projects[projectSlug];
-
-        if (!project) {
-          throw new Error(
-            `No project found for slug "${projectSlug}". Register a new project with project_register first.`,
-          );
-        }
-
-        slugs = [projectSlug];
-      } else {
-        slugs = Object.keys(data.projects);
-      }
-
-      if (slugs.length === 0) {
-        return jsonResult({ success: true, synced: [], message: "No projects registered." });
-      }
-
-      const results: Array<{
-        project: string;
-        stateLabels: string[];
-        roleLabels: string[];
-        routingLabels: string[];
-        error?: string;
-      }> = [];
-
-      for (const slug of slugs) {
-        const project = data.projects[slug];
-
-        if (!project) continue;
-
-        try {
-          const resolvedConfig = await loadConfig(workspaceDir, project.slug);
-
-          const { provider } = await createProvider({ repo: project.repo, provider: project.provider, runCommand: ctx.runCommand });
-
-          // State labels from the resolved workflow (not DEFAULT_WORKFLOW)
-          const stateLabels = getStateLabels(resolvedConfig.workflow);
-
-          await ensureWorkflowLabels(provider, resolvedConfig.workflow);
-
-          const roleLabels = getRoleLabels(resolvedConfig.roles);
-          const routingLabels = getStepRoutingLabels();
-
-          for (const { name, color } of [...roleLabels, ...routingLabels]) {
-            await provider.ensureLabel(name, color);
-          }
-
-          results.push({
-            project: slug,
-            stateLabels,
-            roleLabels: roleLabels.map((r) => r.name),
-            routingLabels: routingLabels.map((label) => label.name),
-          });
-        } catch (err) {
-          results.push({
-            project: slug,
-            stateLabels: [],
-            roleLabels: [],
-            routingLabels: [],
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-      }
-
-      await auditLog(workspaceDir, "sync_labels", {
-        projects: results.map((r) => r.project),
-        errors: results.filter((r) => r.error).length,
-      });
-
-      return jsonResult({
-        success: results.every((r) => !r.error),
-        synced: results,
-      });
+      return jsonResult(await syncProjectLabels({ workspaceDir, projectSlug: params.projectSlug, runCommand: ctx.runCommand }));
     },
   });
 }

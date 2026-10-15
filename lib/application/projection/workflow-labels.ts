@@ -7,7 +7,7 @@ import type { Issue, IssueProvider, LabelProjector } from "../../integrations/in
  * @param provider - Explicit provider label capability.
  * @param workflow - Application-resolved configuration, including custom states.
  */
-export async function ensureWorkflowLabels(provider: LabelProjector, workflow: WorkflowConfig): Promise<void> {
+export async function ensureWorkflowLabels(provider: Pick<LabelProjector, "ensureLabel">, workflow: WorkflowConfig): Promise<void> {
   const colors = getLabelColors(workflow);
 
   for (const label of getStateLabels(workflow)) {

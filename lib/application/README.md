@@ -9,6 +9,7 @@ capability entrypoints; never import the root or a capability's own barrel inter
 | `doctor` | Read-only routing diagnostics. |
 | `heartbeat` | Periodic maintenance, health, recovery, and pickup scheduling. |
 | `issue-runtime` | Runtime resolution, initialization, and complete state writes. |
+| `labels` | Idempotent project label-definition provisioning, separate from issue reconciliation. |
 | `issues` | Archive, deletion, retention, policy migration, and repair. |
 | `notifications` | Exact endpoint delivery, terminal retries, and delivery audit. |
 | `pipeline` | Completion transitions and provider effects. |
@@ -146,3 +147,9 @@ label-owned integrity failures, without transferring ownership again. Bulk resul
 retain independent failures and distinguish them from eligibility refusals. Discussion
 commands validate configured attribution and publish comments without requiring or
 initializing local workflow state. Comments are never automatically replayed.
+
+Registration and administrative label sync share `labels` catalog provisioning for
+resolved workflow, enabled role/level and policy labels. Sync uses persisted provider
+identity, validates exact scope before effects and retains independent project failures.
+A failed catalog may be partially applied; repeating it is idempotent. Catalog
+provisioning never scans issues, changes issues.json or reconciles issue projections.

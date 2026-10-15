@@ -20,8 +20,9 @@ Unknown arguments and non-boolean confirmation flags are rejected without coerci
 - Move reusable business behavior into `lib/application/*`.
 - Do not access provider or state internals directly when an application use case
   exists.
-- Workflow label synchronization calls application/projection with resolved configuration;
-  tool adapters validate project selection and format results, while providers apply explicit labels.
+- Project label catalog synchronization calls application/labels; the application validates
+  exact scope and provisions definitions using persisted provider identity. Issue projection
+  reconciliation remains a separate operation.
 - Register public tool factories in `lib/tools/registry.ts`.
 - Project registration and channel mutations call application/projects. Filesystem
   scaffolding is state-owned; a committed registration with failed scaffolding is

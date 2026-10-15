@@ -1,13 +1,13 @@
 /** Coordinates provider provisioning, locked registration and resumable create-only scaffolding. */
 
 import { log as auditLog } from "../../audit.js";
-import { emptyRoleWorkerState, getRoleLabels, getStateLabels, getStepRoutingLabels, type Project, type RoleWorkerState } from "../../domain/index.js";
+import { emptyRoleWorkerState, type Project, type RoleWorkerState } from "../../domain/index.js";
 import { createProvider } from "../../integrations/index.js";
 import {
   getConfiguredRoleIds, getLevelMaxWorkers, loadConfig, parseNotificationEndpoint, parseProjectSlug,
   readProjects, resolveRepoPath, scaffoldProjectOverrides, updateProjects,
 } from "../../state/index.js";
-import { ensureWorkflowLabels } from "../projection/index.js";
+import { provisionLabelCatalog } from "../labels/index.js";
 import { validateDestinationAvailability, validateProjectRoute } from "../setup/index.js";
 import { allocateEndpointName, matchesProjectRoute } from "./selection.js";
 import type { RegisterProjectInput, RegisterProjectResult } from "./types.js";
@@ -43,10 +43,7 @@ export async function registerProject(input: RegisterProjectInput): Promise<Regi
     provider: existing?.provider, runCommand: input.runCommand });
 
   if (!await provider.healthCheck()) throw new Error(`Provider health check failed for ${input.repo}. Verify repository access and CLI authentication.`);
-  await ensureWorkflowLabels(provider, config.workflow);
-  const labels = [...getRoleLabels(config.roles), ...getStepRoutingLabels()];
-
-  for (const label of labels) await provider.ensureLabel(label.name, label.color);
+  const catalog = await provisionLabelCatalog({ provider, workflow: config.workflow, roles: config.roles });
   const workers: Record<string, RoleWorkerState> = {};
 
   for (const role of getConfiguredRoleIds(config)) workers[role] = emptyRoleWorkerState(getLevelMaxWorkers(config.roles[role]));
@@ -83,5 +80,7 @@ export async function registerProject(input: RegisterProjectInput): Promise<Regi
 
   await auditLog(input.workspaceDir, "project_register", { projectSlug: slug, isNewProject: committed.isNewProject, scaffoldError });
 
-  return { ...committed, workflow: config.workflow, labelsEnsured: getStateLabels(config.workflow).length + labels.length, promptsScaffolded, scaffoldError };
+  return { ...committed, workflow: config.workflow,
+    labelsEnsured: catalog.stateLabels.length + catalog.roleLabels.length + catalog.routingLabels.length,
+    promptsScaffolded, scaffoldError };
 }

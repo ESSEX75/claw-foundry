@@ -15,6 +15,8 @@ Unknown arguments and non-boolean confirmation flags are rejected without coerci
 ## Boundary Rules
 
 - Keep OpenClaw tool context handling here.
+- Manual health calls application/heartbeat. An omitted project slug explicitly selects
+  all registered projects; unknown scopes fail and never become a successful empty scan.
 - Move reusable business behavior into `lib/application/*`.
 - Do not access provider or state internals directly when an application use case
   exists.

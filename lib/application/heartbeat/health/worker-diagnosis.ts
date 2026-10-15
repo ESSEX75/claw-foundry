@@ -15,7 +15,7 @@ export async function diagnoseWorkerHealth(input: WorkerHealthInput): Promise<He
   const workflow = input.workflow ?? DEFAULT_WORKFLOW;
   const states = (await readIssueStateStore(workspaceDir, projectSlug)).issues;
   const roleWorker = getRoleWorker(project, role);
-  const hasStates = hasWorkflowStates(workflow, role);
+  const hasStates = input.roleEnabled !== false && hasWorkflowStates(workflow, role);
   const expectedLabel = hasStates ? getActiveLabel(workflow, role) : undefined;
   const queueLabel = hasStates ? getRevertLabel(workflow, role) : undefined;
   const findings: HealthFix[] = [];
@@ -43,6 +43,14 @@ export async function diagnoseWorkerHealth(input: WorkerHealthInput): Promise<He
           ...identity, type: HEALTH_ISSUE_TYPE.ISSUE_STATE_MISSING,
           severity: HEALTH_ISSUE_SEVERITY.CRITICAL,
           message: `${role} ${level}[${slotIndex}] references issue #${slot.issueId} without local runtime state`,
+        }, fixed: false });
+        continue;
+      }
+
+      if (input.roleEnabled === false && (slot.active || slot.issueId !== null)) {
+        findings.push({ issue: { ...identity, type: HEALTH_ISSUE_TYPE.ROLE_UNAVAILABLE,
+          severity: HEALTH_ISSUE_SEVERITY.CRITICAL,
+          message: `${role} ${level}[${slotIndex}] retains a reservation for a disabled or removed role; restore configuration or explicitly repair ownership.`,
         }, fixed: false });
         continue;
       }

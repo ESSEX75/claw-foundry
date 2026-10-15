@@ -4,7 +4,7 @@ import { log as auditLog } from "../../../audit.js";
 import { DEFAULT_WORKFLOW, findStateKeyByLabel, getActiveLabel, getRevertLabel } from "../../../domain/index.js";
 import { AGENT_TURN_STATUS, submitAgentTurn } from "../../../integrations/index.js";
 import {
-  getProject, getRoleWorker, readIssueStateStore, readProjects,
+  getProject, getRoleWorker, loadConfig, readIssueStateStore, readProjects,
   updateIssueRuntimeRecord, updateSlot, withIssueOrchestrationLock,
 } from "../../../state/index.js";
 import { releaseTransitionWorkerLocked } from "../../pipeline/recovery.js";
@@ -33,6 +33,10 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
 
     if (!project || !slot || slot.issueId !== expected.issueId || slot.sessionKey !== expected.sessionKey
       || slot.startTime !== expected.startTime || slot.active !== expected.active) return finding;
+    if (input.roleEnabled === true && (await loadConfig(workspaceDir, projectSlug)).roles[role]?.enabled !== true) {
+      return { ...finding, fixed: false, error: "Role became disabled or was removed; rerun health before repair." };
+    }
+
     const fresh = (await diagnoseWorkerHealth({ ...input, project })).find((item) =>
       item.issue.level === level && item.issue.slotIndex === slotIndex && item.issue.type === finding.issue.type
       && item.plannedAction === finding.plannedAction);

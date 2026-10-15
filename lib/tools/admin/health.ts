@@ -1,27 +1,10 @@
-/**
- * health — Worker health scan with optional auto-fix.
- *
- * Triangulates projects.json, issue labels, and session state to detect:
- *   - session_dead: active worker but session missing in gateway
- *   - label_mismatch: active worker but issue not in expected label
- *   - stale_worker: active for >2h
- *   - stuck_label: inactive but issue has Doing/Testing label
- *   - orphan_issue_id: inactive but issueId set
- *   - issue_gone: active but issue deleted/closed
- *   - issue_state_missing: slot references an issue absent from issues.json
- *
- * Read-only by default (surfaces issues). Pass fix=true to apply fixes.
- */
+/** Validates manual health scope and formats application-owned worker diagnostics. */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
 import { z } from "zod";
 
-import { checkWorkerHealth, type HealthFix, resolveProvider } from "../../application/index.js";
-import { log as auditLog } from "../../audit.js";
+import { inspectWorkerHealth } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
-import { fetchGatewaySessions } from "../../integrations/index.js";
-import { getConfiguredRoleIds, loadConfig } from "../../state/index.js";
-import { readProjects } from "../../state/index.js";
 import { requireWorkspaceDir } from "../helpers.js";
 import { requiredTextInput, toolInputParameters } from "../validation/index.js";
 
@@ -38,7 +21,8 @@ export function createHealthTool(ctx: Pick<PluginContext, "runCommand">): OpenCl
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: "health",
     label: "Health",
-    description: `Scan worker health across projects. Detects zombies, stale workers, orphaned state. Pass fix=true to auto-fix. Context-aware: auto-filters in group chats.`,
+    description: "Scan worker health across projects, including retained slots of disabled or removed roles. "
+      + "Pass fix=true to apply safe remedies. Omit projectSlug to scan all registered projects.",
     parameters: toolInputParameters(healthInput),
 
     /** Parse the untrusted request before resolving context or performing effects.
@@ -47,69 +31,10 @@ export function createHealthTool(ctx: Pick<PluginContext, "runCommand">): OpenCl
      */
     async execute(_id: string, rawParams: Record<string, unknown>) {
       const params = healthInput.parse(rawParams);
-      const workspaceDir = requireWorkspaceDir(toolCtx);
-      const fix = params.fix ?? false;
+      const result = await inspectWorkerHealth({ workspaceDir: requireWorkspaceDir(toolCtx), projectSlug: params.projectSlug,
+        fix: params.fix, runCommand: ctx.runCommand });
 
-      const projectSlug = params.projectSlug;
-
-      const data = await readProjects(workspaceDir);
-
-      let slugs = Object.keys(data.projects);
-
-      if (projectSlug) {
-        slugs = data.projects[projectSlug] ? [projectSlug] : [];
-      }
-
-      // Fetch gateway sessions once for all projects
-      const sessions = await fetchGatewaySessions(undefined, ctx.runCommand);
-
-      const issues: Array<HealthFix & { project: string; role: string }> = [];
-
-      for (const slug of slugs) {
-        const project = data.projects[slug];
-
-        if (!project) continue;
-        const { provider } = await resolveProvider(workspaceDir, project, ctx.runCommand);
-        const resolvedConfig = await loadConfig(workspaceDir, project.slug);
-
-        for (const role of getConfiguredRoleIds(resolvedConfig)) {
-          // Worker health check (session liveness, label consistency, etc)
-          const healthFixes = await checkWorkerHealth({
-            workspaceDir,
-            projectSlug: slug,
-            project,
-            role,
-            sessions,
-            autoFix: fix,
-            provider,
-            workflow: resolvedConfig.workflow,
-            staleWorkerHours: resolvedConfig.timeouts.staleWorkerHours,
-            stallTimeoutMinutes: resolvedConfig.timeouts.stallTimeoutMinutes,
-            agentId: project.agentId,
-            runCommand: ctx.runCommand,
-          });
-
-          issues.push(...healthFixes.map((f) => ({ ...f, project: project.name, role })));
-        }
-      }
-
-      await auditLog(workspaceDir, "health", {
-        projectCount: slugs.length,
-        fix,
-        issuesFound: issues.length,
-        issuesFixed: issues.filter((i) => i.fixed).length,
-        sessionsCached: sessions?.sessions.size ?? 0,
-        sessionInventoryComplete: sessions?.complete ?? false,
-      });
-
-      return jsonResult({
-        success: true,
-        fix,
-        projectsScanned: slugs.length,
-        sessionsQueried: sessions?.sessions.size ?? 0,
-        sessionInventoryComplete: sessions?.complete ?? false,
-        issues,
-      });
+      return jsonResult({ ...result, issues: result.issues.map(finding => ({ ...finding, project: finding.issue.project, role: finding.issue.role })) });
     },
   });
 }

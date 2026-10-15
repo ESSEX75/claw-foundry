@@ -27,6 +27,7 @@ export const HEALTH_ACTION = {
 
 /** Conditions reported by heartbeat health diagnosis. */
 export const HEALTH_ISSUE_TYPE = {
+  ROLE_UNAVAILABLE: "role_unavailable",
   SESSION_DEAD: "session_dead",
   INSPECTION_FAILED: "inspection_failed",
   LABEL_MISMATCH: "label_mismatch",

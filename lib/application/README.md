@@ -112,6 +112,10 @@ separate READMEs. Their file responsibilities and API details belong in source J
   or occupied slots, and cleans attachments before removing records, retaining cleanup
   intent on failure. Audit never determines readiness, ownership, or recovery state.
 - Heartbeat prevents overlapping ticks and runs recovery/maintenance before pickup.
+  Manual health validates exact project scope before gateway observations and retains
+  independent project/role inspection failures. Health includes persisted slots of
+  disabled or removed roles; these are reported without inventing a replacement workflow
+  or implicitly releasing their ownership.
   Recovery failure stops later project phases; workflow failures block that project's
   dispatch without suppressing independent projects. Diagnosis is read-only; remediation
   locks and rechecks local ownership. Provider absence alone never releases active work.

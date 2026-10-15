@@ -178,7 +178,7 @@ At least one of `title` or `body` must be provided.
 
 ### `task_owner`
 
-Claim issue ownership for this instance. Adds an `owner:{instanceName}` label so this instance owns the issue for queue scanning and dispatch. Supports claiming a single issue or all unclaimed queued issues.
+Claim ownership in local `issues.json`, then reconcile its `owner:{instanceName}` label projection. Omit `issueId` to select local queued issues; each candidate is rechecked under its issue lock. Provider-only issues are never candidates. Repeat a claim for the same owner to resume failed label projection. Results distinguish `claimed`, eligibility `skipped`, and operation `failed`; failures retain their cause and set `success: false`.
 
 **Source:** [`lib/tools/tasks/task-owner.ts`](../lib/tools/tasks/task-owner.ts)
 
@@ -340,15 +340,17 @@ One-time project setup. Creates state labels, scaffolds project directory with o
 
 For a Telegram topic, pass the group ID in `channelId` and the topic ID in `threadId`. The encoded form `channelId:topic:threadId` is rejected.
 
-**What it does atomically:**
+**What it does:**
 
 1. Generates the project slug from `name`
-2. Resolves repo path, auto-detects GitHub/GitLab from git remote
+2. Resolves repo path, uses the persisted provider for an existing project or detects GitHub/GitLab for a new project
 3. Verifies provider health (CLI installed and authenticated)
 4. Creates state labels, role:level labels, and step routing labels (idempotent)
 5. Creates a project entry or adds the channel to an existing project
 6. Scaffolds project directory with `prompts/` folder and `README.md` explaining prompt and workflow overrides
 7. Writes audit log
+
+Provider provisioning, registry commit and scaffolding are separate effects. A committed registration with failed scaffolding reports `scaffold_pending`; repeat the same registration to finish it.
 
 ---
 
@@ -507,16 +509,24 @@ Sync GitHub/GitLab labels with the current workflow config. Creates any missing 
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `channelId` | string | No | Channel ID identifying one project. Omit to sync all registered projects. |
+| `projectSlug` | string | No | Exact canonical project slug. Omit to sync all registered projects. |
 
 **What it does:**
 
 1. Loads the resolved workflow config (built-in → workspace → project)
 2. Derives all required labels: state labels, role:level labels, step routing labels
 3. Creates any missing labels on the GitHub/GitLab repo via the provider
-4. Reports created vs. already-existing labels
+4. Reports each completed catalog or an independent project failure; provider effects before failure can be safely repeated
 
 **When to use:** After editing `workflow.yaml` to add custom states, change label names, or enable the test phase.
+
+Use `sync_labels` with these arguments for one project:
+
+```json
+{"projectSlug":"my-project"}
+```
+
+Provider identity comes from the registry. This provisions repository label definitions only: it does not change local issue state, reconcile individual issues, rename stored workflow states, or delete obsolete label definitions.
 
 ---
 
@@ -562,7 +572,7 @@ The tool requires exactly one of `project` or `channelId`, a positive safe integ
 
 Migrate review/test policy snapshots for existing managed issues. This is for cases where project workflow config changed after issues were already created. New issues use the new project config automatically; existing issues keep their local snapshot until explicitly migrated.
 
-**Source:** [`lib/application/issues/policy-migration.ts`](../lib/application/issues/policy-migration.ts), [`lib/tools/issues/issue-policy-migrate.ts`](../lib/tools/issues/issue-policy-migrate.ts)
+**Source:** [`lib/application/issues/policy/command.ts`](../lib/application/issues/policy/command.ts), [`lib/tools/issues/issue-policy-migrate.ts`](../lib/tools/issues/issue-policy-migrate.ts)
 
 ```bash
 devclaw repair policies --project my-webapp --review agent --test agent --state toReview --dry-run

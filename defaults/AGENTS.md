@@ -77,11 +77,11 @@ Configurable per project in `workflow.yaml` → `workflow.reviewPolicy`:
 
 - **human** (default): All PRs need human approval on GitHub/GitLab. Heartbeat auto-merges when approved.
 - **agent**: Agent reviewer checks every PR before merge.
-- **auto**: Junior/medior → agent review, senior → human review.
+- **skip**: Skip the reviewer worker and follow the configured SKIP transition.
 
 ### Test Phase (optional)
 
-By default, approved PRs go straight to Done. To add automated QA after review, uncomment the `toTest` and `testing` states in `workflow.yaml` and change the review targets from `done` to `toTest`. See the comments in `workflow.yaml` for step-by-step instructions.
+By default, approved PRs enter To Test and follow SKIP to Done without a tester. The built-in graph already contains `toTest` and `testing`. Set `workflow.testPolicy: agent` for new issue snapshots and provide tester prompts to enable automated QA.
 
 > **When the user asks to change the workflow**, call `workflow_guide` first. It explains the full config structure, valid values, and override system.
 
@@ -91,7 +91,7 @@ With testing enabled, the flow becomes:
                                                 → fail → To Improve
 ```
 
-For initialized DevClaw-managed issues, local `<workspace>/devclaw/projects/<project>/issues.json` is the runtime source of truth. Provider labels are required visual projection only; do not manually edit labels expecting DevClaw runtime state to change.
+For initialized DevClaw-managed issues, local `<workspace>/devclaw/projects/<project>/issues.json` is the runtime source of truth. Provider labels and body metadata are visual projection only; do not edit them expecting runtime state to change. Existing issue review/test policy snapshots stay unchanged when workflow defaults change. Use `issue_policy_migrate` with `project`, selected `issueIds`, the requested policy and `dryRun: true`; review the preview before applying the same selection with `dryRun: false`. `sync_labels` accepts optional `projectSlug` and provisions label definitions only.
 
 ### Developer Assignment
 
@@ -114,12 +114,12 @@ Roles use their configured level scales and explicit capability ranks. Built-in 
 
 ### When Work Completes
 
-Workers call `work_finish` themselves — the label transition, state update, and audit log happen atomically. The heartbeat service will pick up the next task on its next cycle:
+Workers call `work_finish` themselves. Local state commits and provider effects have separate recovery boundaries; inspect the result before treating completion as confirmed. The heartbeat service will pick up the next task on its next cycle:
 
 - Developer "done" → "To Review" → routes based on review policy:
   - Human (default): heartbeat polls PR status → auto-merges when approved → Done
   - Agent: reviewer agent dispatched → "Reviewing" → approve/reject
-  - Auto: junior/medior → agent, senior → human
+  - Skip: follow the configured SKIP transition
 - Reviewer "approve" → merges PR → Done (or To Test if test phase enabled)
 - Reviewer "reject" → "To Improve" → scheduler dispatches Developer
 - PR comments / changes requested → "To Improve" (heartbeat detects automatically)
@@ -135,7 +135,7 @@ If the test phase is enabled in workflow.yaml:
 
 ### Prompt Instructions
 
-Workers receive role-specific instructions appended to their task message. These are loaded from `devclaw/projects/<project-name>/prompts/<role>.md` in the workspace, falling back to `devclaw/prompts/<role>.md` if no project-specific file exists. `project_register` scaffolds these files automatically — edit them to customize worker behavior per project.
+Workers receive role-specific instructions appended to their task message. These are loaded from `devclaw/projects/<project-name>/prompts/<role>.md` in the workspace, falling back to `devclaw/prompts/<role>.md` if no project-specific file exists. Setup provides built-in workspace prompts; `project_register` scaffolds project override documentation without overwriting files. Create or edit role prompts explicitly to customize behavior. If both prompt paths are absent, DevClaw supplies no role-specific instructions and does not substitute orchestrator instructions.
 
 ### Heartbeats
 

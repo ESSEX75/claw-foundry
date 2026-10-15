@@ -32,7 +32,7 @@ stateDiagram-v2
     Planning --> ToDo: Ready for development
     Planning --> ToResearch: Needs investigation
     ToResearch --> Researching: Architect picks up
-    Researching --> Planning: Architect done (findings posted)
+    Researching --> Done: Architect done (implementation tasks created)
     Researching --> Refining: Architect blocked
     ToDo --> Doing: DEV picks up
     Doing --> ToReview: DEV done (opens PR)
@@ -48,112 +48,15 @@ stateDiagram-v2
 
 ## Workflow States
 
-Each state has a type, label, color, and optional transitions. The default configuration:
+Each state has a type, label, color, and optional transitions. The complete default graph is maintained in [`defaults/devclaw/workflow.yaml`](../defaults/devclaw/workflow.yaml). Sparse overrides inherit that graph:
 
 ```yaml
 workflow:
-  initial: planning
   reviewPolicy: human
-  states:
-    planning:
-      type: hold
-      label: Planning
-      color: "#95a5a6"
-      on:
-        APPROVE:
-          target: todo
-    toResearch:
-      type: queue
-      role: architect
-      label: To Research
-      color: "#0075ca"
-      priority: 1
-      on:
-        PICKUP:
-          target: researching
-    researching:
-      type: active
-      role: architect
-      label: Researching
-      color: "#4a90e2"
-      on:
-        COMPLETE:
-          target: planning
-        BLOCKED:
-          target: refining
-    todo:
-      type: queue
-      role: developer
-      label: To Do
-      color: "#428bca"
-      priority: 1
-      on:
-        PICKUP:
-          target: doing
-    doing:
-      type: active
-      role: developer
-      label: Doing
-      color: "#f0ad4e"
-      on:
-        COMPLETE:
-          target: toReview
-          actions: [detectPr]
-        BLOCKED:
-          target: refining
-    toReview:
-      type: queue
-      role: reviewer
-      label: To Review
-      color: "#7057ff"
-      priority: 2
-      check: prApproved
-      on:
-        PICKUP:
-          target: reviewing
-        APPROVED:
-          target: done
-          actions: [mergePr, gitPull, closeIssue]
-        MERGE_FAILED:
-          target: toImprove
-        CHANGES_REQUESTED:
-          target: toImprove
-        MERGE_CONFLICT:
-          target: toImprove
-    reviewing:
-      type: active
-      role: reviewer
-      label: Reviewing
-      color: "#c5def5"
-      on:
-        APPROVE:
-          target: done
-          actions: [mergePr, gitPull, closeIssue]
-        REJECT:
-          target: toImprove
-        BLOCKED:
-          target: refining
-    done:
-      type: terminal
-      label: Done
-      color: "#5cb85c"
-    toImprove:
-      type: queue
-      role: developer
-      label: To Improve
-      color: "#d9534f"
-      priority: 3
-      on:
-        PICKUP:
-          target: doing
-    refining:
-      type: hold
-      label: Refining
-      color: "#f39c12"
-      on:
-        APPROVE:
-          target: todo
+  testPolicy: skip
 ```
+
+The default graph includes `toTest` and `testing`. Review transitions enter `toTest`; a local `testPolicy: skip` snapshot follows its `SKIP` transition to `done` without dispatching a tester.
 
 Every entry under `on` must use an object with a required `target`. Optional
 `actions` and `description` fields extend the same shape. String shorthand such
@@ -230,85 +133,56 @@ workflow:
 |---|---|
 | `human` (default) | All PRs need human approval on GitHub/GitLab. The heartbeat service auto-merges when the PR is approved. PR comments or changes-requested reviews automatically move the issue to "To Improve". |
 | `agent` | An agent reviewer checks every PR before merge. The reviewer agent is dispatched automatically and calls `work_finish` with approve/reject. |
-| `auto` | Junior/medior developer tasks → agent review. Senior developer tasks → human review. Useful for catching obvious issues with AI while reserving human review for complex work. |
+| `skip` | Skip the reviewer worker and follow the configured `SKIP` transition. |
 
 ### Per-Issue Overrides
 
 Override the project-level policy for a single issue through DevClaw-managed state. Provider labels are still rendered for visibility:
 
-| Label | Effect |
+| Projected label | Local policy snapshot |
 |---|---|
-| `review:human` | Force human review |
-| `review:agent` | Force agent review |
-| `review:skip` | Skip review entirely |
+| `review:human` | `reviewPolicy: human` |
+| `review:agent` | `reviewPolicy: agent` |
+| `review:skip` | `reviewPolicy: skip` |
 
-For initialized DevClaw-managed issues, these labels are projection from `devclaw/projects/<project>/issues.json`. Editing `review:*`, `test:*`, state, owner, or role labels directly in GitHub/GitLab does not change runtime state. The heartbeat projection pass restores recoverable drift and marks metadata tamper as `integrity_error`.
+For initialized DevClaw-managed issues, these labels are projection from `devclaw/projects/<project>/issues.json`. Editing `review:*`, `test:*`, state, owner, or role labels or body metadata directly in GitHub/GitLab does not change runtime state. The heartbeat projection pass restores recoverable drift and marks metadata tamper as `integrity_error`.
 
-**Source:** [`lib/domain/workflow/queries.ts`](../lib/domain/workflow/queries.ts) — `resolveReviewRouting()`
+Change existing policy snapshots through `issue_policy_migrate`. Preview the exact selection, review changed/skipped results, then apply with `dryRun: false`:
+
+```json
+{"project":"my-project","issueIds":[42],"reviewPolicy":"agent","dryRun":true}
+```
+
+Changing `workflow.reviewPolicy` affects new issue snapshots; it does not implicitly migrate existing ones. Active worker reservations are skipped. A projection failure after apply leaves the local policy committed; repeat the same migration to resume reconciliation. Provider-only issues are not initialized by migration.
+
+**Source:** [`lib/domain/workflow/labels.ts`](../lib/domain/workflow/labels.ts) — `resolveReviewRouting()`
 
 ---
 
 ## Test Phase (optional)
 
-By default, approved PRs go straight to Done. To add automated QA after review, enable the test phase by adding `toTest` and `testing` states.
+By default, the tester queue follows its SKIP transition to Done. Enable automated QA through `testPolicy: agent` and tester instructions.
 
 ### Enabling the Test Phase
 
-**Step 1:** Add the `toTest` and `testing` states to your `workflow.yaml` (uncomment them in the generated file):
+Set the default for new issues and ensure the tester role is enabled:
 
 ```yaml
-    toTest:
-      type: queue
-      role: tester
-      label: To Test
-      color: "#5bc0de"
-      priority: 2
-      on:
-        PICKUP:
-          target: testing
-    testing:
-      type: active
-      role: tester
-      label: Testing
-      color: "#9b59b6"
-      on:
-        PASS:
-          target: done
-          actions:
-            - closeIssue
-        FAIL:
-          target: toImprove
-          actions:
-            - reopenIssue
-        REFINE:
-          target: refining
-        BLOCKED:
-          target: refining
+workflow:
+  testPolicy: agent
 ```
 
-**Step 2:** Change review targets from `done` to `toTest`:
+The built-in graph already routes review to the tester queue and defines tester completion transitions. A custom graph must explicitly connect those states and retain a `SKIP` transition for skipped snapshots.
 
-```yaml
-    toReview:
-      on:
-        APPROVED:
-          target: toTest        # was: done
-          actions: [mergePr, gitPull]  # removed: closeIssue
-    reviewing:
-      on:
-        APPROVE:
-          target: toTest        # was: done
-          actions: [mergePr, gitPull]  # removed: closeIssue
+Provide role instructions at `devclaw/prompts/tester.md` or the project override `devclaw/projects/<project>/prompts/tester.md`. If neither exists, DevClaw supplies no role-specific instructions and does not fall back to orchestrator instructions.
+
+Existing issues retain their snapshots. To enable testing on selected existing issues, preview `issue_policy_migrate` with `testPolicy: agent`, then apply the same selection with `dryRun: false`. To skip testing on one issue:
+
+```json
+{"project":"my-project","issueIds":[42],"testPolicy":"skip","dryRun":true}
 ```
 
-**Step 3:** Add tester role prompts:
-
-- Default: `devclaw/prompts/tester.md`
-- Per-project: `devclaw/projects/<project>/prompts/tester.md`
-
-**Per-issue skip:** Add the `test:skip` label to bypass testing for a specific issue.
-
-For initialized managed issues, `test:skip` is also a provider projection of local state. Use DevClaw tools to change issue routing; provider label edits are not imported as runtime changes.
+Review the preview before applying. Adding or removing `test:skip` on the provider never changes the local policy. `sync_labels` provisions label definitions only; it does not migrate snapshots or issue projections.
 
 ### Pipeline with Test Phase
 

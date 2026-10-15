@@ -6,7 +6,7 @@
  * common customization recipes. Designed to be read by an LLM before
  * it edits any workflow.yaml file.
  *
- * No parameters, no side effects — pure documentation.
+ * Optional topic selection, no side effects — pure documentation.
  */
 
 import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFactory } from "openclaw/plugin-sdk/core";
@@ -91,6 +91,9 @@ export function createWorkflowGuideTool(): OpenClawPluginToolFactory {
 // Section builders
 // ---------------------------------------------------------------------------
 
+/** Explain config layering and retained local policy snapshots.
+ * @param dataDir - Resolved workspace data root displayed in file locations.
+ */
 function buildOverview(dataDir: string): string {
   return `# Workflow Configuration Guide
 
@@ -128,9 +131,11 @@ roles:
 workflow:
   reviewPolicy: agent
 \`\`\`
-This changes only the senior developer model and review policy; everything else inherits.`;
+This changes only the senior developer model and the default review policy for new issues; everything else inherits.
+Existing managed issues retain their local policy snapshots until explicitly migrated with \`issue_policy_migrate\`.`;
 }
 
+/** Explain configured workflow states and definition-only label synchronization. */
 function buildStatesSection(): string {
   return `# Workflow States
 
@@ -172,6 +177,7 @@ These are the valid keys for the \`on:\` object on a state:
 |--------------------|--------------------------------------------|----------------|
 | \`PICKUP\`           | Worker picks up from queue                 | Queue dispatch  |
 | \`COMPLETE\`         | Worker finished successfully               | Worker tool     |
+| \`REVIEW\`           | Send a task for review in a configured transition | Role completion mapping |
 | \`APPROVE\`          | Human/agent approves                       | Reviewer tool   |
 | \`REJECT\`           | Reviewer rejects                           | Reviewer tool   |
 | \`APPROVED\`         | PR approved on GitHub/GitLab               | Heartbeat       |
@@ -181,6 +187,8 @@ These are the valid keys for the \`on:\` object on a state:
 | \`PASS\`             | Tester passes                              | Tester tool     |
 | \`FAIL\`             | Tester fails                               | Tester tool     |
 | \`REFINE\`           | Needs refinement                           | Tester tool     |
+| \`SKIP\`             | Follow a configured skipped-policy transition | Heartbeat |
+| \`PR_CLOSED\`        | Linked PR closed without merge | Heartbeat |
 | \`BLOCKED\`          | Work is blocked                            | Any worker tool |
 
 ## Transition target format
@@ -219,19 +227,28 @@ APPROVED:
 ## Syncing labels after changes
 
 After adding, renaming, or removing states in workflow.yaml, run the \`sync_labels\` tool to create the ` +
-    `corresponding labels on GitHub/GitLab. Labels are only created during \`project_register\` — ` +
+    `corresponding label definitions on GitHub/GitLab. Registration also provisions them; ` +
     `workflow.yaml edits are not automatically synced.
 
 \`sync_labels\` reads the fully resolved config (built-in + workspace + project overrides) and ensures ` +
     `every state label, role:level label, and step routing label exists on the provider. It is idempotent — ` +
     `safe to run multiple times.
 
+This only provisions repository label definitions: it does not migrate local issue state,
+rename stored workflow states, delete old definitions, or reconcile individual issue projections.
+
 \`\`\`
 sync_labels                         # sync all projects
-sync_labels channelId=-100123       # sync one project
+sync_labels projectSlug=my-project  # sync one project
+\`\`\`
+
+Arguments for syncing one project:
+\`\`\`json
+{"projectSlug":"my-project"}
 \`\`\``;
 }
 
+/** Explain role configuration, workflow reachability and instruction ownership. */
 function buildRolesSection(): string {
   return `# Roles Configuration
 
@@ -310,15 +327,18 @@ Each role can have a system prompt file:
 - Workspace default: \`<dataDir>/prompts/<role>.md\`
 - Project override: \`<dataDir>/projects/<name>/prompts/<role>.md\`
 
-If a role has no prompt file, the worker gets a generic system prompt. When enabling a new role (like tester), create its prompt file.`;
+If neither prompt exists, DevClaw supplies no role-specific instructions and does not
+substitute orchestrator instructions. Do not assume a generic role prompt. Create the
+role prompt before enabling or dispatching it.`;
 }
 
+/** Explain authoritative policy snapshots and explicit migration before projection. */
 function buildReviewSection(): string {
   return `# Review Policy
 
 ## reviewPolicy (FIXED — 3 values)
 
-Set in \`workflow.reviewPolicy\`:
+Set defaults for new issues in \`workflow.reviewPolicy\`; existing issues retain local snapshots:
 
 | Value    | Behavior |
 |---------|----------|
@@ -335,16 +355,33 @@ Set in \`workflow.reviewPolicy\`:
    - \`skip\`: skips the reviewer worker and follows the configured transition
 3. The \`toReview\` state should have a \`check: prApproved\` field for human review flow
 
-## Per-issue override labels (FIXED format, applied to individual issues)
+## Per-issue policy snapshots and their label projection
 
-| Label           | Effect |
-|----------------|--------|
-| \`review:human\` | Force human review for this issue regardless of policy |
-| \`review:agent\` | Force agent review for this issue |
-| \`review:skip\`  | Skip review entirely — go straight to done/test |
-| \`test:skip\`    | Skip the test phase for this issue (if testing enabled) |
+For each initialized issue, \`devclaw/projects/<project>/issues.json\` is authoritative.
+Its \`reviewPolicy\` and \`testPolicy\` snapshots determine routing; provider labels and
+body metadata display local state. Manual label/body edits never change runtime policy.
 
-These labels are applied to the issue on GitHub/GitLab and override the global policy.
+| Projected label | Local snapshot |
+|----------------|----------------|
+| \`review:human\` | \`reviewPolicy: human\` |
+| \`review:agent\` | \`reviewPolicy: agent\` |
+| \`review:skip\` | \`reviewPolicy: skip\` |
+| \`test:skip\` | \`testPolicy: skip\` |
+
+Use \`issue_policy_migrate\` to change an existing issue's snapshots through the
+application command, first previewing the exact selection:
+\`\`\`json
+{"project":"my-project","issueIds":[42],"reviewPolicy":"agent","dryRun":true}
+\`\`\`
+After reviewing the preview, apply the same selection explicitly:
+\`\`\`json
+{"project":"my-project","issueIds":[42],"reviewPolicy":"agent","dryRun":false}
+\`\`\`
+Active worker reservations are skipped; terminal issues are excluded unless explicitly
+selected with \`includeClosed: true\`. Apply writes local policy before reconciling
+labels. If projection fails, the local policy remains committed; repeat the same
+command to resume label reconciliation. Missing local records are never initialized
+from provider labels by policy migration. Inspect both changed and skipped results.
 
 ## Example: switching to agent review
 
@@ -356,91 +393,48 @@ workflow:
 The reviewer role must be configured (it is by default) and needs a prompt file at \`<dataDir>/prompts/reviewer.md\`.`;
 }
 
+/** Explain configured testing defaults and explicit migration of existing issue snapshots. */
 function buildTestingSection(): string {
   return `# Test Phase (Optional)
 
-The test phase is **disabled by default**. When enabled, issues go through automated QA after review, before closing.
+Testing is skipped by default through \`workflow.testPolicy: skip\`.
+The built-in graph already contains \`toTest\` and \`testing\`; review transitions
+merge the PR and enter \`toTest\`, whose \`SKIP\` transition closes the issue.
 
-## Default flow (no test phase)
-\`\`\`
-Planning → To Do → Doing → To Review → [PR approved] → Done (auto-merge + close)
-\`\`\`
+## Enable testing for new issues
 
-## Flow with test phase enabled
-\`\`\`
-Planning → To Do → Doing → To Review → [PR approved] → To Test → Testing → Done
-\`\`\`
-
-## How to enable the test phase
-
-Four changes needed:
-
-### 1. Uncomment the toTest and testing states
-Add these states to your workflow (they're commented out in the default workflow.yaml):
 \`\`\`yaml
-    toTest:
-      type: queue
-      role: tester
-      label: To Test
-      color: "#5bc0de"
-      priority: 2
-      on:
-        PICKUP:
-          target: testing
-    testing:
-      type: active
-      role: tester
-      label: Testing
-      color: "#9b59b6"
-      on:
-        PASS:
-          target: done
-          actions:
-            - closeIssue
-        FAIL:
-          target: toImprove
-          actions:
-            - reopenIssue
-        REFINE:
-          target: refining
-        BLOCKED:
-          target: refining
+workflow:
+  testPolicy: agent
 \`\`\`
 
-### 2. Change APPROVED targets from "done" to "toTest"
-In the \`toReview\` state:
-\`\`\`yaml
-    toReview:
-      on:
-        APPROVED:
-          target: toTest        # was: done
-          actions:
-            - mergePr
-            - gitPull           # remove closeIssue — tester closes it
+Keep the tester role enabled and provide \`<dataDir>/prompts/tester.md\` or a
+project override at \`<dataDir>/projects/<project-slug>/prompts/tester.md\`.
+For a custom graph, ensure review transitions reach the tester queue, its \`PICKUP\`
+reaches the tester active state, and \`PASS\`, \`FAIL\`, \`REFINE\` and \`BLOCKED\`
+route explicitly. A test queue needs a \`SKIP\` transition for skipped snapshots.
+Run \`sync_labels\` after changing label definitions; it does not change issue policies.
+
+## Existing issues and per-issue skip
+
+Changing workflow defaults does not replace policy snapshots of initialized issues.
+Use \`issue_policy_migrate\` to preview enabling testing for selected existing issues:
+\`\`\`json
+{"project":"my-project","issueIds":[42],"testPolicy":"agent","dryRun":true}
 \`\`\`
-
-In the \`reviewing\` state (if using agent review):
-\`\`\`yaml
-    reviewing:
-      on:
-        APPROVE:
-          target: toTest        # was: done
-          actions:
-            - mergePr
-            - gitPull           # remove closeIssue — tester closes it
+Apply the same selection with \`dryRun: false\` after reviewing the result.
+To skip testing on one existing issue, preview then apply \`testPolicy: skip\`:
+\`\`\`json
+{"project":"my-project","issueIds":[42],"testPolicy":"skip","dryRun":true}
 \`\`\`
+The command updates local \`issues.json\` first and projects labels from it.
+Adding or removing \`test:skip\` on the provider never changes the local snapshot.
 
-### 3. Remove closeIssue from the APPROVED/APPROVE actions
-The tester now closes the issue on PASS (via the testing state's PASS action).
-
-### 4. Create a tester prompt file
-Create \`<dataDir>/prompts/tester.md\` with instructions for the QA role.
-For project-specific: \`<dataDir>/projects/<name>/prompts/tester.md\`.
-
-## Per-issue skip
-Set \`testPolicy: "skip"\` in project-local \`issues.json\` to skip testing for a specific managed issue. Provider labels are projection only.`;
+With agent testing: Planning -> To Do -> Doing -> To Review -> To Test -> Testing -> Done.
+With skipped testing: To Test -> SKIP -> Done, without dispatching a tester.`;
 }
 
+/** Describe supported timeout configuration for operators. */
 function buildTimeoutsSection(): string {
   return `# Timeouts
 
@@ -466,6 +460,9 @@ timeouts:
 | \`sessionContextBudget\` | number | 0.6 | 0-1. Clear session when context exceeds this ratio. Set to 1.0 to disable. Skips clear on same-issue re-dispatch (feedback cycle). |`;
 }
 
+/** Show project configuration and prompt override ownership.
+ * @param dataDir - Workspace data root displayed in project file locations.
+ */
 function buildOverridesSection(dataDir: string): string {
   return `# Project-Level Overrides
 

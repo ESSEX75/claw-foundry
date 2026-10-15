@@ -62,6 +62,10 @@ workflow:
   reviewPolicy: agent
 \`\`\`
 
+This policy default applies to new issue snapshots. Existing managed issues keep their local
+policies until an explicit \`issue_policy_migrate\` command (preview with \`dryRun: true\`,
+then apply the same selection). Provider labels and body metadata only project local state.
+
 Example — override model for senior developer:
 
 \`\`\`yaml

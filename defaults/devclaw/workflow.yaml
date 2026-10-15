@@ -70,6 +70,9 @@ workflow:
   # maxWorkersPerLevel: 2 — each level (junior/medior/senior) gets up to this many parallel slots.
   # With 3 levels × 2 slots = 6 workers per role in parallel per project at full capacity.
   # Override per level: senior: { model: anthropic/claude-opus-4-6, maxWorkers: 3 }
+  # Policy defaults are snapshotted for new issues. Existing issues require explicit
+  # issue_policy_migrate (preview with dryRun: true, then apply the same selection).
+  # Provider labels and body metadata are projections, never policy inputs.
   reviewPolicy: human # Options: human (default), agent, skip
   # human — All PRs need human approval on GitHub/GitLab. Heartbeat auto-merges when approved.
   # agent — Agent reviewer checks every PR before merge.
@@ -77,7 +80,7 @@ workflow:
   #          If both review and test are skipped, PRs auto-merge to the base branch.
   testPolicy: skip # Options: skip (default), agent
   # skip  — Testing phase is skipped. Issues go straight from review to done.
-  #          To enable testing for a specific issue, remove the test:skip label.
+  #          For existing issues use issue_policy_migrate with testPolicy: agent.
   # agent — Agent tester runs automated QA on every issue after review.
   #          Requires tester prompts: devclaw/prompts/tester.md
   #          (or per-project: devclaw/projects/<name>/prompts/tester.md)
@@ -182,7 +185,7 @@ workflow:
     # --- Test phase (skipped by default via testPolicy: skip) -----------------
     # Issues arrive here after review. With testPolicy: skip (default), the
     # heartbeat auto-transitions them to done. To enable testing per-issue,
-    # remove the test:skip label before it reaches this state.
+    # explicitly migrate its local testPolicy snapshot to agent before pickup.
     # To enable testing globally, set testPolicy: agent above.
     toTest:
       type: queue

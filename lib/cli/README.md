@@ -46,3 +46,9 @@ only, not a cleanup of registry slots, creation/recovery evidence or attachments
 Setup binding prompts display application-provided exact endpoint choices for the
 selected existing or proposed agent. Eligibility and topic peer encoding belong to
 application routing; terminal code only renders destinations and collects a choice.
+
+Setup accepts repeated `--model <role.level=model>` assignments for configured custom
+and built-in levels. Built-in role-level flags remain supported explicit overrides;
+help does not advertise registry defaults as current workspace settings. Repeating
+a destination through either syntax is an error. Interactive model questions use
+the selected target's effective enabled assignments and submit only entered values.

@@ -8,17 +8,15 @@ import {
   runSetup,
   type SetupOpts,
 } from "../../application/index.js";
-import { getAllBuiltInDefaultModels, getAllRoleIds, getBuiltInLevelsForRole } from "../../roles/index.js";
+import { collectModelAssignment, getBuiltInModelOptions, parseModelOverrides } from "../options/models.js";
 import {
   normalizeChannelBinding,
   normalizeProjectExecution,
 } from "../options/setup-options.js";
 import type { SetupCliOptions } from "../options/types.js";
-import {
-  collectInteractiveSetupDetails,
-  printSelectedSetupTarget,
-  resolveSetupCliOptions,
-} from "../prompts/channel-prompts.js";
+import { collectInteractiveSetupDetails } from "../prompts/channel-prompts.js";
+import { printSelectedSetupTarget, printSetupResult } from "../prompts/setup-output.js";
+import { resolveSetupCliOptions } from "../prompts/target-prompts.js";
 
 /** Register terminal options that dispatch the shared setup command.
  * @param parent - Parent DevClaw command group.
@@ -35,19 +33,14 @@ export function registerSetupCommand(parent: Command, ctx: Pick<SetupOpts, "runt
     .option("--channel-account-id <id>", "Explicit channel account id for the binding")
     .option("--channel-peer-id <id>", "Exact group/topic peer id for the binding, e.g. -100123:topic:331")
     .option("--project-execution <mode>", "Project execution mode: parallel or sequential")
+    .option("--model <role.level=model>", "Set a configured model assignment (repeatable)", collectModelAssignment, [])
     .option("--dry-run", "Print the setup plan without writing configuration or workspace files")
     .option("--eject-defaults", "Write missing packaged defaults into the workspace")
     .option("--reset-defaults", "Reset packaged defaults with backups")
     .option("--refresh-instructions", "Refresh system instructions with backups");
 
-  const defaults = getAllBuiltInDefaultModels();
-
-  for (const role of getAllRoleIds()) {
-    for (const level of getBuiltInLevelsForRole(role)) {
-      const flag = `--${role}-${level}`;
-
-      setupCmd.option(`${flag} <model>`, `${role.toUpperCase()} ${level} model (default: ${defaults[role]?.[level] ?? "auto"})`);
-    }
+  for (const option of getBuiltInModelOptions()) {
+    setupCmd.option(`${option.flag} <model>`, `${option.role.toUpperCase()} ${option.level} model override`, collectModelAssignment, []);
   }
 
   setupCmd.action(async (rawOpts: SetupCliOptions) => {
@@ -59,20 +52,7 @@ export function registerSetupCommand(parent: Command, ctx: Pick<SetupOpts, "runt
 
       printSelectedSetupTarget(opts, ctx.runtime);
 
-      const models: Record<string, Record<string, string>> = {};
-
-      for (const role of getAllRoleIds()) {
-        const roleModels: Record<string, string> = {};
-
-        for (const level of getBuiltInLevelsForRole(role)) {
-          const key = `${role}${level.charAt(0).toUpperCase()}${level.slice(1)}`;
-          const model = opts[key];
-
-          if (typeof model === "string" && model) roleModels[level] = model;
-        }
-
-        if (Object.keys(roleModels).length > 0) models[role] = roleModels;
-      }
+      const models = parseModelOverrides(opts);
 
       const result = await runSetup({
         runtime: ctx.runtime,
@@ -83,7 +63,7 @@ export function registerSetupCommand(parent: Command, ctx: Pick<SetupOpts, "runt
         channelPeerId: opts.channelPeerId,
         agentId: opts.agent,
         workspacePath: opts.workspace,
-        models: Object.keys(models).length > 0 ? models : undefined,
+        models,
         ejectDefaults: opts.ejectDefaults === true,
         resetDefaults: opts.resetDefaults === true,
         refreshInstructions: opts.refreshInstructions === true,
@@ -113,75 +93,4 @@ export function registerSetupCommand(parent: Command, ctx: Pick<SetupOpts, "runt
       throw err;
     }
   });
-}
-
-/** Render preview, file operation, or configuration results.
- * @param result - Completed application command outcome.
- */
-function printSetupResult(
-  result: Awaited<ReturnType<typeof runSetup>>,
-): void {
-  const scopePreflight = result.scopePreflight;
-
-  if (result.dryRun) {
-    console.log("Setup dry-run plan:");
-    for (const change of result.plannedChanges) console.log(`  - ${change}`);
-
-    return;
-  }
-
-  if (result.operation !== "configure") {
-    console.log(`${result.operation}: ${result.filesWritten.length} files written`);
-    for (const file of result.filesWritten) console.log(`  ${file}`);
-
-    return;
-  }
-
-  if (result.agentCreated) {
-    console.log(`Agent "${result.agentId}" created`);
-  }
-
-  console.log("Setup target:");
-  console.log(`  Agent: ${result.agentId}`);
-  console.log(`  Workspace: ${result.workspacePath}`);
-  console.log(`  Channel binding: ${result.channelBinding ?? "none"}`);
-  if (result.channelAccountId) console.log(`  Channel account: ${result.channelAccountId}`);
-  if (result.channelPeerId) console.log(`  Channel peer: ${result.channelPeerId}`);
-
-  console.log(`  Workspace defaults: ${result.defaultsEjected ? "ejected packaged defaults" : "safe defaults"}`);
-
-  console.log("Models configured:");
-  for (const [role, levels] of Object.entries(result.models)) {
-    for (const [level, model] of Object.entries(levels)) {
-      console.log(`  ${role}.${level}: ${model}`);
-    }
-  }
-
-  console.log("Files written:");
-  for (const file of result.filesWritten) {
-    console.log(`  ${file}`);
-  }
-
-  if (scopePreflight?.status === "approved") {
-    console.log("\nOpenClaw scopes: approved");
-  }
-
-  if (scopePreflight?.warning) {
-    console.log("\nOpenClaw scopes warning:");
-    console.log(`  ${scopePreflight.warning}`);
-  }
-
-  if (result.warnings.length > 0) {
-    console.log("\nWarnings:");
-    for (const w of result.warnings) {
-      console.log(`  ${w}`);
-    }
-  }
-
-  console.log("\nDone!");
-  console.log("Next steps are messages/actions, not shell menu choices:");
-  console.log("  - Restart the OpenClaw gateway so the new bot/chat binding becomes active.");
-  console.log("  - Add the bot to the selected Telegram/WhatsApp chat.");
-  console.log('  - In that group, send: "Register project <name> at <repo> with base branch <branch>".');
-  console.log("  - Create the first issue and ask DevClaw to pick it up.");
 }

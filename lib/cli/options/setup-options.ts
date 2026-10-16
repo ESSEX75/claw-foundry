@@ -5,21 +5,27 @@ import {
   type SetupNotificationChannel,
 } from "../../application/index.js";
 import { EXECUTION_MODE, type ExecutionMode } from "../../domain/index.js";
-import { listConfiguredAgents } from "../../integrations/index.js";
+import { type ConfiguredAgent, listConfiguredAgents } from "../../integrations/index.js";
 import { type CliConfigRuntime, readCliConfig } from "../input/index.js";
-import type { ConfiguredAgent, SetupCliOptions } from "./types.js";
+import type { SetupCliOptions } from "./types.js";
+
+/** Optional presentation metadata retained from the canonical integration agent type. */
+type AgentDisplayMetadata = {
+  /** Configured human-readable name displayed beside the canonical identity. */
+  name?: string;
+};
 
 /** Read configured agents without suppressing configuration failures.
  * @param runtime - Read-only configuration source.
  */
-export function getConfiguredAgents(runtime: CliConfigRuntime): readonly ConfiguredAgent[] {
+export function getConfiguredAgents(runtime: CliConfigRuntime): readonly ConfiguredAgent<AgentDisplayMetadata>[] {
   return listConfiguredAgents(readCliConfig(runtime));
 }
 
 /** Format an agent choice without changing its identifier.
  * @param agent - Configured agent to display.
  */
-export function formatAgentLabel(agent: ConfiguredAgent): string {
+export function formatAgentLabel(agent: ConfiguredAgent<AgentDisplayMetadata>): string {
   return agent.name && agent.name !== agent.id ? `${agent.name} (${agent.id})` : agent.id;
 }
 

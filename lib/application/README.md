@@ -182,3 +182,9 @@ The setup root is a facade: it explicitly exposes setup commands, discovery and
 supported route-validation contracts. Internal routing discovery and planned-binding
 diagnostics stay with their owning capability; they are not exposed through the
 application root merely to support composition or tests.
+
+Setup model queries reuse setup's target planning and return only effective enabled
+role-level assignments, including custom identifiers. They perform reads only and
+do not query model catalogs or request scope approval. Explicit overrides are
+validated again during setup; unknown/removed levels and disabled roles fail before
+effects. Standalone file recovery does not load or validate the existing workflow.

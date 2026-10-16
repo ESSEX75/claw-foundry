@@ -94,6 +94,9 @@ reviews-to-reactions applies to GitLab. Lower wire/API owners never depend on th
 | `notifications` | One outbound submission with accepted/rejected/unknown outcomes. |
 | `scopes` | Optional CLI transport/evidence; application selects permissions and approval policy. |
 
+The agents API exposes its canonical `ConfiguredAgent` result type for read-only
+consumers, retaining inferred caller metadata without duplicating identity DTOs.
+
 - Session absence requires every advertised store to be read/validated; bounded recent lists never prove absence.
 - Unknown/stale token metrics remain unknown. Usage is fresh used tokens/capacity; sessions never prove local ownership.
 - Application chooses/audits budget cleanup and whether optional deletion failure blocks dispatch.

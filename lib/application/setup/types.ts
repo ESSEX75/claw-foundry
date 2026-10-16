@@ -98,3 +98,6 @@ export type SetupEndpointChoicesInput = Pick<SetupOpts, "agentId" | "newAgentNam
   /** Read-only SDK snapshot source; failed reads remain errors. */
   runtime: SetupConfigReader;
 };
+
+/** Read-only target selection shared by setup planning and effective model queries. */
+export type SetupModelQueryInput = Pick<SetupOpts, "runtime" | "newAgentName" | "agentId" | "workspacePath">;

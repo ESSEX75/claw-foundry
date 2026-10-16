@@ -1,5 +1,4 @@
-/** Terminal setup option and agent display contracts. */
-
+/** Terminal setup option and model-flag contracts. */
 
 /** Parsed terminal setup flags before application validation. */
 export type SetupCliOptions = {
@@ -23,17 +22,23 @@ export type SetupCliOptions = {
   refreshInstructions?: boolean;
   /** Requested project scheduling mode. */
   projectExecution?: string;
+  /** Repeatable explicit role.level=model assignments before parsing. */
+  model?: string[];
   /** Whether to preview without effects. */
   dryRun?: boolean;
-  [key: string]: string | boolean | undefined;
+  /** Named Commander flags, including built-in model assignment arrays. */
+  [key: string]: string | string[] | boolean | undefined;
 };
 
-/** Read-only agent identity displayed by terminal prompts. */
-export type ConfiguredAgent = {
-  /** Stable configured agent identifier. */
-  id: string;
-  /** Optional human-readable agent name. */
-  name?: string;
-  /** Explicit workspace target. */
-  workspace?: string;
+
+/** One built-in model flag, retained as supported terminal syntax. */
+export type BuiltInModelOption = {
+  /** Built-in role addressed by the flag. */
+  role: string;
+  /** Built-in level addressed by the flag. */
+  level: string;
+  /** Commander option spelling, including the leading dashes. */
+  flag: string;
+  /** Commander attribute name storing the raw model value. */
+  key: string;
 };

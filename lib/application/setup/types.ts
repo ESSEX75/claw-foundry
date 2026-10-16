@@ -86,3 +86,15 @@ export type SetupRuntime = {
     mutateConfigFile: (params: Parameters<PluginRuntime["config"]["mutateConfigFile"]>[0]) => Promise<unknown>;
   };
 };
+
+/** Read-only SDK configuration capability for setup endpoint discovery. */
+type SetupConfigReader = {
+  /** Configuration access without a mutation transport. */
+  config: Pick<SetupRuntime["config"], "current">;
+};
+
+/** Existing or proposed agent whose available destinations should be inspected. */
+export type SetupEndpointChoicesInput = Pick<SetupOpts, "agentId" | "newAgentName"> & {
+  /** Read-only SDK snapshot source; failed reads remain errors. */
+  runtime: SetupConfigReader;
+};

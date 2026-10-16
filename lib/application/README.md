@@ -169,3 +169,16 @@ archive issue stores, under the state-owned store lock. It does not clear worker
 slots, creation operations, delivery resolutions, attachments or provider data.
 Reset remains available with damaged stores/configuration or a missing/corrupt
 registry; its two file replacements are not a cross-file atomic transaction.
+
+Setup endpoint discovery is read-only and target-aware. Routing enumerates exact
+configured groups/topics using the same planned-binding diagnostics as setup apply:
+channels/accounts must be enabled, own bindings remain selectable, and conflicting
+owners are excluded. Wildcards are not endpoints. A proposed new agent exists only
+in the discovery snapshot. The menu is not authorization: setup planning and SDK
+mutation validate the fresh route again before writing. SDK read failures propagate;
+discovery neither queries providers/gateway nor changes local runtime state.
+
+The setup root is a facade: it explicitly exposes setup commands, discovery and
+supported route-validation contracts. Internal routing discovery and planned-binding
+diagnostics stay with their owning capability; they are not exposed through the
+application root merely to support composition or tests.

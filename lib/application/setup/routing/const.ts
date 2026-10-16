@@ -27,3 +27,6 @@ export const ROUTE_PEER_KIND = {
 
 /** OpenClaw topic qualifier inside a group peer identifier. */
 export const TOPIC_PEER_SEPARATOR = ":topic:";
+
+/** SDK group/topic inventory marker that cannot identify an exact binding destination. */
+export const ROUTING_INVENTORY_WILDCARD = "*";

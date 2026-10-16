@@ -42,3 +42,7 @@ Issue administration delegates policy/provider resolution and confirmed store re
 to application commands. CLI code does not load project/config stores or mutate
 issue stores directly. Reset is destructive recovery for active/archive stores
 only, not a cleanup of registry slots, creation/recovery evidence or attachments.
+
+Setup binding prompts display application-provided exact endpoint choices for the
+selected existing or proposed agent. Eligibility and topic peer encoding belong to
+application routing; terminal code only renders destinations and collects a choice.

@@ -5,7 +5,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { checkApplicationDependencyDirection, checkSetupAdapterBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
+import { checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
 
 const root = process.cwd();
 const warnOnly = process.argv.includes("--warn-only");
@@ -171,8 +171,11 @@ function checkImportBoundary({ sourceFile, sourceLayer, targetFile, targetLayer,
   const directionViolation = checkApplicationDependencyDirection(sourceLayer, targetLayer);
   if (directionViolation) return directionViolation;
 
-  const adapterViolation = checkSetupAdapterBoundary(relative(sourceFile), targetLayer, specifier);
+  const adapterViolation = checkApplicationAdapterBoundary(relative(sourceFile), targetLayer, specifier);
   if (adapterViolation) return adapterViolation;
+
+  const cliViolation = checkCliApiBoundary(relative(sourceFile), targetRelative);
+  if (cliViolation) return cliViolation;
 
   const toolsViolation = checkToolsApiBoundary(relative(sourceFile), targetRelative);
   if (toolsViolation) return toolsViolation;
@@ -213,10 +216,6 @@ function checkImportBoundary({ sourceFile, sourceLayer, targetFile, targetLayer,
   if (sourceLayer === "application") {
     if (specifier === "openclaw/plugin-sdk/core" && importsOpenClawToolContext(sourceFile)) {
       return "application must not import OpenClaw tool context";
-    }
-
-    if (targetLayer === "cli" && targetRelative.split(path.sep).join("/").startsWith("lib/cli/commands/")) {
-      return "application must not import CLI command adapters";
     }
 
     if (targetRelative === "lib/context.ts" && importsOpenClawToolContext(sourceFile)) {

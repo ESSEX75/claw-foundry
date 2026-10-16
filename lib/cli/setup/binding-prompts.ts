@@ -1,7 +1,8 @@
 /** Renders application-provided endpoint choices and collects one exact terminal selection. */
 
 import { getSetupEndpointChoices, type SetupEndpointChoicesInput } from "../../application/index.js";
-import type { SetupCliOptions } from "../options/types.js";
+import { NO_CHANNEL_BINDING } from "./const.js";
+import type { SetupCliOptions } from "./types.js";
 import type { TerminalQuestion } from "./types.js";
 
 /** Display eligible exact endpoints and return the operator's explicit choice.
@@ -28,7 +29,7 @@ export async function collectChannelBinding(
   const answer = (await rl.question(`Select [${defaultIndex}]: `)).trim();
   const selected = answer ? Number(answer) : defaultIndex;
 
-  if (selected === noneIndex) return { channelBinding: "none" };
+  if (selected === noneIndex) return { channelBinding: NO_CHANNEL_BINDING };
   const choice = Number.isInteger(selected) ? choices[selected - 1] : undefined;
 
   if (!choice) throw new Error(`Invalid channel account option: ${answer}`);

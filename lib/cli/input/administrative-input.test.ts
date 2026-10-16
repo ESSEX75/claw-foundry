@@ -5,9 +5,9 @@ import { describe, it } from "node:test";
 import { Command } from "commander";
 
 import { createSetupRuntime } from "../../testing/index.js";
-import { registerIssuesArchiveCommand } from "../commands/issues-archive-command.js";
-import { registerRepairIssueCommand } from "../commands/repair-issue-command.js";
-import { registerWorkerDeliveryCommand } from "../commands/worker-delivery-command.js";
+import { registerIssuesCommands } from "../issues/index.js";
+import { registerRepairCommands } from "../repair/index.js";
+import { registerWorkerDeliveryCommand } from "../worker-delivery/index.js";
 import { requireWorkspace } from "./configuration.js";
 import { parseIssueId, parseIssueSelection, parseSelection, requireExclusiveMode } from "./parsers.js";
 
@@ -67,8 +67,8 @@ describe("administrative CLI input", () => {
     for (const args of cases) {
       const parent = new Command();
 
-      registerRepairIssueCommand(parent, fixture);
-      registerIssuesArchiveCommand(parent, fixture);
+      registerRepairCommands(parent, fixture);
+      registerIssuesCommands(parent, fixture);
       registerWorkerDeliveryCommand(parent, fixture);
       await assert.rejects(parent.parseAsync([...args, workspace, missing], { from: "user" }),
         /Invalid issue ID|non-empty comma-separated list|--confirm-issue must exactly match/);

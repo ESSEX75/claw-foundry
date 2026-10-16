@@ -5,7 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { Command } from "commander";
-import { registerSetupCommand } from "../../cli/commands/setup-command.js";
+import { registerCli } from "../../cli/index.js";
+import { DEVCLAW_PLUGIN_ID } from "../../const.js";
 import { createSetupRuntime } from "../../testing/index.js";
 import { createSetupTool } from "./setup.js";
 
@@ -26,8 +27,8 @@ describe("setup adapter parity", () => {
           assert.ok(tool && !Array.isArray(tool));
           await tool.execute("test", { [param]: true, dryRun });
           const command = new Command();
-          registerSetupCommand(command, fixture);
-          await command.parseAsync(["setup", "--workspace", cliDir, flag, ...(dryRun ? ["--dry-run"] : [])], { from: "user" });
+          registerCli(command, fixture);
+          await command.parseAsync([DEVCLAW_PLUGIN_ID, "setup", "--workspace", cliDir, flag, ...(dryRun ? ["--dry-run"] : [])], { from: "user" });
           const files = await fs.readdir(toolDir, { recursive: true });
           assert.deepEqual(files, await fs.readdir(cliDir, { recursive: true }));
           for (const file of files) {

@@ -1,8 +1,8 @@
 /** Collects explicit model choices from effective enabled assignments for the selected setup target. */
 
 import { getSetupModels, type SetupRuntime } from "../../application/index.js";
-import { parseModelOverrides } from "../options/models.js";
-import type { SetupCliOptions } from "../options/types.js";
+import { parseModelOverrides } from "./models.js";
+import type { SetupCliOptions } from "./types.js";
 import type { TerminalQuestion } from "./types.js";
 
 /** Keep existing assignments by default and submit only operator-entered overrides.

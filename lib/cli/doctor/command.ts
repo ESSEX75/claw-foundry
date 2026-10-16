@@ -5,7 +5,8 @@
 import type { Command } from "commander";
 
 import { runRoutingDoctor } from "../../application/index.js";
-import { type AdministrativeCliContext,requireWorkspace } from "../input/index.js";
+import { type AdministrativeCliContext, requireWorkspace } from "../input/index.js";
+import { printDoctorReport } from "./output.js";
 
 /** Register read-only routing diagnostics and a failing exit code for blocking findings.
  * @param parent - Parent DevClaw command group.
@@ -21,24 +22,7 @@ export function registerDoctorCommand(parent: Command, ctx: AdministrativeCliCon
 
       const report = await runRoutingDoctor(ctx.runtime, workspace);
 
-      console.log("DevClaw doctor — routing and isolation");
-      for (const finding of report.findings) {
-        console.log(`${finding.severity === "error" ? "ERROR" : "OK"} [${finding.code}] ${finding.message}`);
-      }
-
-      console.log("\nAgent tool access:");
-      for (const agent of report.agents) {
-        console.log(`  ${agent.agentId}: ${agent.devclawToolsAllowed ? "allowed" : "denied"}`);
-      }
-
-      console.log("\nIssue archives:");
-      for (const archive of report.archives) {
-        console.log(
-          `  ${archive.projectSlug}: active=${archive.active}, terminalWaiting=${archive.terminalWaitingArchive}, `
-          + `archived=${archive.archived}, providerDeleted=${archive.providerDeleted}, `
-          + `purgeEligible=${archive.purgeEligible}, attachmentsBytes=${archive.attachmentsRetainedBytes}`,
-        );
-      }
+      printDoctorReport(report);
 
       if (!report.ok) process.exitCode = 1;
     });

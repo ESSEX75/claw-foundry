@@ -30,7 +30,6 @@ export type SetupCliOptions = {
   [key: string]: string | string[] | boolean | undefined;
 };
 
-
 /** One built-in model flag, retained as supported terminal syntax. */
 export type BuiltInModelOption = {
   /** Built-in role addressed by the flag. */
@@ -41,4 +40,12 @@ export type BuiltInModelOption = {
   flag: string;
   /** Commander attribute name storing the raw model value. */
   key: string;
+};
+
+/** Minimal question interface satisfied by the interactive session's readline owner. */
+export type TerminalQuestion = {
+  /** Collect one operator response without owning or closing the terminal session.
+   * @param prompt - Question text including the offered default selection.
+   */
+  question(prompt: string): Promise<string>;
 };

@@ -12,7 +12,7 @@ import {
   resolveWorkerBootstrapIdentity,
 } from "./lib/application/index.js";
 // Infrastructure
-import { registerCli } from "./lib/cli/register.js";
+import { registerCli } from "./lib/cli/index.js";
 import { DEVCLAW_PLUGIN_ID } from "./lib/const.js";
 import { createPluginContext } from "./lib/context.js";
 import { registerAttachmentHook, registerBootstrapHook } from "./lib/integrations/index.js";

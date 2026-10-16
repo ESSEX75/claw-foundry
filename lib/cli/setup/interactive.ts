@@ -3,9 +3,9 @@
 import { createInterface } from "node:readline/promises";
 
 import type { SetupRuntime } from "../../application/index.js";
-import type { SetupCliOptions } from "../options/types.js";
 import { collectChannelBinding } from "./binding-prompts.js";
 import { collectModelOptions } from "./model-prompts.js";
+import type { SetupCliOptions } from "./types.js";
 
 /** Own the interactive detail session and close readline on success or failure.
  * @param opts - Selected target and explicit CLI flags.

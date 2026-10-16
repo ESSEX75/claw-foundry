@@ -9,10 +9,10 @@ import { Command } from "commander";
 import { getSetupModels } from "../../application/index.js";
 import { DATA_DIR, loadConfig } from "../../state/index.js";
 import { createSetupRuntime, createTestHarness } from "../../testing/index.js";
-import { registerSetupCommand } from "../commands/setup-command.js";
-import { collectModelOptions } from "../prompts/model-prompts.js";
-import { collectInteractiveSetupDetails } from "../prompts/channel-prompts.js";
-import { resolveSetupCliOptions } from "../prompts/target-prompts.js";
+import { registerSetupCommand } from "./register.js";
+import { collectModelOptions } from "./model-prompts.js";
+import { collectInteractiveSetupDetails } from "./interactive.js";
+import { resolveSetupCliOptions } from "./target-prompts.js";
 import { parseModelOverrides } from "./models.js";
 
 /** Workspace model configuration file used by integration fixtures. */

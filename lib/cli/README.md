@@ -52,3 +52,33 @@ and built-in levels. Built-in role-level flags remain supported explicit overrid
 help does not advertise registry defaults as current workspace settings. Repeating
 a destination through either syntax is an error. Interactive model questions use
 the selected target's effective enabled assignments and submit only entered values.
+
+## Package API and ownership
+
+External consumers import only `lib/cli/index.ts`, whose facade exposes
+`registerCli` and its minimal `CliContext` contract. The root `register.ts` composes
+one DevClaw group; root `types.ts` owns only that composition boundary. Root
+`const.ts` owns the private terminal audit actor shared by adapters. Internal CLI
+code may import that constant directly, but must never import the root facade.
+
+| Capability | Responsibility |
+| --- | --- |
+| `input` | Strict ID/selection/mode parsing, read-only SDK configuration and workspace resolution, and administrative input/runtime ports. |
+| `setup` | Setup registration, raw model/options contracts, target/binding/model prompts, terminal session lifecycle and output. |
+| `issues` | Composition and independent archive/delete/reset terminal handlers. |
+| `repair` | Composition and independent issue repair/policy migration handlers. |
+| `doctor` | Read-only diagnostic command and terminal report rendering. |
+| `worker-delivery` | Exact worker-session/delivery recovery command and raw options. |
+
+Capability entrypoints explicitly export registration (or shared input operations)
+for siblings; they do not expose prompt, renderer, option or handler internals.
+Siblings use the target capability's index. Files within one capability import
+local implementation files and never their own or ancestor barrel. The facade does
+not aggregate the internal registration APIs. Architecture checks enforce these
+boundaries and prohibit direct filesystem/state dependencies in CLI adapters.
+
+Production files remain flat inside each capability: setup's eight modules share
+one setup invocation, while its types/constants stay with that owner. Root tests
+exercise composition and outcomes across capabilities; individual parser, prompt
+and model tests remain beside their implementations. Cross-adapter parity imports
+the public CLI facade. No nested README or compatibility facade is supported.

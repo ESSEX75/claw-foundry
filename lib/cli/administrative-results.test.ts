@@ -7,13 +7,13 @@ import { describe, it, type TestContext } from "node:test";
 import { Command } from "commander";
 import { z } from "zod";
 
-import type { RunCommand } from "../../context.js";
-import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../domain/index.js";
-import { renderIssueMetadata } from "../../projection/index.js";
-import { DATA_DIR, PROJECTS_DIRECTORY_NAME, readIssueStateStore } from "../../state/index.js";
-import { createEmptyIssueStateStoreForTesting, createSetupRuntime, createTestHarness, replaceIssueStateStoreForTesting } from "../../testing/index.js";
-import { registerIssuesArchiveCommand } from "./issues-archive-command.js";
-import { registerRepairIssueCommand } from "./repair-issue-command.js";
+import type { RunCommand } from "../context.js";
+import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../domain/index.js";
+import { renderIssueMetadata } from "../projection/index.js";
+import { DATA_DIR, PROJECTS_DIRECTORY_NAME, readIssueStateStore } from "../state/index.js";
+import { createEmptyIssueStateStoreForTesting, createSetupRuntime, createTestHarness, replaceIssueStateStoreForTesting } from "../testing/index.js";
+import { DEVCLAW_PLUGIN_ID } from "../const.js";
+import { registerCli } from "./register.js";
 
 /** Archive collision fixture used to force a recoverable local archival failure. */
 const ARCHIVE_COLLISION_FILE_NAME = "issues.archive.json";
@@ -96,11 +96,10 @@ async function createCliFixture(t: TestContext, occupied = false) {
   async function execute(args: string[], initialExitCode?: number) {
     const parent = new Command();
 
-    registerRepairIssueCommand(parent, { runtime, runCommand });
-    registerIssuesArchiveCommand(parent, { runtime, runCommand });
+    registerCli(parent, { runtime, runCommand });
     lines.length = 0;
     process.exitCode = initialExitCode;
-    await parent.parseAsync([...args, "--project", h.project.slug, "--issue", "123", "--workspace", h.workspaceDir], { from: "user" });
+    await parent.parseAsync([DEVCLAW_PLUGIN_ID, ...args, "--project", h.project.slug, "--issue", "123", "--workspace", h.workspaceDir], { from: "user" });
     assert.equal(lines.length, 1, "the application result remains a single JSON output");
     const output: unknown = JSON.parse(lines[0] ?? "null");
 

@@ -4,8 +4,8 @@ import { createInterface } from "node:readline/promises";
 
 import type { SetupRuntime } from "../../application/index.js";
 import { getDefaultWorkspaceDir } from "../input/index.js";
-import { formatAgentLabel, getConfiguredAgents } from "../options/setup-options.js";
-import type { SetupCliOptions } from "../options/types.js";
+import { formatAgentLabel, getConfiguredAgents } from "./options.js";
+import type { SetupCliOptions } from "./types.js";
 
 /** Resolve an explicit target or collect one through an owned terminal session.
  * @param opts - Raw terminal options; noninteractive setup requires an explicit target.

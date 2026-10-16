@@ -4,7 +4,7 @@ import { it } from "node:test";
 
 import { createSetupRuntime } from "../../testing/index.js";
 import { getDefaultWorkspaceDir } from "../input/index.js";
-import { getConfiguredAgents, normalizeChannelBinding, normalizeProjectExecution } from "./setup-options.js";
+import { getConfiguredAgents, normalizeChannelBinding, normalizeProjectExecution } from "./options.js";
 
 it("shows entries agents and ignores legacy list when both exist", () => {
   const { runtime } = createSetupRuntime({ agents: {

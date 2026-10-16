@@ -8,15 +8,15 @@ import {
   runSetup,
   type SetupOpts,
 } from "../../application/index.js";
-import { collectModelAssignment, getBuiltInModelOptions, parseModelOverrides } from "../options/models.js";
+import { collectInteractiveSetupDetails } from "./interactive.js";
+import { collectModelAssignment, getBuiltInModelOptions, parseModelOverrides } from "./models.js";
 import {
   normalizeChannelBinding,
   normalizeProjectExecution,
-} from "../options/setup-options.js";
-import type { SetupCliOptions } from "../options/types.js";
-import { collectInteractiveSetupDetails } from "../prompts/channel-prompts.js";
-import { printSelectedSetupTarget, printSetupResult } from "../prompts/setup-output.js";
-import { resolveSetupCliOptions } from "../prompts/target-prompts.js";
+} from "./options.js";
+import { printSelectedSetupTarget, printSetupResult } from "./output.js";
+import { resolveSetupCliOptions } from "./target-prompts.js";
+import type { SetupCliOptions } from "./types.js";
 
 /** Register terminal options that dispatch the shared setup command.
  * @param parent - Parent DevClaw command group.

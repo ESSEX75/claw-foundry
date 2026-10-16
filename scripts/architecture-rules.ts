@@ -1,9 +1,8 @@
 /** Pure adapter boundary policy shared by the architecture checker and regression tests. */
-/** Adapters whose administrative, setup, and diagnostic effects must pass through application commands. */
+
+/** Tool adapters whose setup effects must pass through shared application commands. */
 const APPLICATION_ADAPTERS = new Set([
   "lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts",
-  "lib/cli/commands/setup-command.ts", "lib/cli/commands/doctor-command.ts",
-  "lib/cli/commands/issues-archive-command.ts",
 ]);
 
 /** Detect direct persistence dependencies in adapters migrated to shared application commands.
@@ -11,10 +10,12 @@ const APPLICATION_ADAPTERS = new Set([
  * @param targetLayer - Resolved target layer for local imports.
  * @param specifier - Raw import specifier for external modules.
  */
-export function checkSetupAdapterBoundary(source: string, targetLayer: string | undefined, specifier: string): string | null {
-  if (APPLICATION_ADAPTERS.has(source.replaceAll("\\", "/")) &&
+export function checkApplicationAdapterBoundary(source: string, targetLayer: string | undefined, specifier: string): string | null {
+  const normalized = source.replaceAll("\\", "/");
+
+  if ((APPLICATION_ADAPTERS.has(normalized) || normalized.startsWith("lib/cli/")) &&
     (targetLayer === "state" || ["node:fs", "node:fs/promises", "fs", "fs/promises"].includes(specifier))) {
-    return "administrative, setup and doctor adapters must use application commands instead of filesystem state";
+    return "CLI and setup tool adapters must use application commands instead of filesystem state";
   }
   return null;
 }
@@ -56,6 +57,32 @@ export function checkToolsApiBoundary(source: string, target: string): string | 
   const importedOwner = imported.slice(0, imported.lastIndexOf("/"));
   if (importerOwner !== importedOwner && !imported.endsWith("/index.ts")) {
     return "tool capabilities must use the target capability entrypoint";
+  }
+  return null;
+}
+
+/** Enforce the CLI facade and internal capability entrypoints independently of platform separators.
+ * @param source - Repository-relative importing source file.
+ * @param target - Repository-relative resolved local import target.
+ */
+export function checkCliApiBoundary(source: string, target: string): string | null {
+  const importer = source.replaceAll("\\", "/");
+  const imported = target.replaceAll("\\", "/");
+
+  if (!imported.startsWith("lib/cli/")) return null;
+  if (!importer.startsWith("lib/cli/")) {
+    return imported === "lib/cli/index.ts" ? null : "external callers must use lib/cli/index.ts";
+  }
+  if (imported === "lib/cli/index.ts") return "CLI must not import its own root facade";
+  if (imported === "lib/cli/const.ts") return null;
+  const importerOwner = importer.slice(0, importer.lastIndexOf("/"));
+  const importedOwner = imported.slice(0, imported.lastIndexOf("/"));
+
+  if (imported.endsWith("/index.ts") && importer.startsWith(`${importedOwner}/`)) {
+    return "CLI capabilities must not import their own or ancestor entrypoint";
+  }
+  if (importerOwner !== importedOwner && !imported.endsWith("/index.ts")) {
+    return "CLI capabilities must use the target capability entrypoint";
   }
   return null;
 }

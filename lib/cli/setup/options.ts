@@ -7,6 +7,7 @@ import {
 import { EXECUTION_MODE, type ExecutionMode } from "../../domain/index.js";
 import { type ConfiguredAgent, listConfiguredAgents } from "../../integrations/index.js";
 import { type CliConfigRuntime, readCliConfig } from "../input/index.js";
+import { NO_CHANNEL_BINDING } from "./const.js";
 import type { SetupCliOptions } from "./types.js";
 
 /** Optional presentation metadata retained from the canonical integration agent type. */
@@ -33,7 +34,7 @@ export function formatAgentLabel(agent: ConfiguredAgent<AgentDisplayMetadata>): 
  * @param opts - Selected channel, account, and peer options.
  */
 export function formatSelectedChannelBinding(opts: Pick<SetupCliOptions, "channelBinding" | "channelAccountId" | "channelPeerId">): string {
-  if (!opts.channelBinding || opts.channelBinding === "none") return "none";
+  if (!opts.channelBinding || opts.channelBinding === NO_CHANNEL_BINDING) return NO_CHANNEL_BINDING;
   const account = opts.channelAccountId?.trim() || "missing-account";
 
   return opts.channelPeerId?.trim()
@@ -48,7 +49,7 @@ export function normalizeChannelBinding(
   value: SetupCliOptions["channelBinding"],
 ): SetupNotificationChannel | null | undefined {
   if (value === undefined) return undefined;
-  if (value === "none") return null;
+  if (value === NO_CHANNEL_BINDING) return null;
   if (isSetupNotificationChannel(value)) return value;
   throw new Error(`Invalid channel binding: ${value}. Use telegram, whatsapp, or none.`);
 }

@@ -1,8 +1,9 @@
 /** Renders setup targets and completed application plans or results for terminal users. */
 
 import { SETUP_OPERATION, type SetupResult, type SetupRuntime } from "../../application/index.js";
-import { formatAgentLabel, formatSelectedChannelBinding, getConfiguredAgents } from "../options/setup-options.js";
-import type { SetupCliOptions } from "../options/types.js";
+import { NO_CHANNEL_BINDING } from "./const.js";
+import { formatAgentLabel, formatSelectedChannelBinding, getConfiguredAgents } from "./options.js";
+import type { SetupCliOptions } from "./types.js";
 
 /** Render the explicitly selected target without changing configuration.
  * @param opts - Selected terminal target and channel details.
@@ -67,7 +68,7 @@ export function printSetupResult(
   console.log("Setup target:");
   console.log(`  Agent: ${result.agentId}`);
   console.log(`  Workspace: ${result.workspacePath}`);
-  console.log(`  Channel binding: ${result.channelBinding ?? "none"}`);
+  console.log(`  Channel binding: ${result.channelBinding ?? NO_CHANNEL_BINDING}`);
   if (result.channelAccountId) console.log(`  Channel account: ${result.channelAccountId}`);
   if (result.channelPeerId) console.log(`  Channel peer: ${result.channelPeerId}`);
 

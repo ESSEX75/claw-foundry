@@ -188,3 +188,6 @@ role-level assignments, including custom identifiers. They perform reads only an
 do not query model catalogs or request scope approval. Explicit overrides are
 validated again during setup; unknown/removed levels and disabled roles fail before
 effects. Standalone file recovery does not load or validate the existing workflow.
+
+Doctor exposes its canonical `RoutingDoctorReport` DTO and `DOCTOR_SEVERITY` registry
+for adapter-owned rendering without duplicating diagnostic protocol values.

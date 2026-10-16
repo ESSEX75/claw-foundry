@@ -1,8 +1,9 @@
 /** Pure adapter boundary policy shared by the architecture checker and regression tests. */
-/** Adapters whose setup and diagnostic effects must pass through application commands. */
+/** Adapters whose administrative, setup, and diagnostic effects must pass through application commands. */
 const APPLICATION_ADAPTERS = new Set([
   "lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts",
   "lib/cli/commands/setup-command.ts", "lib/cli/commands/doctor-command.ts",
+  "lib/cli/commands/issues-archive-command.ts",
 ]);
 
 /** Detect direct persistence dependencies in adapters migrated to shared application commands.
@@ -13,7 +14,7 @@ const APPLICATION_ADAPTERS = new Set([
 export function checkSetupAdapterBoundary(source: string, targetLayer: string | undefined, specifier: string): string | null {
   if (APPLICATION_ADAPTERS.has(source.replaceAll("\\", "/")) &&
     (targetLayer === "state" || ["node:fs", "node:fs/promises", "fs", "fs/promises"].includes(specifier))) {
-    return "setup and doctor adapters must use application commands instead of filesystem state";
+    return "administrative, setup and doctor adapters must use application commands instead of filesystem state";
   }
   return null;
 }

@@ -2,10 +2,7 @@
 
 import type { Command } from "commander";
 
-import { deleteManagedIssue, getIssueArchiveStatus, purgeIssueArchive, resolveProvider } from "../../application/index.js";
-import { loadConfig } from "../../state/index.js";
-import { resetIssueStores } from "../../state/index.js";
-import { readProjects } from "../../state/index.js";
+import { deleteProjectIssue, inspectProjectIssueArchive, purgeProjectIssueArchive, resetProjectIssueStores } from "../../application/index.js";
 import { type AdministrativeCliContext, parseIssueId, requireExclusiveMode, requireWorkspace } from "../input/index.js";
 
 /** Register explicit issue archive, deletion, and store reset operations.
@@ -21,14 +18,10 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: Administrativ
     .option("--workspace <path>", "Workspace path")
     .action(async (opts: { project: string; workspace?: string }) => {
       const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
-      const config = await loadConfig(workspaceDir, opts.project);
 
-      console.log(JSON.stringify(await getIssueArchiveStatus({
+      console.log(JSON.stringify(await inspectProjectIssueArchive({
         workspaceDir,
         projectSlug: opts.project,
-        archiveRetention: config.issueArchiveMaintenance.archiveRetention,
-        deletedProviderRetention: config.issueArchiveMaintenance.deletedProviderRetention,
-        workflow: config.workflow,
       }), null, 2));
     });
 
@@ -40,17 +33,12 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: Administrativ
     .action(async (opts: { project: string; dryRun?: boolean; apply?: boolean; workspace?: string }) => {
       requireExclusiveMode(opts.dryRun, opts.apply);
       const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
-      const config = await loadConfig(workspaceDir, opts.project);
 
-      console.log(JSON.stringify(await purgeIssueArchive({
+      console.log(JSON.stringify(await purgeProjectIssueArchive({
         workspaceDir,
         projectSlug: opts.project,
-        archiveRetention: config.issueArchiveMaintenance.archiveRetention,
-        deletedProviderRetention: config.issueArchiveMaintenance.deletedProviderRetention,
-        maxItems: config.issueArchiveMaintenance.maxPerHeartbeat,
         apply: opts.apply === true,
         actor: "cli",
-        correlationId: `archive-purge:${opts.project}:${Date.now()}`,
       }), null, 2));
     });
 
@@ -68,19 +56,13 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: Administrativ
 
       if (opts.apply && confirmIssueId !== issueId) throw new Error("--confirm-issue must exactly match --issue with --apply.");
       const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
-      const projects = await readProjects(workspaceDir);
-      const project = projects.projects[opts.project];
-
-      if (!project) throw new Error(`Project "${opts.project}" not found.`);
-      const { provider } = await resolveProvider(workspaceDir, project, ctx.runCommand);
-
-      const result = await deleteManagedIssue({
+      const result = await deleteProjectIssue({
         workspaceDir,
-        projectSlug: project.slug,
+        projectSlug: opts.project,
         issueId,
         confirmIssueId,
         dryRun: opts.apply !== true,
-        provider,
+        runCommand: ctx.runCommand,
         actor: "cli",
       });
 
@@ -94,10 +76,10 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: Administrativ
     .requiredOption("--confirm-project <slug>", "Must exactly match --project")
     .option("--workspace <path>", "Workspace path")
     .action(async (opts: { project: string; confirmProject: string; workspace?: string }) => {
-      if (opts.confirmProject !== opts.project) throw new Error("--confirm-project must exactly match --project.");
       const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
 
-      await resetIssueStores(workspaceDir, opts.project);
-      console.log(JSON.stringify({ projectSlug: opts.project, reset: true }, null, 2));
+      const result = await resetProjectIssueStores({ workspaceDir, projectSlug: opts.project, confirmProjectSlug: opts.confirmProject });
+
+      console.log(JSON.stringify(result, null, 2));
     });
 }

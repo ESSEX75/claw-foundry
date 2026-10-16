@@ -1,16 +1,7 @@
-/** Exposes managed issue lifecycle commands and their supported results. */
+/** Aggregates supported managed issue administration, lifecycle, and recovery APIs. */
 
-export {
-  ARCHIVE_BLOCK_REASON,
-  archiveManagedIssue,
-  archiveManagedIssueLocked,
-  getIssueArchiveStatus,
-  maintainIssueArchive,
-  parseDuration,
-  purgeIssueArchive,
-  recoverTerminalIssueArchives
-} from "./archive/index.js";
-export { deleteManagedIssue } from "./deletion/index.js";
-export { migrateIssuePolicies } from "./policy/index.js";
-export type { IssueRepairSource } from "./repair/index.js";
-export { isIssueRepairFailure, ISSUE_REPAIR_SOURCE, repairManagedIssue } from "./repair/index.js";
+export * from "./administration/index.js";
+export * from "./archive/index.js";
+export * from "./deletion/index.js";
+export * from "./policy/index.js";
+export * from "./repair/index.js";

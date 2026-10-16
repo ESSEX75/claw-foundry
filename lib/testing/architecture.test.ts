@@ -5,7 +5,7 @@ import { checkApplicationDependencyDirection, checkSetupAdapterBoundary, checkTo
 
 describe("setup architecture boundaries", () => {
   it("rejects state and filesystem imports in all migrated adapters", () => {
-    for (const source of ["lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts", "lib/cli/commands/setup-command.ts", "lib/cli/commands/doctor-command.ts"]) {
+    for (const source of ["lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts", "lib/cli/commands/setup-command.ts", "lib/cli/commands/doctor-command.ts", "lib/cli/commands/issues-archive-command.ts"]) {
       for (const name of [source, source.replaceAll("/", "\\")]) {
         assert.ok(checkSetupAdapterBoundary(name, "state", "../../state/index.js"));
         for (const specifier of ["node:fs", "node:fs/promises", "fs", "fs/promises"]) {

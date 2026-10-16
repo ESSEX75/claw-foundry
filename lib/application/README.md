@@ -159,3 +159,13 @@ Policy migration validates explicitly selected workflow keys against the resolve
 project configuration before selecting local records or performing effects. Unknown
 keys are errors, including when the managed issue store is empty; custom keys remain
 valid when present in that configuration.
+
+`issues/administration` resolves project retention policy and persisted provider
+selection for operator commands; adapters parse input and render the returned results.
+Archive status/purge operate on local project stores without requiring a registry
+entry. Delete requires a registered project and delegates fresh ownership and
+recovery checks to deletion. Explicit confirmed reset replaces only active and
+archive issue stores, under the state-owned store lock. It does not clear worker
+slots, creation operations, delivery resolutions, attachments or provider data.
+Reset remains available with damaged stores/configuration or a missing/corrupt
+registry; its two file replacements are not a cross-file atomic transaction.

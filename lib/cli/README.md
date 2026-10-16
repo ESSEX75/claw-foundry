@@ -37,3 +37,8 @@ local archival are both confirmed; successful deletion previews remain successfu
 even though they perform neither effect. Successful commands never clear an
 existing nonzero process exit code. Policy migration skips and no-change outcomes
 are normal results rather than CLI failures.
+
+Issue administration delegates policy/provider resolution and confirmed store reset
+to application commands. CLI code does not load project/config stores or mutate
+issue stores directly. Reset is destructive recovery for active/archive stores
+only, not a cleanup of registry slots, creation/recovery evidence or attachments.

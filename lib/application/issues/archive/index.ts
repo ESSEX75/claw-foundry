@@ -6,3 +6,4 @@ export { parseDuration } from "./planning.js";
 export { getIssueArchiveStatus } from "./queries.js";
 export { recoverTerminalIssueArchives } from "./recovery.js";
 export { maintainIssueArchive, purgeIssueArchive } from "./retention.js";
+export type { ArchivePurgeResult, ArchiveStatusResult } from "./types.js";

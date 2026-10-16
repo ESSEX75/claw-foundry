@@ -3,9 +3,8 @@
 import type { Command } from "commander";
 
 import { resolveWorkerDelivery } from "../../application/index.js";
-import type { PluginContext } from "../../context.js";
 import { WORKER_DELIVERY_RESOLUTION } from "../../domain/index.js";
-import { getDefaultWorkspaceDir } from "../options/setup-options.js";
+import { type AdministrativeCliContext, parseIssueId, requireExclusiveMode, requireWorkspace } from "../input/index.js";
 import type { WorkerDeliveryCommandOptions } from "./types.js";
 
 /**
@@ -13,7 +12,7 @@ import type { WorkerDeliveryCommandOptions } from "./types.js";
  * @param parent - DevClaw command group receiving the recovery command.
  * @param ctx - Plugin runtime supplying workspace and provider command access.
  */
-export function registerWorkerDeliveryCommand(parent: Command, ctx: PluginContext): void {
+export function registerWorkerDeliveryCommand(parent: Command, ctx: AdministrativeCliContext): void {
   parent.command("worker-delivery")
     .description("Resolve an uncertain worker turn after inspecting its run")
     .requiredOption("--project <slug>", "Project slug")
@@ -26,18 +25,15 @@ export function registerWorkerDeliveryCommand(parent: Command, ctx: PluginContex
     .option("--apply", "Apply the explicitly verified decision")
     .option("--workspace <path>", "Workspace path")
     .action(async (opts: WorkerDeliveryCommandOptions) => {
-      if (opts.dryRun === opts.apply) throw new Error("Choose exactly one of --dry-run or --apply.");
-      const workspaceDir = opts.workspace ?? getDefaultWorkspaceDir(ctx.runtime);
+      requireExclusiveMode(opts.dryRun, opts.apply);
+      const issueId = parseIssueId(opts.issue);
 
-      if (!workspaceDir) throw new Error("Workspace path is required. Pass --workspace or configure an agent default workspace.");
-      const issueId = Number(opts.issue);
-
-      if (!Number.isSafeInteger(issueId) || issueId <= 0) throw new Error(`Invalid issue ID: ${opts.issue}`);
       if (opts.decision !== WORKER_DELIVERY_RESOLUTION.CONFIRMED_STARTED
         && opts.decision !== WORKER_DELIVERY_RESOLUTION.CONFIRMED_NOT_STARTED) {
         throw new Error(`Invalid worker delivery decision: ${opts.decision}`);
       }
 
+      const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
       const result = await resolveWorkerDelivery({
         workspaceDir, projectSlug: opts.project, issueId,
         sessionKey: opts.sessionKey, deliveryId: opts.deliveryId, decision: opts.decision,

@@ -1,7 +1,5 @@
 /** Terminal setup option and agent display contracts. */
 
-import type { SetupNotificationChannel } from "../../application/index.js";
-import type { ExecutionMode } from "../../domain/index.js";
 
 /** Parsed terminal setup flags before application validation. */
 export type SetupCliOptions = {
@@ -12,7 +10,7 @@ export type SetupCliOptions = {
   /** Explicit workspace target. */
   workspace?: string;
   /** Selected notification transport. */
-  channelBinding?: SetupNotificationChannel | "none";
+  channelBinding?: string;
   /** Exact channel account identifier. */
   channelAccountId?: string;
   /** Exact group or topic destination. */
@@ -24,7 +22,7 @@ export type SetupCliOptions = {
   /** Whether system instructions should be replaced with backups. */
   refreshInstructions?: boolean;
   /** Requested project scheduling mode. */
-  projectExecution?: ExecutionMode;
+  projectExecution?: string;
   /** Whether to preview without effects. */
   dryRun?: boolean;
   [key: string]: string | boolean | undefined;

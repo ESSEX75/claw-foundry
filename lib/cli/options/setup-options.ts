@@ -3,36 +3,17 @@
 import {
   isSetupNotificationChannel,
   type SetupNotificationChannel,
-  type SetupRuntime,
 } from "../../application/index.js";
 import { EXECUTION_MODE, type ExecutionMode } from "../../domain/index.js";
 import { listConfiguredAgents } from "../../integrations/index.js";
+import { type CliConfigRuntime, readCliConfig } from "../input/index.js";
 import type { ConfiguredAgent, SetupCliOptions } from "./types.js";
 
-/** Read the configured default workspace for terminal target selection.
+/** Read configured agents without suppressing configuration failures.
  * @param runtime - Read-only configuration source.
  */
-export function getDefaultWorkspaceDir(runtime: SetupRuntime): string | undefined {
-  try {
-    const config = runtime.config.current();
-
-    return config.agents?.defaults?.workspace ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/** Read configured agents for the interactive target menu.
- * @param runtime - Read-only configuration source.
- */
-export function getConfiguredAgents(runtime: SetupRuntime): readonly ConfiguredAgent[] {
-  try {
-    const config = runtime.config.current();
-
-    return listConfiguredAgents(config);
-  } catch {
-    return [];
-  }
+export function getConfiguredAgents(runtime: CliConfigRuntime): readonly ConfiguredAgent[] {
+  return listConfiguredAgents(readCliConfig(runtime));
 }
 
 /** Format an agent choice without changing its identifier.

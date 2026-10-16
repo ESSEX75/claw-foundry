@@ -154,3 +154,8 @@ resolved workflow, enabled role/level and policy labels. Sync uses persisted pro
 identity, validates exact scope before effects and retains independent project failures.
 A failed catalog may be partially applied; repeating it is idempotent. Catalog
 provisioning never scans issues, changes issues.json or reconciles issue projections.
+
+Policy migration validates explicitly selected workflow keys against the resolved
+project configuration before selecting local records or performing effects. Unknown
+keys are errors, including when the managed issue store is empty; custom keys remain
+valid when present in that configuration.

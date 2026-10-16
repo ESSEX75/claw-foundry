@@ -3,14 +3,16 @@
 import type { Command } from "commander";
 
 import { deleteManagedIssue, getIssueArchiveStatus, purgeIssueArchive, resolveProvider } from "../../application/index.js";
-import type { PluginContext } from "../../context.js";
 import { loadConfig } from "../../state/index.js";
 import { resetIssueStores } from "../../state/index.js";
 import { readProjects } from "../../state/index.js";
-import { getDefaultWorkspaceDir } from "../options/setup-options.js";
+import { type AdministrativeCliContext, parseIssueId, requireExclusiveMode, requireWorkspace } from "../input/index.js";
 
-/** Register non-legacy issue archive and deletion CLI operations. */
-export function registerIssuesArchiveCommand(parent: Command, ctx: PluginContext): void {
+/** Register explicit issue archive, deletion, and store reset operations.
+ * @param parent - Parent DevClaw command group.
+ * @param ctx - Read-only configuration and application command transport.
+ */
+export function registerIssuesArchiveCommand(parent: Command, ctx: AdministrativeCliContext): void {
   const issues = parent.command("issues").description("Manage active and archived issue state");
   const archive = issues.command("archive").description("Inspect or purge the dedicated issue archive");
 
@@ -18,7 +20,7 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: PluginContext
     .requiredOption("--project <slug>", "Project slug")
     .option("--workspace <path>", "Workspace path")
     .action(async (opts: { project: string; workspace?: string }) => {
-      const workspaceDir = requireWorkspace(opts.workspace, ctx);
+      const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
       const config = await loadConfig(workspaceDir, opts.project);
 
       console.log(JSON.stringify(await getIssueArchiveStatus({
@@ -37,7 +39,7 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: PluginContext
     .option("--workspace <path>", "Workspace path")
     .action(async (opts: { project: string; dryRun?: boolean; apply?: boolean; workspace?: string }) => {
       requireExclusiveMode(opts.dryRun, opts.apply);
-      const workspaceDir = requireWorkspace(opts.workspace, ctx);
+      const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
       const config = await loadConfig(workspaceDir, opts.project);
 
       console.log(JSON.stringify(await purgeIssueArchive({
@@ -61,7 +63,11 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: PluginContext
     .option("--workspace <path>", "Workspace path")
     .action(async (opts: { project: string; issue: string; confirmIssue?: string; dryRun?: boolean; apply?: boolean; workspace?: string }) => {
       requireExclusiveMode(opts.dryRun, opts.apply);
-      const workspaceDir = requireWorkspace(opts.workspace, ctx);
+      const issueId = parseIssueId(opts.issue);
+      const confirmIssueId = opts.confirmIssue === undefined ? undefined : parseIssueId(opts.confirmIssue);
+
+      if (opts.apply && confirmIssueId !== issueId) throw new Error("--confirm-issue must exactly match --issue with --apply.");
+      const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
       const projects = await readProjects(workspaceDir);
       const project = projects.projects[opts.project];
 
@@ -71,8 +77,8 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: PluginContext
       console.log(JSON.stringify(await deleteManagedIssue({
         workspaceDir,
         projectSlug: project.slug,
-        issueId: parseIssueId(opts.issue),
-        confirmIssueId: opts.confirmIssue ? parseIssueId(opts.confirmIssue) : undefined,
+        issueId,
+        confirmIssueId,
         dryRun: opts.apply !== true,
         provider,
         actor: "cli",
@@ -86,30 +92,9 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: PluginContext
     .option("--workspace <path>", "Workspace path")
     .action(async (opts: { project: string; confirmProject: string; workspace?: string }) => {
       if (opts.confirmProject !== opts.project) throw new Error("--confirm-project must exactly match --project.");
-      const workspaceDir = requireWorkspace(opts.workspace, ctx);
+      const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
 
       await resetIssueStores(workspaceDir, opts.project);
       console.log(JSON.stringify({ projectSlug: opts.project, reset: true }, null, 2));
     });
-}
-
-function requireWorkspace(explicit: string | undefined, ctx: PluginContext): string {
-  const workspace = explicit ?? getDefaultWorkspaceDir(ctx.runtime);
-
-  if (!workspace) throw new Error("Workspace path is required.");
-
-  return workspace;
-}
-
-function requireExclusiveMode(dryRun: boolean | undefined, apply: boolean | undefined): void {
-  if (dryRun && apply) throw new Error("Choose either --dry-run or --apply.");
-  if (!dryRun && !apply) throw new Error("Choose an explicit mode: --dry-run or --apply.");
-}
-
-function parseIssueId(value: string): number {
-  const issueId = Number(value);
-
-  if (!Number.isInteger(issueId) || issueId <= 0) throw new Error(`Invalid issue ID "${value}".`);
-
-  return issueId;
 }

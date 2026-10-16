@@ -5,20 +5,19 @@
 import type { Command } from "commander";
 
 import { runRoutingDoctor } from "../../application/index.js";
-import type { PluginContext } from "../../context.js";
+import { type AdministrativeCliContext,requireWorkspace } from "../input/index.js";
 
-/** Register `devclaw doctor` on the parent CLI command. */
-export function registerDoctorCommand(parent: Command, ctx: PluginContext): void {
+/** Register read-only routing diagnostics and a failing exit code for blocking findings.
+ * @param parent - Parent DevClaw command group.
+ * @param ctx - Configuration and command capabilities supplied by the plugin.
+ */
+export function registerDoctorCommand(parent: Command, ctx: AdministrativeCliContext): void {
   parent
     .command("doctor")
     .description("Validate DevClaw configuration, routing, and agent isolation")
     .option("--workspace <path>", "Workspace containing devclaw/projects.json")
     .action(async (opts: { workspace?: string }) => {
-      const workspace = opts.workspace ?? ctx.runtime.config.current().agents?.defaults?.workspace;
-
-      if (!workspace) {
-        throw new Error("Doctor requires --workspace when OpenClaw has no default agent workspace.");
-      }
+      const workspace = requireWorkspace(opts.workspace, ctx.runtime);
 
       const report = await runRoutingDoctor(ctx.runtime, workspace);
 

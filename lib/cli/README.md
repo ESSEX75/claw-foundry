@@ -23,3 +23,10 @@ Setup calls the same application command as the setup tool, including preflight
 and dry-run validation. `--eject-defaults`, `--reset-defaults`, and
 `--refresh-instructions` select standalone file operations; ordinary setup preserves
 existing files. Doctor remains read-only.
+
+Shared terminal selection parsing and read-only configuration access belong to
+`input`, whose entrypoint is used by sibling adapters. Issue identifiers must be
+positive safe decimal integers. Explicit CSV filters reject blank or invalid items;
+only omitted options mean no filter. Application validates workflow filter keys
+against the selected project configuration. SDK configuration failures remain errors
+and are never presented as empty inventories or missing workspace defaults.

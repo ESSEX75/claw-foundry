@@ -8,23 +8,32 @@ import {
   migrateIssuePolicies,
   repairManagedIssue,
 } from "../../application/index.js";
-import type { PluginContext } from "../../context.js";
-import type { ReviewPolicy, TestPolicy } from "../../domain/index.js";
-import { getDefaultWorkspaceDir } from "../options/setup-options.js";
+import { isReviewPolicy, isTestPolicy, type ReviewPolicy, type TestPolicy } from "../../domain/index.js";
+import { type AdministrativeCliContext, parseIssueId, parseIssueSelection, parseSelection, requireExclusiveMode, requireWorkspace } from "../input/index.js";
 
+/** Parse the optional review policy through its domain value set.
+ * @param value - Raw terminal policy or source value.
+ */
 function parseReviewPolicy(value: string | undefined): ReviewPolicy | undefined {
   if (value === undefined) return undefined;
-  if (value === "human" || value === "agent" || value === "skip") return value;
+  if (isReviewPolicy(value)) return value;
   throw new Error(`Invalid review policy "${value}". Use human, agent, or skip.`);
 }
 
+/** Parse the optional test policy through its domain value set.
+ * @param value - Raw terminal policy or source value.
+ */
 function parseTestPolicy(value: string | undefined): TestPolicy | undefined {
   if (value === undefined) return undefined;
-  if (value === "agent" || value === "skip") return value;
+  if (isTestPolicy(value)) return value;
   throw new Error(`Invalid test policy "${value}". Use agent or skip.`);
 }
 
-export function registerRepairIssueCommand(parent: Command, ctx: PluginContext): void {
+/** Register repair and policy migration adapters without widening explicit selections.
+ * @param parent - Parent DevClaw command group.
+ * @param ctx - Read-only configuration and application command transport.
+ */
+export function registerRepairIssueCommand(parent: Command, ctx: AdministrativeCliContext): void {
   const repairCmd = parent
     .command("repair")
     .description("Repair DevClaw-managed provider projections");
@@ -50,17 +59,17 @@ export function registerRepairIssueCommand(parent: Command, ctx: PluginContext):
       apply?: boolean;
       workspace?: string;
     }) => {
-      if (opts.dryRun && opts.apply) throw new Error("Choose either --dry-run or --apply, not both.");
-      if (!opts.dryRun && !opts.apply) throw new Error("Repair requires an explicit mode: pass --dry-run or --apply.");
-      const workspaceDir = opts.workspace ?? getDefaultWorkspaceDir(ctx.runtime);
+      requireExclusiveMode(opts.dryRun, opts.apply);
+      const issueId = parseIssueId(opts.issue);
+      const source = parseRepairSource(opts.source);
+      const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
 
-      if (!workspaceDir) throw new Error("Workspace path is required. Pass --workspace or configure an agent default workspace.");
       if (opts.apply && !opts.planToken) throw new Error("--plan-token from a matching dry-run is required with --apply.");
       const result = await repairManagedIssue({
         workspaceDir,
         projectSlug: opts.project,
-        issueId: parseIssueId(opts.issue),
-        source: parseRepairSource(opts.source),
+        issueId,
+        source,
         apply: opts.apply === true,
         planToken: opts.planToken,
         reason: opts.reason,
@@ -94,18 +103,20 @@ export function registerRepairIssueCommand(parent: Command, ctx: PluginContext):
       apply?: boolean;
       workspace?: string;
     }) => {
-      if (opts.dryRun && opts.apply) throw new Error("Choose either --dry-run or --apply, not both.");
-      if (!opts.dryRun && !opts.apply) throw new Error("Policy migration requires an explicit mode: pass --dry-run or --apply.");
-      const workspaceDir = opts.workspace ?? getDefaultWorkspaceDir(ctx.runtime);
+      requireExclusiveMode(opts.dryRun, opts.apply);
+      const reviewPolicy = parseReviewPolicy(opts.review);
+      const testPolicy = parseTestPolicy(opts.test);
+      const issueIds = parseIssueSelection(opts.issue);
+      const workflowStates = parseSelection(opts.state, "--state");
+      const workspaceDir = requireWorkspace(opts.workspace, ctx.runtime);
 
-      if (!workspaceDir) throw new Error("Workspace path is required. Pass --workspace or configure an agent default workspace.");
       const result = await migrateIssuePolicies({
         workspaceDir,
         projectSlug: opts.project,
-        reviewPolicy: parseReviewPolicy(opts.review),
-        testPolicy: parseTestPolicy(opts.test),
-        issueIds: opts.issue ? opts.issue.split(",").map((id) => Number(id.trim())).filter((id) => Number.isFinite(id)) : undefined,
-        workflowStates: opts.state ? opts.state.split(",").map((state) => state.trim()).filter(Boolean) : undefined,
+        reviewPolicy,
+        testPolicy,
+        issueIds,
+        workflowStates,
         includeClosed: opts.includeClosed,
         dryRun: !opts.apply,
         runCommand: ctx.runCommand,
@@ -115,14 +126,9 @@ export function registerRepairIssueCommand(parent: Command, ctx: PluginContext):
     });
 }
 
-function parseIssueId(value: string): number {
-  const issueId = Number(value);
-
-  if (!Number.isSafeInteger(issueId) || issueId <= 0) throw new Error(`Invalid issue ID "${value}".`);
-
-  return issueId;
-}
-
+/** Validate the explicitly requested repair authority.
+ * @param value - Raw terminal policy or source value.
+ */
 function parseRepairSource(value: string): IssueRepairSource {
   if (value === ISSUE_REPAIR_SOURCE.LOCAL_STATE || value === ISSUE_REPAIR_SOURCE.PROVIDER) return value;
 

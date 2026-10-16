@@ -8,11 +8,11 @@ import {
   type SetupRuntime,
 } from "../../application/index.js";
 import { getAllBuiltInDefaultModels, getAllRoleIds, getBuiltInLevelsForRole } from "../../roles/index.js";
+import { getDefaultWorkspaceDir, readCliConfig } from "../input/index.js";
 import {
   formatAgentLabel,
   formatSelectedChannelBinding,
   getConfiguredAgents,
-  getDefaultWorkspaceDir,
 } from "../options/setup-options.js";
 import type { SetupCliOptions } from "../options/types.js";
 
@@ -104,37 +104,36 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/** Read endpoint choices while preserving configuration read failures.
+ * @param runtime - SDK configuration source for terminal choices.
+ */
 function getConfiguredChannelAccounts(runtime: SetupRuntime): ChannelAccountChoice[] {
-  try {
-    const config = runtime.config.current();
-    const choices: ChannelAccountChoice[] = [];
+  const config = readCliConfig(runtime);
+  const choices: ChannelAccountChoice[] = [];
 
   for (const channel of SETUP_NOTIFICATION_CHANNELS) {
-      const channelConfig = config.channels?.[channel];
+    const channelConfig = config.channels?.[channel];
 
-      if (!channelConfig || channelConfig.enabled === false) continue;
-      const accounts = channelConfig.accounts;
+    if (!channelConfig || channelConfig.enabled === false) continue;
+    const accounts = channelConfig.accounts;
 
-      if (accounts && typeof accounts === "object" && !Array.isArray(accounts)) {
-        for (const [accountId, accountConfig] of Object.entries(accounts)) {
-          const normalized = accountId.trim();
+    if (accounts && typeof accounts === "object" && !Array.isArray(accounts)) {
+      for (const [accountId, accountConfig] of Object.entries(accounts)) {
+        const normalized = accountId.trim();
 
-          if (normalized) {
-            choices.push(...buildChannelEndpointChoices(
-              channel,
-              normalized,
-              accountConfig,
-              getBoundTopicPeerIds(config, channel, normalized),
-            ));
-          }
+        if (normalized) {
+          choices.push(...buildChannelEndpointChoices(
+            channel,
+            normalized,
+            accountConfig,
+            getBoundTopicPeerIds(config, channel, normalized),
+          ));
         }
       }
     }
-
-    return choices;
-  } catch {
-    return [];
   }
+
+  return choices;
 }
 
 async function askYesNo(

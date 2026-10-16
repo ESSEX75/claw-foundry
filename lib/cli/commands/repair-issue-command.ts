@@ -78,6 +78,7 @@ export function registerRepairIssueCommand(parent: Command, ctx: AdministrativeC
       });
 
       console.log(JSON.stringify(result, null, 2));
+      if (!result.success) process.exitCode = 1;
     });
 
   repairCmd

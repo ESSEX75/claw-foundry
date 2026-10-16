@@ -74,7 +74,7 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: Administrativ
       if (!project) throw new Error(`Project "${opts.project}" not found.`);
       const { provider } = await resolveProvider(workspaceDir, project, ctx.runCommand);
 
-      console.log(JSON.stringify(await deleteManagedIssue({
+      const result = await deleteManagedIssue({
         workspaceDir,
         projectSlug: project.slug,
         issueId,
@@ -82,7 +82,10 @@ export function registerIssuesArchiveCommand(parent: Command, ctx: Administrativ
         dryRun: opts.apply !== true,
         provider,
         actor: "cli",
-      }), null, 2));
+      });
+
+      console.log(JSON.stringify(result, null, 2));
+      if (!result.dryRun && (!result.deleted || !result.archived)) process.exitCode = 1;
     });
 
   issues.command("reset-store")

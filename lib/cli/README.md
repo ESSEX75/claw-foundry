@@ -30,3 +30,10 @@ positive safe decimal integers. Explicit CSV filters reject blank or invalid ite
 only omitted options mean no filter. Application validates workflow filter keys
 against the selected project configuration. SDK configuration failures remain errors
 and are never presented as empty inventories or missing workspace defaults.
+
+Repair and delete preserve their application JSON results. A classified repair
+failure sets exit code 1. Delete apply sets exit code 1 until provider absence and
+local archival are both confirmed; successful deletion previews remain successful
+even though they perform neither effect. Successful commands never clear an
+existing nonzero process exit code. Policy migration skips and no-change outcomes
+are normal results rather than CLI failures.

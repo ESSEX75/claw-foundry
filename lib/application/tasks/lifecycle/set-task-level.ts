@@ -6,13 +6,14 @@ import {
   findStateByLabel,
   ISSUE_INTEGRITY_STATUS,
 } from "../../../domain/index.js";
+import { validateRoleLevel } from "../../../roles/index.js";
 import { isIssueCreationReady, loadConfig, withIssueOrchestrationLock } from "../../../state/index.js";
 import { ISSUE_RUNTIME_KIND } from "../../issue-runtime/const.js";
 import { resolveIssueRuntimeState, writeIssueRuntimeState } from "../../issue-runtime/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { resolveProject, resolveProvider } from "../../projects/index.js";
 import { TASK_EVENT } from "./const.js";
-import { resolveHoldQueueTarget, validateRoleLevel } from "./lifecycle-decision.js";
+import { resolveHoldQueueTarget } from "./lifecycle-decision.js";
 import type { SetTaskLevelInput, SetTaskLevelResult } from "./types.js";
 
 /** Serialize an explicit level change with issue lifecycle transitions.

@@ -8,6 +8,7 @@ export const QUEUE_REASON = {
   DISPATCH_FAILED: "dispatch_failed",
   REVIEW_POLICY: "review_policy",
   TEST_POLICY: "test_policy",
+  RESERVED: "issue_reserved",
   CAPACITY: "capacity_exhausted",
 } as const;
 

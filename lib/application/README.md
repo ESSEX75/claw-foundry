@@ -218,3 +218,9 @@ committed closedAt and notifications. Completion receipts retain processed actio
 replay cannot report an unexecuted reopen after merge-conflict recovery. Provider effects
 and local persistence are separate transactions; retry reconciles existing effects rather
 than treating provider labels as authoritative transition evidence.
+
+Queue ticks order canonical local queues by configured priority, then issue ID. They examine
+capacity-blocked candidates without holding another issue lock and recheck only the selected
+issue under its lock. Each tick makes at most one pickup per role and respects the total
+pickup budget; atomic reservation still enforces role/project execution constraints.
+Invalid source pairs or PICKUP targets never become managed candidates.

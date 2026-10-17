@@ -163,22 +163,6 @@ export type ClaimManagedTaskInput = {
   queuedOnly?: boolean;
 };
 
-/** Inputs consumed by resolveRoleLevel after adapter validation. */
-export type ResolveRoleLevelInput = {
-  /** Optional explicit level overriding automatic selection. */
-  requestedLevel?: string;
-  /** Authoritative local issue record used to make the decision. */
-  runtimeState: IssueRuntimeState;
-  /** Configured worker role responsible for the target queue. */
-  targetRole: string;
-  /** Effective role settings including enabled levels. */
-  roleConfig: ResolvedRoleConfig;
-  /** Provider title used for task context and operator output. */
-  issueTitle: string;
-  /** Provider description used for worker context or level selection. */
-  issueDescription: string;
-};
-
 /** Inputs consumed by resolveStartTaskDecision after adapter validation. */
 export type ResolveStartTaskDecisionInput = {
   /** Effective project workflow including custom states. */

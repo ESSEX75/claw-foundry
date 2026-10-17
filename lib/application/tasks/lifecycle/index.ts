@@ -3,7 +3,6 @@
 export { claimManagedTask } from "./claim-task.js";
 export { claimManagedTasks } from "./claim-tasks.js";
 export { editTaskBody } from "./edit-task-body.js";
-export { resolveRoleLevel } from "./lifecycle-decision.js";
 export { setTaskLevel } from "./set-task-level.js";
 export { startTask } from "./start-task.js";
 export type { ClaimManagedTasksInput, ClaimManagedTasksResult, TaskClaimDiagnostic } from "./types.js";

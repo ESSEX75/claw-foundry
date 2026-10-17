@@ -1,7 +1,7 @@
 /** Plans local policy gating, role level, and free slot without I/O. */
 
 import { findAvailableWorkerSlot } from "../../domain/index.js";
-import { resolveRoleLevel } from "../tasks/lifecycle/index.js";
+import { resolveRoleLevel } from "../../roles/index.js";
 import { WORKER_SESSION_ACTION } from "../workers/const.js";
 import { QUEUE_PLAN, QUEUE_REASON } from "./const.js";
 import { queuePolicyBlock } from "./policy.js";

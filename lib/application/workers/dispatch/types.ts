@@ -2,14 +2,13 @@
 
 import type { RunCommand } from "../../../context.js";
 import type { Project, SlotState, WorkflowConfig } from "../../../domain/index.js";
+import type { WorkerSessionAction } from "../../../domain/index.js";
 import { WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import type { AGENT_TURN_STATUS, AgentTurnOutcome, IssueComment, IssueProvider } from "../../../integrations/index.js";
 import type { ResolvedRoleConfig } from "../../../state/index.js";
-import type { ValueOf } from "../../../types.js";
 import type { NotificationRuntime } from "../../notifications/index.js";
 import type { PrFeedback } from "../../review/index.js";
 import type { TaskContextBudget } from "../../tasks/context/index.js";
-import type { WORKER_SESSION_ACTION } from "../const.js";
 
 /** Immutable inputs used to plan one worker session assignment. */
 export type DispatchPlanInput = {
@@ -48,7 +47,7 @@ export type DispatchPlan = {
   /** Deterministic OpenClaw session identity. */
   sessionKey: string;
   /** Whether an existing matching session can be reused. */
-  sessionAction: ValueOf<typeof WORKER_SESSION_ACTION>;
+  sessionAction: WorkerSessionAction;
   /** Stale or over-budget session to remove before delivery. */
   sessionKeyToDelete: string | null;
 };
@@ -110,15 +109,25 @@ export type DispatchResult = {
   /** Unique submission identifier used for exact operator recovery. */
   deliveryId: string;
   /** Whether dispatch created a session identity or reused an existing one. */
-  sessionAction: ValueOf<typeof WORKER_SESSION_ACTION>;
+  sessionAction: WorkerSessionAction;
   /** Deterministic OpenClaw worker session key. */
   sessionKey: string;
   /** Configured worker level selected for dispatch. */
   level: string;
   /** Resolved model assigned to the worker session. */
   model: string;
-  /** Human-readable dispatch announcement. */
-  announcement: string;
+  /** Configured role and issue facts for adapter rendering. */
+  role: string;
+  /** Provider-local issue identity. */
+  issueId: number;
+  /** Provider title observed at dispatch. */
+  issueTitle: string;
+  /** Canonical provider link. */
+  issueUrl: string;
+  /** Optional worker display name. */
+  botName?: string;
+  /** Effective role-level presentation symbol. */
+  emoji: string;
   /** Observed gateway result; pending and unknown retain the reservation for reconciliation. */
   deliveryStatus: Exclude<AgentTurnOutcome["kind"], typeof AGENT_TURN_STATUS.REJECTED> | typeof WORKER_DELIVERY_STATUS.PENDING;
 };
@@ -152,7 +161,7 @@ export type AuditDispatchOptions = {
   /** Resolved worker model. */
   model: string;
   /** Whether the session was created or reused. */
-  sessionAction: ValueOf<typeof WORKER_SESSION_ACTION>;
+  sessionAction: WorkerSessionAction;
   /** Deterministic worker session key. */
   sessionKey: string;
   /** Workflow label consumed by dispatch. */

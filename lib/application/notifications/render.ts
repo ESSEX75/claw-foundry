@@ -1,7 +1,7 @@
 /** Renders notification event messages without I/O or delivery side effects. */
 
 import { COMPLETION_RESULT, getCompletionEmoji, REVIEW_POLICY } from "../../domain/index.js";
-import { WORKER_SESSION_ACTION } from "../workers/const.js";
+import { WORKER_SESSION_ACTION } from "../../domain/index.js";
 import {
   MERGE_ACTOR_TEXT,
   MERGE_REQUEST_PATH_SEGMENT,

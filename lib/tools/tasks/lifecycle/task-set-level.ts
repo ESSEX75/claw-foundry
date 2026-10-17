@@ -51,14 +51,21 @@ Examples:
       const reason = params.reason;
       const workspaceDir = requireWorkspaceDir(toolCtx);
 
-      return jsonResult(await setTaskLevel({
+      const result = await setTaskLevel({
         workspaceDir,
         channelId,
         issueId,
         level: newLevel,
         ...(reason ? { reason } : {}),
         runCommand: ctx.runCommand,
-      }));
+      });
+
+      const announcement = result.changed
+        ? `🔧 Updated #${result.issueId}: level ${result.fromLevel ?? "none"} → ${result.level}`
+          + (result.reason ? ` (${result.reason})` : "")
+        : `Issue #${result.issueId} already has level "${result.level}".`;
+
+      return jsonResult({ ...result, announcement });
     },
   });
 }

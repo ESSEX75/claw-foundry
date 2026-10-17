@@ -2,8 +2,6 @@
  * message-builder.ts — Task message construction for worker sessions.
  */
 
-import { getFallbackEmoji } from "../../../roles/index.js";
-import type { ResolvedRoleConfig } from "../../../state/index.js";
 import { formatPrContext, formatPrFeedback, PR_FEEDBACK_REASON } from "../../review/index.js";
 import type { BuildConflictFixMessageInput, BuildTaskMessageInput } from "./types.js";
 
@@ -146,42 +144,4 @@ export function buildConflictFixMessage(opts: BuildConflictFixMessageInput): str
   );
 
   return parts.join("\n");
-}
-
-/** Render the operator announcement for a worker session dispatch.
- * @param level - Requested or resolved level from the effective role configuration.
- * @param role - Configured role responsible for the workflow state or worker task.
- * @param sessionAction - Whether dispatch creates a session or sends to an existing one.
- * @param issueId - Provider-local issue identifier.
- * @param issueTitle - Provider title used for task context and operator output.
- * @param issueUrl - Provider issue URL included in worker context.
- * @param resolvedRole - Effective role configuration determining completion results and level presentation.
- * @param botName - Optional worker display name.
- */
-export function buildAnnouncement(
-  level: string, role: string, sessionAction: "spawn" | "send",
-  issueId: number, issueTitle: string, issueUrl: string,
-  resolvedRole?: ResolvedRoleConfig, botName?: string,
-): string {
-  const emoji = resolvedRole?.levels[level]?.emoji ?? getFallbackEmoji(role);
-  const actionVerb = sessionAction === "spawn" ? "Spawning" : "Sending";
-  const nameTag = botName ? ` ${botName}` : "";
-
-  return `${emoji} ${actionVerb} ${role.toUpperCase()}${nameTag} (${level}) for #${issueId}: ${issueTitle}\n🔗 [Issue #${issueId}](${issueUrl})`;
-}
-
-/**
- * Build a human-friendly session label from project name, role, and level.
- * e.g. "my-project", "developer", "medior" → "My Project — Developer (Medior)"
- *
- * @param projectName - Project display name included in worker context.
- * @param role - Configured role responsible for the workflow state or worker task.
- * @param level - Requested or resolved level from the effective role configuration.
- * @param botName - Optional worker display name.
- */
-export function formatSessionLabel(projectName: string, role: string, level: string, botName?: string): string {
-  const titleCase = (s: string) => s.replace(/(^|\s|-)\S/g, (c) => c.toUpperCase()).replace(/-/g, " ");
-  const nameLabel = botName ? ` ${botName}` : "";
-
-  return `${titleCase(projectName)} — ${titleCase(role)}${nameLabel} (${titleCase(level)})`;
 }

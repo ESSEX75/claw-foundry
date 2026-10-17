@@ -7,6 +7,7 @@ import { TASK_COMPLEXITY } from "../../../roles/index.js";
 import { requireWorkspaceDir } from "../../context/index.js";
 import { channelIdInput, requiredTextInput, toolInputParameters } from "../../validation/index.js";
 import { RESEARCH_TASK_TOOL_NAME } from "./const.js";
+import { renderDispatchAnnouncement } from "./dispatch-render.js";
 
 /** Validates research-task arguments before context resolution or effects. */
 const researchTaskInput = z.strictObject({
@@ -72,7 +73,8 @@ Example arguments:
           deliveryStatus: result.deliveryStatus, deliveryId: result.deliveryId,
           sessionAction: result.dispatch?.sessionAction, reason: result.reason,
           sessionKey: result.dispatch?.sessionKey ?? result.existingWorker?.sessionKey },
-        announcement: result.dispatch?.announcement ?? `Research ${result.status}${result.issue ? ` #${result.issue.iid}` : ""}${result.reason ? `: ${result.reason}` : ""}`,
+        announcement: result.dispatch ? renderDispatchAnnouncement(result.dispatch)
+          : `Research ${result.status}${result.issue ? ` #${result.issue.iid}` : ""}${result.reason ? `: ${result.reason}` : ""}`,
       });
     },
   });

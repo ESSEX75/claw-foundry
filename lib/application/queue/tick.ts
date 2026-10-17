@@ -150,7 +150,7 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
                   role,
                   level: pickup.level,
                   sessionAction: pickup.sessionAction,
-                  announcement: `[DRY RUN] Would pick up #${lockedNext.issue.iid}`,
+                  dryRun: true,
                 },
               };
             }
@@ -193,7 +193,7 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
                 role,
                 level: dispatch.level,
                 sessionAction: dispatch.sessionAction,
-                announcement: dispatch.announcement,
+                dryRun: false,
               },
             };
           },

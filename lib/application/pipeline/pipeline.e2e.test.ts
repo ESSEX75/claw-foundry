@@ -159,8 +159,8 @@ describe("E2E pipeline", () => {
       // Verify dispatch result
       assert.strictEqual(result.sessionAction, "spawn");
       assert.ok(result.sessionKey.includes("test-project-developer-medior"));
-      assert.ok(result.announcement.includes("#42"));
-      assert.ok(result.announcement.includes("Add login page"));
+      assert.equal(result.issueId, 42);
+      assert.equal(result.issueTitle, "Add login page");
 
       // Verify label transitioned on the issue
       const issue = await h.provider.getIssue(42);
@@ -349,7 +349,7 @@ describe("E2E pipeline", () => {
       });
 
       assert.strictEqual(output.labelTransition, "Doing → To Review");
-      assert.ok(output.announcement.includes("#10"));
+      assert.ok(output.issueUrl?.includes("10"));
 
       const issue = await h.provider.getIssue(10);
       assert.ok(issue.labels.includes("To Review"), `Labels: ${issue.labels}`);

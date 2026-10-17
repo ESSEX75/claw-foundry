@@ -96,12 +96,15 @@ export type SetTaskLevelResult = {
   level: string;
   /** Whether the command changed the current assignment or content. */
   changed: boolean;
+  /** Previously prepared level, absent when no assignment existed. */
+  fromLevel: string | null;
+  /** Operator explanation retained verbatim for rendering. */
+  reason?: string;
   /** Resolved project or its display name in command output. */
   project: string;
   /** Provider capability or identifier used for this operation. */
   provider: string;
-  /** Human-readable result for adapter delivery. */
-  announcement: string;
+
 };
 
 /** Explicit approval request for a held managed task. */
@@ -136,8 +139,7 @@ export type StartTaskResult = {
   level: string | null;
   /** Resolved project or its display name in command output. */
   project: string;
-  /** Human-readable result for adapter delivery. */
-  announcement: string;
+
 };
 
 /** Inputs consumed by claimManagedTask after adapter validation. */

@@ -247,3 +247,5 @@ target. A confirmed new agent is retained and resumed by existing agentId withou
 newAgentName; unconfirmed registration requires configuration inspection before retry.
 Dry-run performs no provisioning. Ordinary existing-agent setup leaves implicit SDK
 resource creation with the host while explicit registration plans can be resumed.
+
+Operator tools render completion, dispatch, lifecycle and projection repair guidance from structured application facts. Worker prompts and outbound notifications remain application effects; gateway session labels belong to workers. Shared session-action semantics belong to domain/workers.

@@ -1,7 +1,7 @@
 /** Shared issue and slot contract for an unresolved worker submission. */
 
 import type { ValueOf } from "../../types.js";
-import { WORKER_DELIVERY_STATUS } from "./const.js";
+import { WORKER_DELIVERY_STATUS, WORKER_SESSION_ACTION } from "./const.js";
 
 /** Durable evidence that a worker-turn submission has no confirmed outcome. */
 export type WorkerDeliveryState = {
@@ -32,3 +32,6 @@ export type WorkerRunIdentity = {
   /** Timestamp selected when this run reserved its slot. */
   startedAt: string;
 };
+
+/** Whether a worker turn creates a session identity or reuses one. */
+export type WorkerSessionAction = ValueOf<typeof WORKER_SESSION_ACTION>;

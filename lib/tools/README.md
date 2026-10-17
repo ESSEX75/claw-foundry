@@ -100,3 +100,5 @@ must pass arch/check/build/full tests and a logic review before committing.
 Setup partial-apply errors are returned as unsuccessful structured results with the
 stopped effect, confirmed agent creation and recovery target. They never become a
 successful setup response merely because registration or configuration already committed.
+
+Tool adapters own operator announcements and CLI repair guidance rendered from structured application outcomes. Task query adapters preserve projection evidence while adding repair/delivery hints.

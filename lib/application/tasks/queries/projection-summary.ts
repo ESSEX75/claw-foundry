@@ -79,12 +79,11 @@ function summarizeManagedProjection(
     missingManagedLabels: diff.missingManagedLabels,
     unexpectedManagedLabels: diff.unexpectedManagedLabels,
     unmanagedLabels: diff.unmanagedLabels,
-    repairHint: needsRepair ? `devclaw issue_repair ${state.issueId} --source local-state --dry-run` : null,
+    needsRepair,
     ...(state.pipelineNotification ? { pipelineNotification: state.pipelineNotification } : {}),
     ...(state.activeWorker?.delivery ? {
       workerDelivery: state.activeWorker.delivery,
-      deliveryHint: `Inspect OpenClaw session ${state.activeWorker.sessionKey ?? "unknown"} and the worker slot before retrying issue #${state.issueId}.`
-        + " Use devclaw worker-delivery --help with this marker's operationId as --delivery-id to preview and apply a verified conclusion.",
+      workerSessionKey: state.activeWorker.sessionKey,
     } : {}),
   };
 }
@@ -100,6 +99,6 @@ function summarizeUninitializedProjection(issue: Issue): TaskIssueProjectionView
     missingManagedLabels: [],
     unexpectedManagedLabels: [],
     unmanagedLabels: [...issue.labels].sort(),
-    repairHint: null,
+    needsRepair: false,
   };
 }

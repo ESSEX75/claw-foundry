@@ -77,13 +77,10 @@ async function startTaskLocked(input: StartTaskInput, target: TaskLifecycleTarge
     transitioned: true, level: decision.assignedLevel,
   });
 
-  const announcement = `▶️ #${issueId} moved to "${decision.targetLabel}" `
-    + `(level: ${decision.assignedLevel}) — heartbeat will dispatch.`;
-
   return {
     success: true, issueId, issueTitle: issue.title,
     from: decision.fromLabel, to: decision.targetLabel, transitioned: true,
     level: decision.assignedLevel,
-    project: project.name, announcement,
+    project: project.name,
   };
 }

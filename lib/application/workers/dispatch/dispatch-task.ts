@@ -10,18 +10,19 @@ import { log as auditLog } from "../../../audit.js";
 import type { WorkerDeliveryState } from "../../../domain/index.js";
 import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, STATE_TYPE, WORKER_DELIVERY_STATUS, WORKFLOW_EVENT } from "../../../domain/index.js";
 import { AGENT_TURN_STATUS, deleteWorkerSession, ensureSessionModel } from "../../../integrations/index.js";
+import { getFallbackEmoji } from "../../../roles/index.js";
 import { isIssueCreationReady, loadConfig } from "../../../state/index.js";
 import { readIssueStateStore, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
 import { getProject, getRoleWorker, readProjects } from "../../../state/index.js";
-import { getNotificationConfig, notify } from "../../notifications/index.js";
+import { getNotificationConfig, NOTIFICATION_EVENT, notify } from "../../notifications/index.js";
 import { resolveIssueNotificationEndpoint } from "../../notifications/resolve-endpoint.js";
 import { transitionWorkflowLabel } from "../../projection/index.js";
 import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageReviewSummaryDelivery } from "../../review/index.js";
-import { buildAnnouncement, formatSessionLabel } from "../../tasks/context/index.js";
 import { REVIEW_SUMMARY_RECEIPT_STEP, WORKER_AUDIT_EVENT } from "../const.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
 import { recordIssueDelivery, recordSlotDelivery } from "../delivery-state.js";
 import { shouldClearSession } from "../session-budget.js";
+import { formatSessionLabel } from "../session-label.js";
 import { auditDispatch, dispatchErrorMessage } from "./audit.js";
 import { settleDispatchDelivery } from "./delivery-settlement.js";
 import { loadDispatchContext } from "./dispatch-context.js";
@@ -192,7 +193,7 @@ export async function dispatchTaskLocked(
     const notifyTarget = await resolveIssueNotificationEndpoint(workspaceDir, project, issueId).catch(() => undefined);
 
     notify({
-      type: "workerStart", project: project.name, issueId, issueTitle, issueUrl,
+      type: NOTIFICATION_EVENT.WORKER_START, project: project.name, issueId, issueTitle, issueUrl,
       role, level, name: botName, sessionAction,
     }, {
       workspaceDir, config: notifyConfig,
@@ -238,9 +239,9 @@ export async function dispatchTaskLocked(
       fromLabel, toLabel,
     }).catch(() => { });
 
-    const announcement = buildAnnouncement(level, role, sessionAction, issueId, issueTitle, issueUrl, resolvedRole, botName);
+    const presentation = { role, issueId, issueTitle, issueUrl, botName, emoji: resolvedRole.levels[level]?.emoji ?? getFallbackEmoji(role) };
 
-    return { sessionAction, sessionKey, level, model, announcement, deliveryStatus, deliveryId: plan.deliveryId };
+    return { sessionAction, sessionKey, level, model, ...presentation, deliveryStatus, deliveryId: plan.deliveryId };
   } catch (error) {
     if (!taskDispatched) {
       if (providerProjectionAttempted) {

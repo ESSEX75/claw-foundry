@@ -49,7 +49,7 @@ Examples:
       const workspaceDir = requireWorkspaceDir(toolCtx);
       const channelId = resolveChannelId(toolCtx, params.channelId);
 
-      return jsonResult(await editTaskBody({
+      const result = await editTaskBody({
         workspaceDir,
         channelId,
         issueId: params.issueId,
@@ -58,7 +58,15 @@ Examples:
         reason: params.reason,
         addComment: params.addComment,
         runCommand: ctx.runCommand,
-      }));
+      });
+
+      const announcement = result.changed
+        ? `✏️ Updated ${result.changes?.join(" and ")} of #${result.issueId}: "${result.issueTitle}"`
+          + (result.reason ? ` — ${result.reason}` : "")
+          + `\n🔗 [Issue #${result.issueId}](${result.issueUrl})`
+        : `Issue #${result.issueId} already has the requested content — no changes made.\n🔗 [Issue #${result.issueId}](${result.issueUrl})`;
+
+      return jsonResult({ ...result, announcement });
     },
   });
 }

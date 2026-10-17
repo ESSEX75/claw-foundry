@@ -9,6 +9,7 @@ import { finishWork } from "../../application/index.js";
 import type { PluginContext } from "../../context.js";
 import { requireWorkspaceDir, resolveChannelId } from "../context/index.js";
 import { channelIdInput, issueIdInput, requiredTextInput, toolInputParameters } from "../validation/index.js";
+import { renderCompletionAnnouncement } from "./announcement.js";
 import { WORK_FINISH_TOOL_NAME } from "./const.js";
 
 /** Validates work-finish arguments before context resolution or effects. */
@@ -47,7 +48,7 @@ export function createWorkFinishTool(ctx: Pick<PluginContext, "runCommand" | "pl
       const workspaceDir = requireWorkspaceDir(toolCtx);
       const channelId = resolveChannelId(toolCtx, params.channelId);
 
-      return jsonResult(await finishWork({
+      const result = await finishWork({
         workspaceDir,
         channelId,
         role: params.role,
@@ -59,7 +60,9 @@ export function createWorkFinishTool(ctx: Pick<PluginContext, "runCommand" | "pl
         runCommand: ctx.runCommand,
         runtime: ctx.runtime,
         pluginConfig: ctx.pluginConfig,
-      }));
+      });
+
+      return jsonResult({ ...result, announcement: renderCompletionAnnouncement(result) });
     },
   });
 }

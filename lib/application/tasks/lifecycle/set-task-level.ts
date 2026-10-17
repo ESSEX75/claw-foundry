@@ -90,8 +90,6 @@ async function setTaskLevelLocked(input: SetTaskLevelInput, capturedTarget: Task
     changed,
     project: project.name,
     provider: providerType,
-    announcement: changed
-      ? `🔄 Updated #${issueId}: level ${fromLevel ?? "none"} → ${level}${input.reason ? ` (${input.reason})` : ""}`
-      : `Issue #${issueId} already has level "${level}".`,
+    fromLevel, reason: input.reason,
   };
 }

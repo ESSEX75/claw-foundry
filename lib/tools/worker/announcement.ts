@@ -1,15 +1,15 @@
 /** Renders a completion announcement without provider or state access. */
 
+import type { FinishWorkResult } from "../../application/index.js";
 import { getCompletionEmoji } from "../../domain/index.js";
-import type { CompletionInput } from "./types.js";
 
-/** Render the configured result and links for the completing worker.
- * @param opts - User-facing completion context.
- * @param issueUrl - Observed provider issue URL.
- * @param prUrl - Observed pull request URL.
- * @param nextState - Configured destination description.
+/** Render a completed workflow outcome for the work_finish tool.
+ * @param opts - Committed completion facts, including exact failure diagnostics.
  */
-export function renderCompletionAnnouncement(opts: CompletionInput, issueUrl: string, prUrl: string | undefined, nextState: string): string {
+export function renderCompletionAnnouncement(opts: FinishWorkResult): string {
+  const { issueUrl = "", prUrl, nextState } = opts;
+
+  if (opts.mergeFailure) return `⚠️ MERGE FAILED #${opts.issueId} — ${opts.mergeFailure}\n📋 [Issue #${opts.issueId}](${issueUrl})\n→ ${nextState}.`;
   const { role, result, issueId, summary, createdTasks } = opts;
   const key = `${role}:${result}`;
   // Build announcement using workflow-derived emoji

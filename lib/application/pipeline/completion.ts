@@ -13,7 +13,6 @@ import {
 } from "../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../projection/index.js";
 import { confirmReviewSummaryDelivery } from "../review/index.js";
-import { renderCompletionAnnouncement } from "./announcement.js";
 import { resumeCompletionArchive } from "./completion-archive.js";
 import { notifyCompletion } from "./completion-notifications.js";
 import { PIPELINE_AUDIT, PIPELINE_OWNER } from "./const.js";
@@ -152,7 +151,7 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
 
     return {
       labelTransition: `${rule.from} → ${failedTransition.toLabel}`,
-      announcement: `⚠️ MERGE FAILED #${issueId} — ${mergeFailure.error}\n📋 [Issue #${issueId}](${issue.web_url})\n→ ${failedTransition.toLabel}.`,
+      mergeFailure: mergeFailure.error, summary: opts.summary, createdTasks: opts.createdTasks,
       nextState: failedTransition.toLabel,
       prUrl,
       issueUrl: issue.web_url,
@@ -216,11 +215,10 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
     });
   }
 
-  const announcement = renderCompletionAnnouncement(opts, issue.web_url, prUrl, nextState);
 
   return {
     labelTransition: `${rule.from} → ${effectivePlan.rule.to}`,
-    announcement,
+    summary: opts.summary, createdTasks: opts.createdTasks,
     nextState,
     prUrl,
     issueUrl: issue.web_url,

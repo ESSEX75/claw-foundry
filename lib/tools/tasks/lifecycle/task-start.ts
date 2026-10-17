@@ -50,13 +50,15 @@ Examples:
       const issueId = params.issueId;
       const level = params.level;
 
-      return jsonResult(await startTask({
+      const result = await startTask({
         workspaceDir,
         channelId,
         issueId,
         level,
         runCommand: ctx.runCommand,
-      }));
+      });
+
+      return jsonResult({ ...result, announcement: `▶️ #${result.issueId} moved to "${result.to}" (level: ${result.level}) — heartbeat will dispatch.` });
     },
   });
 }

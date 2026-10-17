@@ -16,6 +16,7 @@ import { loadConfig } from "../../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../../context/index.js";
 import { channelIdInput, toolInputParameters } from "../../validation/index.js";
 import { TASK_LIST_TOOL_NAME } from "./const.js";
+import { renderTaskIssue } from "./projection-render.js";
 
 /** Validates task-list arguments before context resolution or effects. */
 const taskListInput = z.strictObject({
@@ -79,7 +80,7 @@ export function createTaskListTool(ctx: PluginContext): OpenClawPluginToolFactor
         success: true,
         project: project.name,
         filter: result.filter,
-        states: result.states,
+        states: result.states.map(group => ({ ...group, issues: group.issues.map(renderTaskIssue) })),
         totalIssues: result.totalIssues,
       });
     },

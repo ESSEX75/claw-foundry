@@ -106,8 +106,8 @@ export type TickAction = {
   level: string;
   /** Session action planned or performed by dispatch. */
   sessionAction: DispatchResult["sessionAction"];
-  /** Human-readable pickup summary. */
-  announcement: string;
+  /** Preview selection performs no dispatch. */
+  dryRun: boolean;
 };
 
 /** Pickups and safely skipped roles from one queue tick. */

@@ -35,8 +35,12 @@ export type CompletionPlan = {
 export type CompletionOutput = {
   /** Provider-visible label change. */
   labelTransition: string;
-  /** Human-readable completion summary. */
-  announcement: string;
+  /** Original worker summary, retained for adapter rendering. */
+  summary?: string;
+  /** Child issue links reported by the completing worker. */
+  createdTasks?: NotificationCreatedTask[];
+  /** Confirmed merge failure selecting the recovery destination. */
+  mergeFailure?: string;
   /** Description or label of the destination state. */
   nextState: string;
   /** URL of the detected or supplied pull request. */

@@ -15,6 +15,7 @@ import { loadConfig } from "../../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../../context/index.js";
 import { channelIdInput, toolInputParameters } from "../../validation/index.js";
 import { TASKS_STATUS_TOOL_NAME } from "./const.js";
+import { renderTaskIssue } from "./projection-render.js";
 
 /** Validates tasks-status arguments before context resolution or effects. */
 const tasksStatusInput = z.strictObject({
@@ -67,9 +68,9 @@ export function createTasksStatusTool(ctx: PluginContext): OpenClawPluginToolFac
         project: project.name,
         stateLabels: status.stateLabels,
         summary: status.summary,
-        hold: status.hold,
-        active: status.active,
-        queue: status.queue,
+        hold: Object.fromEntries(Object.entries(status.hold).map(([key, group]) => [key, { ...group, issues: group.issues.map(renderTaskIssue) }])),
+        active: Object.fromEntries(Object.entries(status.active).map(([key, group]) => [key, { ...group, issues: group.issues.map(renderTaskIssue) }])),
+        queue: Object.fromEntries(Object.entries(status.queue).map(([key, group]) => [key, { ...group, issues: group.issues.map(renderTaskIssue) }])),
       });
     },
   });

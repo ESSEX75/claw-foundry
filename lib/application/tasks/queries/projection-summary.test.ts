@@ -63,7 +63,7 @@ describe("task projection view", () => {
     assert.ok(summary.projection.missingManagedLabels.includes("To Do"));
     assert.ok(summary.projection.unexpectedManagedLabels.includes("Doing"));
     assert.ok(summary.projection.unmanagedLabels.includes("bug"));
-    assert.ok(summary.projection.repairHint?.includes("--source local-state --dry-run"));
+    assert.equal(summary.projection.needsRepair, true);
   });
 
   it("marks old issues without local state as projection_uninitialized", () => {
@@ -82,7 +82,7 @@ describe("task projection view", () => {
       ISSUE_INTEGRITY_STATUS.PROJECTION_UNINITIALIZED,
     );
     assert.deepStrictEqual(summary.projection.unmanagedLabels, ["To Do", "human"]);
-    assert.strictEqual(summary.projection.repairHint, null);
+    assert.strictEqual(summary.projection.needsRepair, false);
   });
 
   it("shows integrity_error and repair hint", () => {
@@ -96,6 +96,6 @@ describe("task projection view", () => {
     }, ctx(state({ integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR, integrityErrors: ["metadata tamper"] })));
 
     assert.strictEqual(summary.projection.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
-    assert.ok(summary.projection.repairHint?.includes("issue_repair 123"));
+    assert.equal(summary.projection.needsRepair, true);
   });
 });

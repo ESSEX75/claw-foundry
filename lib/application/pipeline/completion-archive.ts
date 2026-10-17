@@ -3,7 +3,6 @@
 import { type IssueCompletionReceipt, type IssueRuntimeState, resolveIssueClosedAt, STATE_TYPE } from "../../domain/index.js";
 import { readIssueArchiveStore } from "../../state/index.js";
 import { archiveManagedIssueLocked } from "../issues/index.js";
-import { renderCompletionAnnouncement } from "./announcement.js";
 import { PIPELINE_OWNER, PIPELINE_TERMINAL_ARCHIVE_CORRELATION_PREFIX } from "./const.js";
 import type { CompletionInput, CompletionOutput, CompletionPlan } from "./types.js";
 
@@ -28,7 +27,7 @@ export async function resumeCompletionArchive(input: CompletionInput & Required<
   if (!recovered.archived) throw new Error(`Interrupted completion archive could not resume: ${recovered.reason}`);
 
   return { labelTransition: `${plan.rule.from} \u2192 ${receipt.toLabel}`,
-    announcement: renderCompletionAnnouncement(input, archived.issueUrl ?? "", receipt.prUrl, plan.nextState),
+    summary: input.summary, createdTasks: input.createdTasks,
     nextState: plan.nextState, prUrl: receipt.prUrl, issueUrl: archived.issueUrl, issueClosed: state.closedAt !== null,
     issueReopened: resolveIssueClosedAt(receipt.actions, state.closedAt, new Date().toISOString()) === null };
 }

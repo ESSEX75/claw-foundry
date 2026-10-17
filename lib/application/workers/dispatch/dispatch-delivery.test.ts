@@ -620,7 +620,7 @@ describe("worker delivery outcome", () => {
       assert.equal(getRoleWorker(project, "developer").levels.medior?.[0]?.issueId, 67);
       assert.equal(state.activeWorker?.delivery?.status, WORKER_DELIVERY_STATUS.NEEDS_ATTENTION);
       assert.equal(summary.projection.workerDelivery?.status, WORKER_DELIVERY_STATUS.NEEDS_ATTENTION);
-      assert.match(summary.projection.deliveryHint ?? "", /Inspect OpenClaw session/);
+      assert.equal(summary.projection.workerSessionKey, state.activeWorker?.sessionKey);
       assert.ok((await h.provider.getIssue(67)).labels.includes("Doing"));
       const audit = await fs.readFile(path.join(h.workspaceDir, "devclaw", "log", "audit.log"), "utf8");
 

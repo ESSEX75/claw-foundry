@@ -85,7 +85,6 @@ async function editTaskBodyLocked(input: EditTaskBodyInput, target: TaskLifecycl
       issueUrl: issue.web_url,
       project: project.name,
       changed: false,
-      announcement: `Issue #${issueId} already has the requested content — no changes made.\n🔗 [Issue #${issueId}](${issue.web_url})`,
     };
   }
 
@@ -127,12 +126,6 @@ async function editTaskBodyLocked(input: EditTaskBodyInput, target: TaskLifecycl
     timestamp: new Date().toISOString(),
   });
 
-  const changedFields = Object.keys(changes).join(" and ");
-  let announcement = `✏️ Updated ${changedFields} of #${issueId}: "${updatedIssue.title}"`;
-
-  if (reason) announcement += ` — ${reason}`;
-  announcement += `\n🔗 [Issue #${issueId}](${updatedIssue.web_url})`;
-
   return {
     success: true,
     issueId,
@@ -142,6 +135,6 @@ async function editTaskBodyLocked(input: EditTaskBodyInput, target: TaskLifecycl
     provider: providerType,
     changed: true,
     changes: Object.keys(changes),
-    announcement,
+    reason,
   };
 }

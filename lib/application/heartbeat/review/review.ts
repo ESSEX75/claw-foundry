@@ -16,7 +16,7 @@ import {
 } from "../../../domain/index.js";
 import { PR_STATE } from "../../../integrations/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../../pipeline/index.js";
-import { planWorkflowEvent } from "../../pipeline/plan.js";
+import { planWorkflowEvent } from "../../pipeline/index.js";
 import { observePrStatusWithReceipts } from "../../review/index.js";
 import { getHeartbeatCandidates } from "../issue-coordination/index.js";
 import { transitionHeartbeatIssue } from "../issue-coordination/index.js";

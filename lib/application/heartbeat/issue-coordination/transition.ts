@@ -3,7 +3,7 @@
  */
 
 import { withIssueOrchestrationLock } from "../../../state/index.js";
-import { commitWorkflowTransitionLocked } from "../../pipeline/transition.js";
+import { commitWorkflowTransitionLocked } from "../../pipeline/index.js";
 import type { HeartbeatTransitionInput } from "./types.js";
 
 /** Recheck the local source state under the issue lock before actions and commit.

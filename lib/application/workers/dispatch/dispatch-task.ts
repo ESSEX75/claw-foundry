@@ -15,7 +15,7 @@ import { isIssueCreationReady, loadConfig } from "../../../state/index.js";
 import { readIssueStateStore, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
 import { getProject, getRoleWorker, readProjects } from "../../../state/index.js";
 import { getNotificationConfig, NOTIFICATION_EVENT, notify } from "../../notifications/index.js";
-import { resolveIssueNotificationEndpoint } from "../../notifications/resolve-endpoint.js";
+import { resolveIssueNotificationEndpoint } from "../../notifications/index.js";
 import { transitionWorkflowLabel } from "../../projection/index.js";
 import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageReviewSummaryDelivery } from "../../review/index.js";
 import { REVIEW_SUMMARY_RECEIPT_STEP, WORKER_AUDIT_EVENT } from "../const.js";

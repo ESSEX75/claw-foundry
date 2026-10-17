@@ -5,7 +5,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
+import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
 
 const root = process.cwd();
 const warnOnly = process.argv.includes("--warn-only");
@@ -112,6 +112,8 @@ async function findBoundaryViolations(files) {
     const content = stripComments(await readFile(file, "utf8"));
     const sourceLayer = layerForFile(file);
     const relativeSource = relative(file);
+    const aggregationViolation = checkApplicationAggregation(relativeSource, content);
+    if (aggregationViolation) violations.push({ file: relativeSource, import: "exports", rule: aggregationViolation });
 
     openClawToolContextImportCache.set(
       file,
@@ -176,6 +178,9 @@ function checkImportBoundary({ sourceFile, sourceLayer, targetFile, targetLayer,
 
   const cliViolation = checkCliApiBoundary(relative(sourceFile), targetRelative);
   if (cliViolation) return cliViolation;
+
+  const applicationViolation = checkApplicationApiBoundary(relative(sourceFile), targetRelative);
+  if (applicationViolation) return applicationViolation;
 
   const toolsViolation = checkToolsApiBoundary(relative(sourceFile), targetRelative);
   if (toolsViolation) return toolsViolation;

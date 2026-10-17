@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { it } from "node:test";
 
 import { createTestHarness } from "../../../testing/index.js";
-import { resolveHeartbeatConfig } from "./config.js";
+import { resolveHeartbeatConfig } from "../configuration/index.js";
 import { createHeartbeatLifecycle } from "./service.js";
 
 it("rejects timer intervals that Node would roll over into a rapid loop", () => {

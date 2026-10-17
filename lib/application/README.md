@@ -251,3 +251,16 @@ resource creation with the host while explicit registration plans can be resumed
 Operator tools render completion, dispatch, lifecycle and projection repair guidance from structured application facts. Worker prompts and outbound notifications remain application effects; gateway session labels belong to workers. Shared session-action semantics belong to domain/workers.
 
 Heartbeat projection-maintenance owns provider/metadata verification, confirmation policy, integrity persistence and its regression tests. Issue-coordination owns local candidate queries and locked heartbeat transitions; root heartbeat files compose passes. Issues/ownership exposes project reservation queries and exact worker selection without importing pipeline. Workers retain durable reservation/submission/settlement/recovery capabilities; pipeline retains transition, completion receipt and effect coordination. Collection search reuses provider observations only within one read-only invocation; mutation paths retain locked fresh reads.
+
+Application aggregation barrels delegate public child APIs with export *. Owning leaves
+explicitly select their supported operations and contracts; setup remains a facade.
+Heartbeat exposes configuration, health and its composed registration command; timer
+lifecycle, issue-coordination and projection-maintenance APIs serve internal composition.
+The service receives its project-tick callback from heartbeat registration and never
+imports the parent tick implementation. Shared configuration has its own read-only API;
+setup imports heartbeat/configuration directly without loading service orchestration.
+Worker dispatch may consume tasks/context and tasks/attachments APIs directly, preserving
+the documented worker-input boundary independently of task command aggregation. Shared
+parent const/types contracts, worker evidence/session policy, setup root/child types and
+heartbeat's service context type remain narrow internal exceptions. Architecture checks
+enforce sibling/child entrypoints, own/ancestor barrel rejection and hierarchical exports.

@@ -21,16 +21,6 @@ export type AgentDiscoveryResult = {
   errors: string[];
 };
 
-/** Validated heartbeat schedule and pickup budget. */
-export type HeartbeatConfig = {
-  /** Whether periodic service ticks are enabled. */
-  enabled: boolean;
-  /** Interval between scheduled checks in seconds. */
-  intervalSeconds: number;
-  /** Maximum dispatches across all projects in one agent tick. */
-  maxPickupsPerTick: number;
-};
-
 /** Narrow logger capability used for heartbeat lifecycle and agent diagnostics. */
 export type HeartbeatServiceLogger = {
   /** Report lifecycle starts, stops, and completed maintenance. */

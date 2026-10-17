@@ -5,9 +5,10 @@ import type { Project } from "../../domain/index.js";
 import type { IssueProvider, SessionLookup } from "../../integrations/index.js";
 import type { ValueOf } from "../../types.js";
 import type { NotificationRuntime } from "../notifications/index.js";
+import type { HeartbeatConfig } from "./configuration/index.js";
 import type { HEARTBEAT_PASS_FAILURE_POLICY } from "./const.js";
-import type { HealthFix, HealthIssue } from "./health/types.js";
-import type { HeartbeatConfig, ServiceContext } from "./service/types.js";
+import type { HealthFix, HealthIssue } from "./health/index.js";
+import type { ServiceContext } from "./service/types.js";
 
 /** One project tick's resolved application and transport dependencies. */
 export type HeartbeatRunInput = {

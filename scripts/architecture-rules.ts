@@ -86,3 +86,65 @@ export function checkCliApiBoundary(source: string, target: string): string | nu
   }
   return null;
 }
+
+/** Enforce application ownership and its documented shared submodule APIs on either platform.
+ * @param source - Repository-relative importer.
+ * @param target - Resolved repository-relative imported file.
+ */
+export function checkApplicationApiBoundary(source: string, target: string): string | null {
+  const importer = source.replaceAll("\\", "/");
+  const imported = target.replaceAll("\\", "/");
+  const root = "lib/application/";
+
+  if (!imported.startsWith(root)) return null;
+  if (!importer.startsWith(root)) {
+    return imported === `${root}index.ts` ? null : "external callers must use lib/application/index.ts";
+  }
+  if (imported === `${root}index.ts`) return "application must not import its own root barrel";
+  const targetOwner = imported.slice(0, imported.lastIndexOf("/"));
+  const sourceOwner = importer.slice(0, importer.lastIndexOf("/"));
+
+  if (imported.endsWith("/index.ts") && importer.startsWith(`${targetOwner}/`)) {
+    return "application capabilities must not import their own or ancestor barrel";
+  }
+  const sourceCapability = importer.slice(root.length).split("/")[0];
+  const targetCapability = imported.slice(root.length).split("/")[0];
+
+  if (sourceCapability !== targetCapability && sourceCapability !== "index.ts") {
+    const sharedWorkerInput = sourceCapability === "workers"
+      && ["tasks/context/index.ts", "tasks/attachments/index.ts"].includes(imported.slice(root.length));
+    const sharedHeartbeatSettings = sourceCapability === "setup" && imported === `${root}heartbeat/configuration/index.ts`;
+
+    if (sharedWorkerInput || sharedHeartbeatSettings) return null;
+
+    return imported === `${root}${targetCapability}/index.ts`
+      ? null : "application siblings must use the target capability entrypoint";
+  }
+  if (sourceOwner === targetOwner || imported.endsWith("/index.ts")) return null;
+  // Parent coordination owns root contracts; worker evidence and setup runtime ports intentionally stay there.
+  if (targetOwner === `${root}${targetCapability}`) {
+    const name = imported.slice(imported.lastIndexOf("/") + 1);
+    const sharedParentContracts = ["const.ts", "types.ts"];
+    const sharedWorkerEvidence = targetCapability === "workers" && ["delivery-state.ts", "session-budget.ts", "session-label.ts"].includes(name);
+
+    if (sharedParentContracts.includes(name) || sharedWorkerEvidence) return null;
+  }
+  if (importer === `${root}setup/types.ts` && imported.endsWith("/types.ts")) return null;
+  if (importer === `${root}heartbeat/types.ts` && imported === `${root}heartbeat/service/types.ts`) return null;
+
+  return "application child capabilities must use the target child entrypoint";
+}
+
+/** Require aggregation barrels to delegate supported child APIs rather than repeat symbol lists.
+ * Setup is an explicit facade and intentionally selects its supported child contracts.
+ * @param source - Repository-relative barrel file.
+ * @param content - Source text with comments removed by the checker.
+ */
+export function checkApplicationAggregation(source: string, content: string): string | null {
+  const file = source.replaceAll("\\", "/");
+
+  if (!file.startsWith("lib/application/") || !file.endsWith("/index.ts") || file === "lib/application/setup/index.ts") return null;
+
+  return /export\s+(?:type\s+)?\{[^}]*\}\s+from\s+["']\.\/[^"']+\/index\.js["']/.test(content)
+    ? "application aggregators must export * from supported child entrypoints" : null;
+}

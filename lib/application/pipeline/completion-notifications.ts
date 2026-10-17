@@ -6,7 +6,7 @@ import {
 } from "../../domain/index.js";
 import { PR_STATE } from "../../integrations/index.js";
 import { reservePipelineNotification } from "../../state/index.js";
-import { NOTIFICATION_BLOCKED } from "../notifications/const.js";
+import { NOTIFICATION_BLOCKED } from "../notifications/index.js";
 import {
   getNotificationConfig,
   NOTIFICATION_BLOCK_REASON,

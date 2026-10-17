@@ -1,5 +1,5 @@
-/** Supported heartbeat service, diagnostics, and health APIs. */
+/** Aggregates supported heartbeat configuration, service and health APIs. */
 
-export type { HealthFix, InspectWorkerHealthInput, InspectWorkerHealthResult } from "./health/index.js";
-export { checkWorkerHealth, inspectWorkerHealth } from "./health/index.js";
-export { HEARTBEAT_DEFAULTS, registerHeartbeatService } from "./service/index.js";
+export * from "./configuration/index.js";
+export * from "./health/index.js";
+export { registerHeartbeatService } from "./registration.js";

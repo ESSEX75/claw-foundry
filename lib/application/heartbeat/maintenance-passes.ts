@@ -6,7 +6,7 @@ import type { IssueProvider } from "../../integrations/index.js";
 import type { ResolvedConfig } from "../../state/index.js";
 import { maintainIssueArchive, recoverTerminalIssueArchives } from "../issues/index.js";
 import type { NotificationRuntime } from "../notifications/index.js";
-import { retryPendingPipelineNotifications } from "../notifications/retry-pipeline.js";
+import { retryPendingPipelineNotifications } from "../notifications/index.js";
 import { recoverTransitionWorkers } from "../pipeline/index.js";
 import { reconcileManagedTaskCreations } from "../tasks/index.js";
 import { HEARTBEAT_CREATION_LIMIT } from "./const.js";

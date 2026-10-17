@@ -7,8 +7,8 @@ import {
   getProject, getRoleWorker, loadConfig, readIssueStateStore, readProjects,
   updateIssueRuntimeRecord, updateSlot, withIssueOrchestrationLock,
 } from "../../../state/index.js";
-import { releaseTransitionWorkerLocked } from "../../pipeline/recovery.js";
-import { commitWorkflowTransitionLocked } from "../../pipeline/transition.js";
+import { releaseTransitionWorkerLocked } from "../../pipeline/index.js";
+import { commitWorkflowTransitionLocked } from "../../pipeline/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { reconcileUncertainDispatch } from "../../workers/index.js";
 import { WORKER_HEALTH_AUDIT, WORKER_HEALTH_OWNER } from "./const.js";

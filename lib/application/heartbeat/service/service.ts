@@ -1,19 +1,19 @@
-/** Registers one heartbeat timer lifecycle and serializes scheduled ticks. */
+/** Owns one timer lifecycle and serializes composition-injected heartbeat ticks. */
 
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
-
-import type { PluginContext } from "../../../context.js";
+import { resolveHeartbeatConfig } from "../configuration/index.js";
+import { MILLISECONDS_PER_SECOND } from "../configuration/index.js";
 import { discoverAgents } from "./agent-discovery.js";
 import { logTickResult, processAllAgents } from "./agent-runner.js";
-import { resolveHeartbeatConfig } from "./config.js";
-import { HEARTBEAT_SERVICE, MILLISECONDS_PER_SECOND } from "./const.js";
+import { HEARTBEAT_SERVICE } from "./const.js";
 import type { HeartbeatLifecycle, HeartbeatServiceDependencies, ServiceContext } from "./types.js";
 
 /** Create an isolated timer lifecycle with one in-flight tick at most.
  * @param pluginCtx - Plugin configuration, gateway command, and runtime capabilities.
+ * @param projectTick - Project coordinator supplied by the heartbeat composition boundary.
  * @param runTick - Optional supplied tick for lifecycle integration tests.
  */
-export function createHeartbeatLifecycle(pluginCtx: HeartbeatServiceDependencies, runTick?: () => Promise<void>): HeartbeatLifecycle {
+export function createHeartbeatLifecycle(pluginCtx: HeartbeatServiceDependencies, runTick?: () => Promise<void>,
+  projectTick?: Parameters<typeof processAllAgents>[1]): HeartbeatLifecycle {
   let intervalId: ReturnType<typeof setInterval> | null = null;
   let startupTimeoutId: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
@@ -67,7 +67,8 @@ export function createHeartbeatLifecycle(pluginCtx: HeartbeatServiceDependencies
 
             warnedNoAgents = false;
             if (generation !== currentGeneration) return;
-            const result = await processAllAgents(discovery.agents, config, pluginCtx.pluginConfig,
+            if (!projectTick) throw new Error("Heartbeat lifecycle requires a project tick coordinator.");
+            const result = await processAllAgents(discovery.agents, projectTick, config, pluginCtx.pluginConfig,
               svcCtx.logger, pluginCtx.runCommand, pluginCtx.runtime);
 
             logTickResult(result, svcCtx.logger);
@@ -93,12 +94,4 @@ export function createHeartbeatLifecycle(pluginCtx: HeartbeatServiceDependencies
       svcCtx.logger.info("work_heartbeat service stopped");
     },
   };
-}
-
-/** Register the supported heartbeat service with OpenClaw.
- * @param api - Plugin registration boundary.
- * @param pluginCtx - Plugin configuration, transport, and command capabilities.
- */
-export function registerHeartbeatService(api: OpenClawPluginApi, pluginCtx: PluginContext): void {
-  api.registerService({ id: HEARTBEAT_SERVICE.ID, ...createHeartbeatLifecycle(pluginCtx) });
 }

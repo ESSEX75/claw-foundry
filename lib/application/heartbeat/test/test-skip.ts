@@ -16,7 +16,7 @@ import {
   WORKFLOW_EVENT,
 } from "../../../domain/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../../pipeline/index.js";
-import { planWorkflowEvent } from "../../pipeline/plan.js";
+import { planWorkflowEvent } from "../../pipeline/index.js";
 import { getHeartbeatCandidates } from "../issue-coordination/index.js";
 import { transitionHeartbeatIssue } from "../issue-coordination/index.js";
 import { TEST_SKIP_AUDIT_EVENT, TEST_SKIP_TRANSITION_OWNER } from "./const.js";

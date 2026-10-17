@@ -176,7 +176,7 @@ describe("heartbeat stage 12", () => {
       const result = await processAllAgents([
         { agentId: "broken", workspace: invalidWorkspace },
         { agentId: harness.project.agentId, workspace: harness.workspaceDir },
-      ], { enabled: true, intervalSeconds: 60, maxPickupsPerTick: 0 }, undefined,
+      ], tick, { enabled: true, intervalSeconds: 60, maxPickupsPerTick: 0 }, undefined,
       { info() {}, warn(message) { warnings.push(message); }, error(message) { warnings.push(message); } }, harness.runCommand);
 
       assert.ok(result.passes.some(pass => pass.projectSlug === harness.project.slug));

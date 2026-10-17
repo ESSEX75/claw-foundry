@@ -6,8 +6,9 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import { extractMediaAttachments } from "../../../integrations/index.js";
 import { getAttachmentPath, listAttachments, purgeIssueAttachments, saveAttachment } from "../../../state/index.js";
-import { extractIssueReferences, formatAttachmentComment, formatAttachmentsForTask } from "./index.js";
+import { extractIssueReferences, formatAttachmentsForTask } from "./index.js";
 
+import { formatAttachmentComment } from "./render.js";
 describe("extractMediaAttachments", () => {
   it("extracts single MediaPath", () => {
     const result = extractMediaAttachments({

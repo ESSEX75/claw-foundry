@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { z } from "zod";
-import { writeIssueRuntimeState } from "../../../application/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import type { PluginContext } from "../../../context.js";
 import { GitHubProvider } from "../../../integrations/index.js";
 import { readIssueStateStore } from "../../../state/index.js";
@@ -16,7 +16,7 @@ describe("task browsing adapters", () => {
     const h = await createTestHarness();
     try {
       const issue = h.provider.seedIssue({ iid: 42, title: "Managed", labels: ["Planning"] });
-      await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
+      await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
         workflow: h.workflow, workflowState: "planning", workflowLabel: "Planning", owner: "local", reviewPolicy: "human", testPolicy: "skip" });
       h.provider.seedIssue({ iid: 42, title: "Managed", labels: ["Doing", "owner:foreign", "review:skip"] });
       h.provider.seedIssue({ iid: 99, title: "Provider only", labels: ["To Do"] });

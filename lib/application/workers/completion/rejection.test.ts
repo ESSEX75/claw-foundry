@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { createTestHarness } from "../../../testing/index.js";
-import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { finishWork } from "./finish-work.js";
 import { DEFAULT_WORKFLOW, ISSUE_PROVIDER } from "../../../domain/index.js";
 
@@ -22,7 +22,7 @@ describe("work_finish rejection", () => {
           title: "Stale testing issue",
           labels: ["Testing", "tester:senior"],
         });
-        await writeIssueRuntimeState({
+        await seedIssueRuntimeState({
           workspaceDir: h.workspaceDir,
           project: h.project,
           issue,

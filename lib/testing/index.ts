@@ -23,6 +23,7 @@ export {
   createEmptyIssueStateStoreForTesting,
   replaceIssueArchiveStoreForTesting,
   replaceIssueStateStoreForTesting,
+  seedIssueRuntimeState,
 } from "./state-fixtures.js";
 export { TestProvider } from "./test-provider.js";
 export type { ProviderCall } from "./types.js";

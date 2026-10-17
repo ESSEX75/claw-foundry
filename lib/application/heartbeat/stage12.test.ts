@@ -10,7 +10,7 @@ import { renderIssueMetadata } from "../../projection/index.js";
 import { DATA_DIR, readIssueStateStore } from "../../state/index.js";
 import { updateIssueRuntimeRecord } from "../../state/index.js";
 import { createTestHarness } from "../../testing/index.js";
-import { writeIssueRuntimeState } from "../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import { discoverAgents } from "./service/agent-discovery.js";
 import { processAllAgents } from "./service/agent-runner.js";
 import { notifyReviewEvent } from "./review/review-notification.js";
@@ -51,13 +51,13 @@ describe("heartbeat stage 12", () => {
       const queued = harness.provider.seedIssue({ iid: 103, labels: ["To Do"],
         description: renderIssueMetadata({ projectSlug: harness.project.slug, issueId: 103 }) });
 
-      await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue: human,
+      await seedIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue: human,
         providerType: harness.project.provider, workflow: harness.workflow, workflowState: "toReview", workflowLabel: "To Review",
         reviewPolicy: "human" });
-      await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue: skippedTest,
+      await seedIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue: skippedTest,
         providerType: harness.project.provider, workflow: harness.workflow, workflowState: "toTest", workflowLabel: "To Test",
         testPolicy: "skip" });
-      await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue: queued,
+      await seedIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue: queued,
         providerType: harness.project.provider, workflow: harness.workflow, workflowState: "todo", workflowLabel: "To Do" });
 
       const getPrStatus = harness.provider.getPrStatus.bind(harness.provider);
@@ -94,7 +94,7 @@ describe("heartbeat stage 12", () => {
       const issue = harness.provider.seedIssue({ iid: 113, labels: ["To Do"],
         description: renderIssueMetadata({ projectSlug: harness.project.slug, issueId: 113 }) });
 
-      await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue,
+      await seedIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue,
         providerType: harness.project.provider, workflow: harness.workflow, workflowState: "todo", workflowLabel: "To Do" });
 
       const runCommand: typeof harness.runCommand = async (argv, options) => {
@@ -207,7 +207,7 @@ describe("heartbeat stage 12", () => {
       const issue = harness.provider.seedIssue({ iid: 7, labels: ["To Review"] });
       const sends: Array<{ to: string; threadId?: string; accountId: string }> = [];
 
-      await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue,
+      await seedIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue,
         providerType: project.provider, workflow: harness.workflow, workflowState: "toReview", workflowLabel: "To Review" });
       await updateIssueRuntimeRecord(harness.workspaceDir, project.slug, 7, current => {
         if (!current) throw new Error("Review issue missing from local state.");

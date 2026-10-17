@@ -2,8 +2,10 @@
  * Seeds validated DevClaw stores through their locked public update boundaries for tests.
  */
 
+import { initializeIssueRuntimeState, type IssueStateInitializeInput, writeIssueRuntimeState } from "../application/index.js";
+import type { IssueRuntimeState } from "../domain/index.js";
 import type { IssueArchiveStore, IssueStateStore } from "../state/index.js";
-import { updateIssueArchiveStore, updateIssueStateStore } from "../state/index.js";
+import { readIssueStateStore, updateIssueArchiveStore, updateIssueStateStore } from "../state/index.js";
 
 /**
  * Build an empty active issue store for one test project.
@@ -42,4 +44,13 @@ export async function replaceIssueArchiveStoreForTesting(
   store: IssueArchiveStore,
 ): Promise<void> {
   await updateIssueArchiveStore(workspaceDir, projectSlug, () => ({ store, result: undefined }));
+}
+
+/** Explicitly seed or update managed fixtures without adding production initialization fallback.
+ * @param input - Complete test initialization choices or changes to an existing fixture.
+ */
+export async function seedIssueRuntimeState(input: IssueStateInitializeInput): Promise<IssueRuntimeState> {
+  const previous = (await readIssueStateStore(input.workspaceDir, input.project.slug)).issues[String(input.issue.iid)];
+
+  return previous ? writeIssueRuntimeState(input) : initializeIssueRuntimeState(input);
 }

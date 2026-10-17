@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER } from "../../../domain/index.js";
 import { loadConfig, readIssueStateStore, updateIssueRuntimeRecord, updateSlot } from "../../../state/index.js";
 import { createTestHarness } from "../../../testing/index.js";
-import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { claimManagedTasks } from "./claim-tasks.js";
 
 /** Seed an initialized queue record independently of provider label observations.
@@ -15,7 +15,7 @@ import { claimManagedTasks } from "./claim-tasks.js";
 async function setup(h: Awaited<ReturnType<typeof createTestHarness>>, issueId: number) {
   const config = await loadConfig(h.workspaceDir, h.project.slug);
   const issue = h.provider.seedIssue({ iid: issueId, labels: ["To Do"] });
-  await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
+  await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
     providerType: ISSUE_PROVIDER.GITHUB, workflow: config.workflow, workflowState: "todo", workflowLabel: "To Do",
     owner: null, integrityStatus: ISSUE_INTEGRITY_STATUS.OK });
   return { workspaceDir: h.workspaceDir, project: h.project, provider: h.provider, providerType: ISSUE_PROVIDER.GITHUB,

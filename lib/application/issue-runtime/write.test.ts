@@ -2,6 +2,7 @@
  * Verifies application-owned projection interpretation before local runtime persistence.
  */
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -14,13 +15,14 @@ import {
   createTestHarness,
   replaceIssueStateStoreForTesting as writeIssueStateStore,
 } from "../../testing/index.js";
+import { initializeIssueRuntimeState } from "./initialization.js";
 import { writeIssueRuntimeState } from "./write.js";
-import type { IssueStateWriteInput } from "./types.js";
+import type { IssueStateInitializeInput } from "./types.js";
 
 /** Run runtime-write scenarios against an isolated workspace with default configuration.
  * @param run - Assertions using a valid input whose issue does not initially exist.
  */
-async function withRuntimeInput(run: (input: IssueStateWriteInput) => Promise<void>): Promise<void> {
+async function withRuntimeInput(run: (input: IssueStateInitializeInput) => Promise<void>): Promise<void> {
   const harness = await createTestHarness();
 
   try {
@@ -57,11 +59,50 @@ function issueState(): IssueRuntimeState {
 }
 
 describe("writeIssueRuntimeState", () => {
+  it("rejects updates to missing state without importing provider labels or creating a store", async () => {
+    await withRuntimeInput(async input => {
+      await assert.rejects(writeIssueRuntimeState(input), /no initialized local runtime state/);
+      assert.equal((await readIssueStateStore(input.workspaceDir, input.project.slug)).issues["123"], undefined);
+    });
+  });
+
+  it("preserves an unchanged explicit pair through configuration drift while rejecting a new invalid pair", async () => {
+    await withRuntimeInput(async input => {
+      const original = await initializeIssueRuntimeState(input);
+      const workflow = structuredClone(input.workflow);
+
+      delete workflow.states.todo;
+      const updated = await writeIssueRuntimeState({ ...input, workflow,
+        workflowState: original.workflowState, workflowLabel: original.workflowLabel, owner: "new-owner" });
+
+      assert.equal(updated.owner, "new-owner");
+      assert.equal(updated.workflowState, original.workflowState);
+      assert.equal(updated.workflowLabel, original.workflowLabel);
+      await assert.rejects(writeIssueRuntimeState({ ...input, workflow, workflowState: "missing", workflowLabel: original.workflowLabel }));
+      assert.deepEqual((await readIssueStateStore(input.workspaceDir, input.project.slug)).issues["123"], updated);
+    });
+  });
+
+  it("only resumes initialization for the same durable creation identity and preserves the current record", async () => {
+    await withRuntimeInput(async input => {
+      const creationOperationId = randomUUID();
+
+      await initializeIssueRuntimeState({ ...input, creationOperationId });
+      const updated = await writeIssueRuntimeState({ ...input, owner: "current-owner", workflowState: "doing" });
+      const resumed = await initializeIssueRuntimeState({ ...input, creationOperationId });
+
+      assert.deepEqual(resumed, updated);
+      await assert.rejects(initializeIssueRuntimeState(input), /already has initialized/);
+      await assert.rejects(initializeIssueRuntimeState({ ...input, creationOperationId: randomUUID() }), /already has initialized/);
+      await assert.rejects(initializeIssueRuntimeState({ ...input, creationOperationId, providerType: ISSUE_PROVIDER.GITLAB }), /already has initialized/);
+    });
+  });
+
   it("imports only configured custom role levels on initialization", async () => {
     await withRuntimeInput(async (input) => {
       const config = await loadConfig(input.workspaceDir);
       const developer = config.roles.developer!;
-      const initialized = await writeIssueRuntimeState({ ...input,
+      const initialized = await initializeIssueRuntimeState({ ...input,
         initializationRoles: { security_auditor: { ...developer, levels: { expert: developer.levels.senior! } } },
         issue: { iid: 123, labels: ["To Do", "priority:high", "developer:senior", "security_auditor:expert", "review:agent"] },
       });
@@ -69,13 +110,13 @@ describe("writeIssueRuntimeState", () => {
       assert.equal(initialized.assignedRole, "security_auditor");
       assert.equal(initialized.assignedLevel, "expert");
       assert.equal(initialized.reviewPolicy, "agent");
-      const withoutRoles = await writeIssueRuntimeState({ ...input,
+      const withoutRoles = await initializeIssueRuntimeState({ ...input,
         issue: { iid: 124, labels: ["To Do", "developer:senior", "priority:high"] },
       });
 
       assert.equal(withoutRoles.assignedRole, null);
       assert.equal(withoutRoles.assignedLevel, null);
-      const invalidLevel = await writeIssueRuntimeState({ ...input, initializationRoles: config.roles,
+      const invalidLevel = await initializeIssueRuntimeState({ ...input, initializationRoles: config.roles,
         issue: { iid: 125, labels: ["To Do", "developer:unconfigured"] },
       });
 
@@ -87,7 +128,7 @@ describe("writeIssueRuntimeState", () => {
   it("does not combine an explicit role with a different projected role's level", async () => {
     await withRuntimeInput(async (input) => {
       const { roles } = await loadConfig(input.workspaceDir);
-      const state = await writeIssueRuntimeState({ ...input, initializationRoles: roles,
+      const state = await initializeIssueRuntimeState({ ...input, initializationRoles: roles,
         assignedRole: "tester", issue: { iid: 123, labels: ["To Do", "developer:senior"] },
       });
 
@@ -102,11 +143,11 @@ describe("writeIssueRuntimeState", () => {
 
       for (const labels of [["To Do", "Doing"], ["To Do", "review:human", "review:agent"],
         ["To Do", "test:skip", "test:agent"], ["To Do", "developer:senior", "tester:junior"]]) {
-        await assert.rejects(writeIssueRuntimeState({ ...input, initializationRoles: roles, issue: { iid: 123, labels } }));
+        await assert.rejects(initializeIssueRuntimeState({ ...input, initializationRoles: roles, issue: { iid: 123, labels } }));
         assert.equal((await readIssueStateStore(input.workspaceDir, input.project.slug)).issues["123"], undefined);
       }
 
-      const explicit = await writeIssueRuntimeState({ ...input, initializationRoles: roles,
+      const explicit = await initializeIssueRuntimeState({ ...input, initializationRoles: roles,
         issue: { iid: 123, labels: ["Doing", "To Do", "developer:senior", "tester:junior", "review:human", "review:agent"] },
         workflowState: "todo", assignedRole: null, assignedLevel: null, reviewPolicy: null,
       });
@@ -120,7 +161,7 @@ describe("writeIssueRuntimeState", () => {
 
   it("validates explicit state-label pairs and derives the omitted side", async () => {
     await withRuntimeInput(async (input) => {
-      const before = await writeIssueRuntimeState(input);
+      const before = await initializeIssueRuntimeState(input);
 
       await assert.rejects(writeIssueRuntimeState({ ...input, providerType: ISSUE_PROVIDER.GITLAB }), /provider cannot change/);
       assert.deepEqual((await readIssueStateStore(input.workspaceDir, input.project.slug)).issues["123"], before);
@@ -142,7 +183,7 @@ describe("writeIssueRuntimeState", () => {
 
   it("preserves omitted values without provider labels and applies explicit nulls", async () => {
     await withRuntimeInput(async (input) => {
-      const before = await writeIssueRuntimeState({ ...input,
+      const before = await initializeIssueRuntimeState({ ...input,
         assignedRole: "developer", assignedLevel: "senior", owner: "main", reviewPolicy: "agent", testPolicy: "agent",
         notifyTarget: { channel: "telegram", name: "primary" },
         activeWorker: { role: "developer", level: "senior", slotIndex: 0, sessionKey: "worker", startedAt: new Date().toISOString() },

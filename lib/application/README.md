@@ -45,7 +45,10 @@ directly so task orchestration can call worker commands without ancestor-barrel 
 This README is the single application-layer contract; subpackages do not maintain
 separate READMEs. Their file responsibilities and API details belong in source JSDoc.
 
-- Runtime writes use fresh locked state, preserve omitted fields and null policy
+- Explicit `initializeIssueRuntimeState` is the only projection-importing creation boundary;
+  `writeIssueRuntimeState` updates existing records and rejects missing state. Matching
+  creation-operation retries preserve the existing record rather than overwriting it.
+  Runtime writes use fresh locked state, preserve omitted fields and null policy
   snapshots, and keep provider identity immutable. Workflow key/label overrides must
   match resolved configuration; unchanged stored pairs survive configuration drift.
   Transition, notification, and release intents commit atomically. Only explicit

@@ -6,7 +6,7 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import { z } from "zod";
 
-import { writeIssueRuntimeState } from "../../application/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import type { RunCommand } from "../../context.js";
 import { getRoleWorker, loadConfig, readIssueStateStore } from "../../state/index.js";
 import { createTestHarness } from "../../testing/index.js";
@@ -25,7 +25,7 @@ describe("work_finish configured results", () => {
       await fs.writeFile(path.join(h.workspaceDir, ...CONFIG_PATH), "roles:\n  architect:\n    completion:\n      findings_ready: BLOCKED\n");
       const config = await loadConfig(h.workspaceDir, h.project.slug);
       const issue = h.provider.seedIssue({ iid: 42, labels: ["Researching"] });
-      await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
+      await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
         providerType: h.project.provider, workflow: config.workflow, workflowState: "researching", workflowLabel: "Researching",
         activeWorker: { role: "architect", level: "junior", slotIndex: 0, sessionKey: "research-worker", startedAt } });
       const labels = new Set(issue.labels);

@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, it, type TestContext } from "node:test";
 import { z } from "zod";
-import { writeIssueRuntimeState } from "../../../application/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import type { PluginContext } from "../../../context.js";
 import { ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
 import { GitHubProvider } from "../../../integrations/index.js";
@@ -53,7 +53,7 @@ async function seedManaged(h: TestHarness): Promise<void> {
   const issue = h.provider.seedIssue({ iid: 42, title: "Before",
     description: composeManagedIssueBody("Original body", { projectSlug: h.project.slug, issueId: 42 }),
     labels: ["Planning", "review:human", "test:skip"] });
-  await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
+  await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
     workflow: config.workflow, workflowState: "planning", workflowLabel: "Planning", owner: "local",
     assignedRole: null, assignedLevel: null, reviewPolicy: "human", testPolicy: "skip", integrityStatus: ISSUE_INTEGRITY_STATUS.OK });
 }

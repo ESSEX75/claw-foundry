@@ -28,7 +28,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness({ workers: { tester: { active: true, issueId: 42, level: "medior" } } });
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Testing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Testing"] });
       await executeCompletion(input(h));
       const state = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"];
 
@@ -48,7 +48,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness();
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Testing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Testing"] });
       const close = t.mock.method(h.provider, "closeIssue", async () => { throw new Error("close unavailable"); });
 
       await assert.rejects(executeCompletion(input(h)), /close unavailable/);
@@ -65,7 +65,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness();
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Testing"], state: "closed" });
+      await h.seedManagedIssue({ iid: 42, labels: ["Testing"], state: "closed" });
       const reopen = t.mock.method(h.provider, "reopenIssue", async () => { throw new Error("reopen unavailable"); });
 
       await assert.rejects(executeCompletion(input(h, "tester", "fail")), /reopen unavailable/);
@@ -80,7 +80,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness();
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Reviewing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Reviewing"] });
       h.provider.setPrStatus(42, { state: "open", url: "https://example.com/pr/42" });
       const transition = t.mock.method(h.provider, "addLabels", async () => { throw new Error("transition unavailable"); });
 
@@ -96,7 +96,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness();
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Reviewing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Reviewing"] });
       h.provider.setPrStatus(42, { state: "open", url: "https://example.com/pr/42" });
       const merge = h.provider.mergePr.bind(h.provider);
 
@@ -118,7 +118,7 @@ describe("completion interruption recovery", () => {
     });
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Reviewing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Reviewing"] });
       h.provider.setPrStatus(42, { state: "open", url: "https://example.com/pr/42" });
       const transition = h.provider.addLabels.bind(h.provider);
 
@@ -139,7 +139,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness();
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Reviewing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Reviewing"] });
       h.provider.setPrStatus(42, { state: "open", url: "https://example.com/pr/42" });
       const merge = h.provider.mergePr.bind(h.provider);
       const read = h.provider.getPrStatus.bind(h.provider);
@@ -168,7 +168,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness();
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Reviewing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Reviewing"] });
       h.provider.setPrStatus(42, { state: "open", url: "https://example.com/pr/42" });
       t.mock.method(h.provider, "mergePr", async () => { throw new Error("response lost"); });
       await assert.rejects(executeCompletion(input(h, "reviewer", "approve")), /response lost/);
@@ -180,7 +180,7 @@ describe("completion interruption recovery", () => {
     const h = await createTestHarness({ workers: { tester: { active: true, issueId: 42, level: "medior" } } });
 
     try {
-      h.provider.seedIssue({ iid: 42, labels: ["Testing"] });
+      await h.seedManagedIssue({ iid: 42, labels: ["Testing"] });
       const original = (await readProjects(h.workspaceDir)).projects[h.project.slug].workers.tester.levels.medior?.[0];
 
       assert.ok(original);

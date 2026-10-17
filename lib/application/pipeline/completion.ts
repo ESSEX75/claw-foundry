@@ -7,7 +7,6 @@
 import { log as auditLog } from "../../audit.js";
 import { ACTION, DEFAULT_WORKFLOW, findStateByLabel, STATE_TYPE } from "../../domain/index.js";
 import { getProject, getRoleWorker, loadConfig, readIssueStateStore, readProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../state/index.js";
-import { writeIssueRuntimeState } from "../issue-runtime/index.js";
 import { reconcileManagedLabelsLocked } from "../projection/index.js";
 import { confirmReviewSummaryDelivery } from "../review/index.js";
 import { renderCompletionAnnouncement } from "./announcement.js";
@@ -57,9 +56,11 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
     throw new Error(`Project "${projectSlug}" not found.`);
   }
 
-  let currentState = (await readIssueStateStore(workspaceDir, projectSlug)).issues[String(issueId)];
+  const currentState = (await readIssueStateStore(workspaceDir, projectSlug)).issues[String(issueId)];
 
-  if (currentState && currentState.workflowLabel !== rule.from && currentState.workflowLabel !== rule.to) {
+  if (!currentState) throw new Error(`Issue #${issueId} has no initialized local runtime state.`);
+
+  if (currentState.workflowLabel !== rule.from && currentState.workflowLabel !== rule.to) {
     throw new Error(`Completion for #${issueId} expected ${rule.from}, found ${currentState.workflowLabel}.`);
   }
 
@@ -89,15 +90,6 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
   }
 
   const currentIssue = await provider.getIssue(issueId);
-
-  if (!currentState && !currentIssue.labels.includes(rule.from)) {
-    throw new Error(`Completion for #${issueId} expected provider label ${rule.from}.`);
-  }
-
-  if (!currentState) {
-    currentState = await writeIssueRuntimeState({ workspaceDir, project, issue: currentIssue,
-      providerType: project.provider, workflow, workflowLabel: rule.from });
-  }
 
   const resuming = currentState.workflowLabel === rule.to && rule.from !== rule.to;
 

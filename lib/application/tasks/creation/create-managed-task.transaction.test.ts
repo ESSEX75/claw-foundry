@@ -15,7 +15,7 @@ import { extractIssueCreationMarker, extractIssueMetadata, renderIssueCreationMa
 
 import { readIssueCreationStore, readIssueStateStore, updateIssueCreationStore } from "../../../state/index.js";
 import { TestProvider } from "../../../testing/test-provider.js";
-import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { findNextIssueForRole } from "../../queue/scan.js";
 import { CREATION_STEPS } from "./const.js";
 import { createManagedTaskIssue, reconcileManagedTaskCreations } from "./index.js";
@@ -344,7 +344,7 @@ describe("managed issue creation transaction", () => {
       const result = await createManagedTaskIssue(input(workspaceDir, provider, "not-ready"));
       const issue = provider.seedIssue({ iid: 7, labels: ["To Do"], title: "Hidden pending issue" });
 
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir,
         project,
         issue,

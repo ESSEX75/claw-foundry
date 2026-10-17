@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { writeIssueRuntimeState } from "../../application/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import type { RunCommand } from "../../context.js";
 import { getRoleWorker, readIssueStateStore, readProjects } from "../../state/index.js";
 import { createTestHarness } from "../../testing/index.js";
@@ -31,7 +31,7 @@ describe("manual health project policy", () => {
         const workflow = structuredClone(h.workflow);
         if (custom && workflow.states.doing) workflow.states.doing.label = label;
         const issue = h.provider.seedIssue({ iid: 42, labels: [label] });
-        await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
+        await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
           providerType: h.project.provider, workflow, workflowState: "doing", workflowLabel: label,
           activeWorker: { role: "developer", level: "medior", slotIndex: 0, sessionKey: "worker", startedAt } });
         const before = await readIssueStateStore(h.workspaceDir, h.project.slug);

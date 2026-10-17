@@ -6,7 +6,7 @@ import { it } from "node:test";
 import { PR_COMMENT_KIND, PR_STATE } from "../../integrations/index.js";
 import { readIssueStateStore, updateIssueRuntimeRecord } from "../../state/index.js";
 import { createTestHarness } from "../../testing/index.js";
-import { writeIssueRuntimeState } from "../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import { fetchPrFeedback } from "./pr-context.js";
 import { filterProcessedReviewSummaries, observePrStatusWithReceipts, recordProcessedReviewSummaries } from "./summary-receipts.js";
 import { confirmReviewSummaryDelivery, stageReviewSummaryDelivery } from "./summary-delivery.js";
@@ -16,7 +16,7 @@ it("only matching accepted summary receipts suppress feedback, retaining edited 
   const h = await createTestHarness();
   try {
     const issue = h.provider.seedIssue({ iid: 42, labels: ["To Review"] });
-    await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
+    await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
       workflow: h.workflow, workflowState: "toReview", workflowLabel: "To Review", reviewPolicy: "human" });
     const context = { workspaceDir: h.workspaceDir, projectSlug: h.project.slug };
     const summary = { kind: PR_COMMENT_KIND.REVIEW, id: 7, author: "reviewer", body: "fix", state: "COMMENTED", created_at: "2026-01-01" };
@@ -47,7 +47,7 @@ it("fresh locked receipt updates preserve concurrent summaries and never initial
     const feedback: PrFeedback = { url: "pr", comments: [summary] };
     await assert.rejects(recordProcessedReviewSummaries(context, 42, feedback), /uninitialized/);
     const issue = h.provider.seedIssue({ iid: 42, labels: ["Doing"] });
-    await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
+    await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
       workflow: h.workflow, workflowState: "doing", workflowLabel: "Doing" });
     await Promise.all([recordProcessedReviewSummaries(context, 42, feedback),
       recordProcessedReviewSummaries(context, 42, { ...feedback, comments: [{ ...summary, id: 2 }] })]);
@@ -62,7 +62,7 @@ it("pending context cannot be acknowledged by a different submission or reused s
   try {
     const issue = h.provider.seedIssue({ iid: 42, labels: ["Doing"] });
     const worker = { role: "developer", level: "medior", slotIndex: 0, sessionKey: "worker", startedAt: "2026-01-01" };
-    await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
+    await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
       workflow: h.workflow, workflowState: "doing", workflowLabel: "Doing", activeWorker: worker });
     const context = { workspaceDir: h.workspaceDir, projectSlug: h.project.slug };
     const id = "00000000-0000-4000-8000-000000000001";

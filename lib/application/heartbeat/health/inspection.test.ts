@@ -8,7 +8,7 @@ import { describe, it } from "node:test";
 import type { RunCommand } from "../../../context.js";
 import { readIssueStateStore } from "../../../state/index.js";
 import { createTestHarness } from "../../../testing/index.js";
-import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { inspectWorkerHealth } from "./inspection.js";
 import { diagnoseWorkerHealth } from "./worker-diagnosis.js";
 import { remediateWorkerHealth } from "./worker-remediation.js";
@@ -34,7 +34,7 @@ describe("manual health inspection", () => {
       try {
         if (role === "developer") await fs.writeFile(path.join(h.workspaceDir, ...CONFIG_PATH), "roles:\n  developer: false\n");
         const issue = h.provider.seedIssue({ iid: 42, labels: ["Doing"] });
-        await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
+        await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
           providerType: h.project.provider, workflow: h.workflow, workflowState: "doing", workflowLabel: "Doing", assignedRole: role,
           activeWorker: { role, level: "medior", slotIndex: 0, sessionKey: "worker", startedAt } });
         const before = await readIssueStateStore(h.workspaceDir, h.project.slug);
@@ -79,7 +79,7 @@ describe("manual health inspection", () => {
     } } });
     try {
       const issue = h.provider.seedIssue({ iid: 42, labels: ["Doing"] });
-      await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
+      await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
         providerType: h.project.provider, workflow: h.workflow, workflowState: "doing", workflowLabel: "Doing",
         activeWorker: { role: "developer", level: "medior", slotIndex: 0, sessionKey: "worker", startedAt } });
       const input = { workspaceDir: h.workspaceDir, projectSlug: h.project.slug, project: h.project,
@@ -106,7 +106,7 @@ describe("manual health inspection", () => {
     try {
       const issue = h.provider.seedIssue({ iid: 42, labels: ["Doing"] });
       h.provider.seedIssue({ iid: 400, labels: ["Doing"] });
-      await writeIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
+      await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue,
         providerType: h.project.provider, workflow: h.workflow, workflowState: "doing", workflowLabel: "Doing" });
       h.provider.getIssue = async () => { throw new Error("read unavailable"); };
       const runCommand: RunCommand = async (argv, options) => h.runCommand(argv, options);

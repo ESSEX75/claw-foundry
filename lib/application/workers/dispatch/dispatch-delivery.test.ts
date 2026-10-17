@@ -28,10 +28,24 @@ function dispatchInput(h: Awaited<ReturnType<typeof createTestHarness>>, issueId
 }
 
 describe("worker delivery outcome", () => {
+  it("rejects provider-only issues before model setup, reservation or provider mutation", async t => {
+    const h = await createTestHarness();
+
+    t.after(() => h.cleanup());
+    h.provider.seedIssue({ iid: 96, labels: ["To Do"] });
+    const before = await h.readProjects();
+
+    await assert.rejects(dispatchTask(dispatchInput(h, 96, h.runCommand)), /no initialized local runtime state/);
+    assert.deepEqual(await h.readProjects(), before);
+    assert.equal(h.commands.commands.length, 0);
+    assert.equal(h.provider.calls.length, 0);
+    assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["96"], undefined);
+  });
+
   it("restores labels after cleanup fails during a partially applied pre-submission projection", async t => {
     const h = await createTestHarness();
     t.after(() => h.cleanup());
-    h.provider.seedIssue({ iid: 95, labels: ["To Do", "bug"] });
+    await h.seedManagedIssue({ iid: 95, labels: ["To Do", "bug"] });
     const removeLabels = h.provider.removeLabels.bind(h.provider);
     let cleanupCalls = 0;
     t.mock.method(h.provider, "removeLabels", async (issueId: number, labels: string[]) => {
@@ -45,13 +59,13 @@ describe("worker delivery outcome", () => {
     assert.equal(slot?.issueId, null);
     assert.equal(slot?.active, false);
     assert.equal(h.commands.commands.filter(command => command.argv[3] === "agent").length, 0);
-    assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["95"], undefined);
+    assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["95"].workflowLabel, "To Do");
   });
 
   it("acknowledges captured summaries when the exact worker completes before the final gateway reply", async () => {
     const h = await createTestHarness();
     const summary = { kind: PR_COMMENT_KIND.REVIEW, id: 42, author: "reviewer", body: "summary feedback", state: "COMMENTED", created_at: "2026-01-01" };
-    h.provider.seedIssue({ iid: 93, labels: ["To Improve"] });
+    await h.seedManagedIssue({ iid: 93, labels: ["To Improve"] });
     h.provider.setPrStatus(93, { state: PR_STATE.HAS_COMMENTS, url: "https://example.test/pr/1", reviewSummaries: [summary], hasCommentFeedback: false });
     h.provider.getPrReviewComments = async () => [summary];
     let finishReply = () => {};
@@ -79,7 +93,7 @@ describe("worker delivery outcome", () => {
 
   it("uses distinct gateway submission identities for successive feedback turns in the same session", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 94, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 94, labels: ["To Do"] });
     try {
       const first = await dispatchTask(dispatchInput(h, 94, h.runCommand));
       const firstState = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["94"];
@@ -91,7 +105,7 @@ describe("worker delivery outcome", () => {
         if (!previous) throw new Error("Missing issue");
         return { ...previous, workflowState: "todo", workflowLabel: "To Do" };
       });
-      h.provider.seedIssue({ iid: 94, labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 94, labels: ["To Do"] });
       const second = await dispatchTask(dispatchInput(h, 94, h.runCommand));
       assert.equal(first.sessionKey, second.sessionKey);
       const keys = h.commands.commands.filter(command => command.argv[3] === "agent").map(command => {
@@ -109,7 +123,7 @@ describe("worker delivery outcome", () => {
     it(`records full review-summary receipts only after ${accepted ? "confirmed acceptance" : "unknown submission"}`, async () => {
       const h = await createTestHarness();
       const summary = { kind: PR_COMMENT_KIND.REVIEW, id: 42, author: "reviewer", body: "summary feedback", state: "COMMENTED", created_at: "2026-01-01" };
-      h.provider.seedIssue({ iid: 92, labels: ["To Improve"] });
+      await h.seedManagedIssue({ iid: 92, labels: ["To Improve"] });
       h.provider.setPrStatus(92, { state: PR_STATE.HAS_COMMENTS, url: "https://example.test/pr/1", reviewSummaries: [summary], hasCommentFeedback: false });
       h.provider.getPrReviewComments = async () => [summary];
       const runCommand: RunCommand = async (argv, options) => !accepted && argv[3] === "agent"
@@ -126,7 +140,7 @@ describe("worker delivery outcome", () => {
 
   it("waits for model confirmation before provider transition or worker submission", { timeout: 20_000 }, async (t) => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 84, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 84, labels: ["To Do"] });
     const transition = t.mock.method(h.provider, "addLabels");
     let releasePatch: () => void = () => {};
     let patchStarted: () => void = () => {};
@@ -166,7 +180,7 @@ describe("worker delivery outcome", () => {
   for (const failure of ["exit", "timeout", "invalid acknowledgement"]) {
     it(`releases the reservation without submitting work when model setup fails: ${failure}`, async (t) => {
       const h = await createTestHarness();
-      h.provider.seedIssue({ iid: 85, labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 85, labels: ["To Do"] });
       const transition = t.mock.method(h.provider, "addLabels");
       const queued: IssueRuntimeState = {
         projectSlug: h.project.slug, issueId: 85, provider: ISSUE_PROVIDER.GITHUB,
@@ -212,7 +226,7 @@ describe("worker delivery outcome", () => {
 
   it("rejects an unknown level before reservation, provider transition, or gateway commands", async (t) => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 83, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 83, labels: ["To Do"] });
     const transition = t.mock.method(h.provider, "addLabels");
     const runCommand = t.mock.fn(h.runCommand);
     const workersBefore = (await h.readProjects()).projects[h.project.slug].workers;
@@ -224,7 +238,7 @@ describe("worker delivery outcome", () => {
       assert.deepEqual((await h.readProjects()).projects[h.project.slug].workers, workersBefore);
       assert.equal(transition.mock.callCount(), 0);
       assert.equal(runCommand.mock.callCount(), 0);
-      assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["83"], undefined);
+      assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["83"].workflowLabel, "To Do");
     } finally {
       await h.cleanup();
     }
@@ -232,7 +246,7 @@ describe("worker delivery outcome", () => {
 
   it("rejects oversized required task input before reservation or provider transition", async (t) => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 81, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 81, labels: ["To Do"] });
     const transition = t.mock.method(h.provider, "addLabels");
     const reaction = t.mock.method(h.provider, "reactToIssueComment");
     const workersBefore = (await h.readProjects()).projects[h.project.slug].workers;
@@ -247,7 +261,7 @@ describe("worker delivery outcome", () => {
       assert.deepEqual(project.workers, workersBefore);
       assert.equal(transition.mock.callCount(), 0);
       assert.equal(reaction.mock.callCount(), 0);
-      assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["81"], undefined);
+      assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["81"].workflowLabel, "To Do");
     } finally {
       await h.cleanup();
     }
@@ -255,7 +269,7 @@ describe("worker delivery outcome", () => {
 
   it("acknowledges only full comments when preceding discussion is fragmented", { timeout: 20_000 }, async (t) => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 82, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 82, labels: ["To Do"] });
     t.mock.method(h.provider, "listComments", async () => [
       { id: 1, author: "reviewer", body: "Earlier discussion", created_at: "2026-01-01" },
       { id: 2, author: "reviewer", body: "Large log ".repeat(10_000), created_at: "2026-01-02" },
@@ -281,7 +295,7 @@ describe("worker delivery outcome", () => {
 
   it("releases the slot and restores provider label after local submission rejection", async (t) => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 61, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 61, labels: ["To Do"] });
     t.mock.method(h.provider, "listComments", async () => [{ id: 1, author: "reviewer", body: "feedback", created_at: "2026-01-01" }]);
     const reaction = t.mock.method(h.provider, "reactToIssueComment");
     try {
@@ -291,7 +305,7 @@ describe("worker delivery outcome", () => {
       assert.equal(getRoleWorker(project, "developer").levels.medior?.[0]?.issueId, null);
       assert.ok((await h.provider.getIssue(61)).labels.includes("To Do"));
       assert.equal(reaction.mock.callCount(), 0);
-      assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["61"], undefined);
+      assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["61"].workflowLabel, "To Do");
     } finally {
       await h.cleanup();
     }
@@ -299,7 +313,7 @@ describe("worker delivery outcome", () => {
 
   it("retains ownership after a nonzero gateway command exit", async (t) => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 66, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 66, labels: ["To Do"] });
     t.mock.method(h.provider, "listComments", async () => [{ id: 1, author: "reviewer", body: "feedback", created_at: "2026-01-01" }]);
     const reaction = t.mock.method(h.provider, "reactToIssueComment");
     const runCommand: RunCommand = async (argv, options) => argv[3] === "agent"
@@ -326,7 +340,7 @@ describe("worker delivery outcome", () => {
 
   it("keeps ownership after a lost gateway response and does not resend", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 62, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 62, labels: ["To Do"] });
     let sends = 0;
     const runCommand: RunCommand = async (argv, options) => {
       if (argv[3] === "agent") {
@@ -359,8 +373,8 @@ describe("worker delivery outcome", () => {
 
   it("reserves one concrete slot for only one of two concurrent issues", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 63, labels: ["To Do"] });
-    h.provider.seedIssue({ iid: 64, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 63, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 64, labels: ["To Do"] });
 
     try {
       const outcomes = await Promise.allSettled([
@@ -380,7 +394,7 @@ describe("worker delivery outcome", () => {
 
   it("returns a pending result without releasing an in-flight agent turn", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 65, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 65, labels: ["To Do"] });
     const pending = new Promise<Awaited<ReturnType<RunCommand>>>(() => { /* gateway turn remains in flight */ });
     const runCommand: RunCommand = async (argv, options) => argv[3] === "agent"
       ? pending : h.runCommand(argv, options);
@@ -415,7 +429,7 @@ describe("worker delivery outcome", () => {
 
   it("keeps an unresolved slot and escalates it for manual investigation", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 67, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 67, labels: ["To Do"] });
     const runCommand: RunCommand = async (argv, options) => argv[3] === "agent"
       ? { stdout: "", stderr: "response lost", code: 1, signal: null, killed: false, termination: "exit" }
       : h.runCommand(argv, options);
@@ -490,7 +504,7 @@ describe("worker delivery outcome", () => {
 
   it("clears an in-flight delivery marker after explicit gateway acceptance", async (t) => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 68, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 68, labels: ["To Do"] });
     t.mock.method(h.provider, "listComments", async () => [{ id: 1, author: "reviewer", body: "feedback", created_at: "2026-01-01" }]);
     let acknowledge: (() => void) | undefined;
     const acknowledged = new Promise<void>((resolve) => { acknowledge = resolve; });
@@ -544,7 +558,7 @@ describe("worker delivery outcome", () => {
 
   it("records a late ambiguous command failure after an initially pending send", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 70, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 70, labels: ["To Do"] });
     let settle: ((value: Awaited<ReturnType<RunCommand>>) => void) | undefined;
     const pending = new Promise<Awaited<ReturnType<RunCommand>>>((resolve) => { settle = resolve; });
     const runCommand: RunCommand = async (argv, options) => argv[3] === "agent" ? pending : h.runCommand(argv, options);
@@ -575,7 +589,7 @@ describe("worker delivery outcome", () => {
 
   it("requires exact session ownership and preserves the slot on a recovery preview", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 71, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 71, labels: ["To Do"] });
     const runCommand: RunCommand = async (argv, options) => argv[3] === "agent"
       ? { stdout: "", stderr: "lost", code: 1, signal: null, killed: false, termination: "exit" }
       : h.runCommand(argv, options);
@@ -603,7 +617,7 @@ describe("worker delivery outcome", () => {
 
   it("clears uncertainty after an operator confirms the worker started", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 72, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 72, labels: ["To Do"] });
     const runCommand: RunCommand = async (argv, options) => argv[3] === "agent"
       ? { stdout: "", stderr: "lost", code: 1, signal: null, killed: false, termination: "exit" }
       : h.runCommand(argv, options);
@@ -627,7 +641,7 @@ describe("worker delivery outcome", () => {
 
   it("returns a verified non-start to the queue and releases its exact slot", async () => {
     const h = await createTestHarness();
-    h.provider.seedIssue({ iid: 73, labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 73, labels: ["To Do"] });
     const runCommand: RunCommand = async (argv, options) => argv[3] === "agent"
       ? { stdout: "", stderr: "lost", code: 1, signal: null, killed: false, termination: "exit" }
       : h.runCommand(argv, options);
@@ -655,7 +669,7 @@ describe("worker delivery outcome", () => {
 
 it("acknowledges only the recent comments included in the accepted task", async (t) => {
   const h = await createTestHarness();
-  h.provider.seedIssue({ iid: 81, labels: ["To Do"] });
+  await h.seedManagedIssue({ iid: 81, labels: ["To Do"] });
   t.mock.method(h.provider, "listComments", async () => Array.from({ length: 25 }, (_, index) => ({
     id: index + 1, author: "reviewer", body: `COMMENT-${index + 1}-END`, created_at: "2026-01-01",
   })));
@@ -678,7 +692,7 @@ it("acknowledges only the recent comments included in the accepted task", async 
 
 it("delivers a commentless conflict PR and leaves excluded issue comments unacknowledged", async (t) => {
   const h = await createTestHarness();
-  h.provider.seedIssue({ iid: 82, labels: ["To Improve"] });
+  await h.seedManagedIssue({ iid: 82, labels: ["To Improve"] });
   h.provider.setPrStatus(82, { state: PR_STATE.OPEN, url: "https://example.test/pr/82", mergeable: false, sourceBranch: "feature/82-fix" });
   t.mock.method(h.provider, "listComments", async () => [{ id: 1, author: "reviewer", body: "UNRELATED-ISSUE-COMMENT", created_at: "2026-01-01" }]);
   const reaction = t.mock.method(h.provider, "reactToIssueComment");

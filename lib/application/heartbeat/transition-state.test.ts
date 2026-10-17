@@ -7,7 +7,7 @@ import path from "node:path";
 import type { RunCommand } from "../../context.js";
 import { createProvider, isProviderIssueLookupError } from "../../integrations/index.js";
 
-import { writeIssueRuntimeState } from "../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import { readIssueArchiveStore, readIssueStateStore } from "../../state/index.js";
 import { renderIssueMetadata } from "../../projection/index.js";
 import { TestProvider } from "../../testing/test-provider.js";
@@ -64,7 +64,7 @@ describe("heartbeat transition state sync", () => {
       await withProject(async ({ workspaceDir, project, provider, runCommand }) => {
         const selectedProject = { ...project, provider: providerType };
         const issue = provider.seedIssue({ iid: 90, labels: ["To Review"] });
-        await writeIssueRuntimeState({ workspaceDir, project: selectedProject, issue, providerType,
+        await seedIssueRuntimeState({ workspaceDir, project: selectedProject, issue, providerType,
           workflow: DEFAULT_WORKFLOW, workflowState: "toReview", workflowLabel: "To Review", reviewPolicy: "human" });
         const actual = await createProvider({ provider: providerType, repoPath: ".", runCommand: async () => ({
           stdout: "[]", stderr: "HTTP 401 Unauthorized", code: 1, signal: null, killed: false, termination: "exit",
@@ -84,7 +84,7 @@ describe("heartbeat transition state sync", () => {
   it("does not execute provider actions for a stale local source state", async () => {
     await withProject(async ({ workspaceDir, project, provider }) => {
       const issue = provider.seedIssue({ iid: 88, labels: ["To Test"] });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir, project, issue, providerType: project.provider,
         workflow: DEFAULT_WORKFLOW, workflowState: "toTest", workflowLabel: "To Test",
       });
@@ -105,7 +105,7 @@ describe("heartbeat transition state sync", () => {
   it("does not merge when review policy changed after candidate selection", async () => {
     await withProject(async ({ workspaceDir, project, provider }) => {
       const issue = provider.seedIssue({ iid: 87, labels: ["To Review"] });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir, project, issue, providerType: project.provider,
         workflow: DEFAULT_WORKFLOW, workflowState: "toReview", workflowLabel: "To Review",
         reviewPolicy: "agent",
@@ -129,7 +129,7 @@ describe("heartbeat transition state sync", () => {
         title: "Ownership projection drift",
         labels: ["To Do", "owner:provider"],
       });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir,
         project,
         issue: initialIssue,
@@ -140,7 +140,7 @@ describe("heartbeat transition state sync", () => {
         owner: "local",
       });
 
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir,
         project,
         issue: initialIssue,
@@ -164,7 +164,7 @@ describe("heartbeat transition state sync", () => {
         labels: ["To Review", "review:human", "test:skip"],
         description: renderIssueMetadata({ projectSlug: project.slug, issueId: 90 }),
       });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir,
         project,
         issue,
@@ -211,7 +211,7 @@ describe("heartbeat transition state sync", () => {
         labels: ["To Test", "review:human", "test:skip"],
         description: renderIssueMetadata({ projectSlug: project.slug, issueId: 91 }),
       });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir,
         project,
         issue,
@@ -246,7 +246,7 @@ describe("heartbeat transition state sync", () => {
   it("review skip merges once and does nothing on a repeated pass", async () => {
     await withProject(async ({ workspaceDir, project, provider, runCommand }) => {
       const issue = provider.seedIssue({ iid: 92, labels: ["To Review", "review:skip"] });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir, project, issue, providerType: project.provider,
         workflow: DEFAULT_WORKFLOW, workflowState: "toReview", workflowLabel: "To Review",
         reviewPolicy: "skip",
@@ -267,7 +267,7 @@ describe("heartbeat transition state sync", () => {
   it("review skip preserves the configured direct-commit path when no PR exists", async () => {
     await withProject(async ({ workspaceDir, project, provider, runCommand }) => {
       const issue = provider.seedIssue({ iid: 93, labels: ["To Review", "review:skip"] });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir, project, issue, providerType: project.provider,
         workflow: DEFAULT_WORKFLOW, workflowState: "toReview", workflowLabel: "To Review",
         reviewPolicy: "skip",
@@ -286,7 +286,7 @@ describe("heartbeat transition state sync", () => {
   it("review skip routes failed merge to recovery without committing success", async () => {
     await withProject(async ({ workspaceDir, project, provider, runCommand }) => {
       const issue = provider.seedIssue({ iid: 94, labels: ["To Review", "review:skip"] });
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir, project, issue, providerType: project.provider,
         workflow: DEFAULT_WORKFLOW, workflowState: "toReview", workflowLabel: "To Review",
         reviewPolicy: "skip",
@@ -310,7 +310,7 @@ describe("heartbeat transition state sync", () => {
       workflow.states.toReview.on = { ...workflow.states.toReview.on,
         [WORKFLOW_EVENT.SKIP]: { target: "toTest", actions: [ACTION.CLOSE_ISSUE] } };
       const issue = provider.seedIssue({ iid: 95, labels: ["To Review", "review:skip"] });
-      await writeIssueRuntimeState({ workspaceDir, project, issue, providerType: project.provider,
+      await seedIssueRuntimeState({ workspaceDir, project, issue, providerType: project.provider,
         workflow, workflowState: "toReview", workflowLabel: "To Review", reviewPolicy: "skip" });
       provider.closeIssue = async () => { throw new Error("provider close failed"); };
 
@@ -323,7 +323,7 @@ describe("heartbeat transition state sync", () => {
   it("surfaces provider lookup errors during local candidate selection", async () => {
     await withProject(async ({ workspaceDir, project, provider, runCommand }) => {
       const issue = provider.seedIssue({ iid: 96, labels: ["To Review", "review:skip"] });
-      await writeIssueRuntimeState({ workspaceDir, project, issue, providerType: project.provider,
+      await seedIssueRuntimeState({ workspaceDir, project, issue, providerType: project.provider,
         workflow: DEFAULT_WORKFLOW, workflowState: "toReview", workflowLabel: "To Review", reviewPolicy: "skip" });
       provider.getIssue = async () => { throw new Error("provider lookup failed"); };
 

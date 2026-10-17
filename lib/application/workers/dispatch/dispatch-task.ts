@@ -75,6 +75,8 @@ export async function dispatchTaskLocked(
 
   // ── Setup (no side effects — safe to fail) ──────────────────────────
   const existingState = (await readIssueStateStore(workspaceDir, project.slug)).issues[String(issueId)];
+
+  if (!existingState) throw new Error(`Issue #${issueId} has no initialized local runtime state.`);
   const resolution = await readWorkerDeliveryResolution(workspaceDir, project.slug, issueId);
 
   if (resolution && !resolution.completed) throw new Error(`Issue #${issueId} has a pending operator delivery resolution.`);

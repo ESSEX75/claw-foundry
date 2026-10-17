@@ -5,7 +5,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { getProject, getRoleWorker, loadConfig, readIssueStateStore, readProjects, updateSlot } from "../../../state/index.js";
 import { createTestHarness, type TestHarness } from "../../../testing/index.js";
-import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { performHealthPass } from "./pass.js";
 import type { WorkerHealthInput } from "./types.js";
 import { diagnoseWorkerHealth } from "./worker-diagnosis.js";
@@ -31,7 +31,7 @@ describe("worker diagnosis and remediation", () => {
     const startedAt = new Date(Date.now() - 10 * 60_000).toISOString();
     harness = await createTestHarness({ workers: { developer: { active: true, issueId: 42, level: "medior", sessionKey: "worker", startTime: startedAt, previousLabel: "To Do" } } });
     const issue = harness.provider.seedIssue({ iid: 42, labels: ["Doing"] });
-    await writeIssueRuntimeState({
+    await seedIssueRuntimeState({
       workspaceDir: harness.workspaceDir, project: harness.project, issue,
       providerType: harness.project.provider, workflow: harness.workflow,
       workflowState: "doing", workflowLabel: "Doing",

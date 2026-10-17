@@ -18,7 +18,7 @@ import {
   WORKFLOW_EVENT,
 } from "../../domain/index.js";
 import { loadConfig } from "../../state/index.js";
-import { writeIssueRuntimeState } from "../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import { readIssueArchiveStore, readIssueStateStore } from "../../state/index.js";
 import { getProject, getRoleWorker, readProjects } from "../../state/index.js";
 import { createTestHarness, type TestHarness } from "../../testing/index.js";
@@ -127,12 +127,12 @@ workflow:
     assert.equal(harness.provider.labels.has(CUSTOM_ACTIVE_LABEL), true);
     assert.equal(getLabelColors(customWorkflow).get(CUSTOM_QUEUE_LABEL), "#123456");
 
-    const issue = harness.provider.seedIssue({
+    const issue = await harness.seedManagedIssue({
       iid: 501,
       title: "Audit authentication",
       labels: [CUSTOM_QUEUE_LABEL, `${CUSTOM_ROLE}:${CUSTOM_LEVEL}`, getOwnerLabel("primary")],
     });
-    await writeIssueRuntimeState({
+    await seedIssueRuntimeState({
       workspaceDir: harness.workspaceDir,
       project: harness.project,
       issue,

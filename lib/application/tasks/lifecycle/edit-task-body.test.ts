@@ -6,7 +6,7 @@ import { GitHubProvider } from "../../../integrations/index.js";
 import { extractIssueMetadata, renderIssueCreationMarker, replaceIssueMetadata } from "../../../projection/index.js";
 import { withIssueOrchestrationLock } from "../../../state/index.js";
 import { createTestHarness } from "../../../testing/index.js";
-import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { createManagedTaskIssue } from "../creation/index.js";
 import { editTaskBody } from "./edit-task-body.js";
 
@@ -41,7 +41,7 @@ it("waits for a concurrent transition and rejects editing the newly active state
   const harness = await createTestHarness();
   try {
     const issue = await harness.provider.createIssue({ title: "Before", body: "body", labels: ["Planning"], assignees: [] });
-    await writeIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue, providerType: ISSUE_PROVIDER.GITHUB, workflow: DEFAULT_WORKFLOW });
+    await seedIssueRuntimeState({ workspaceDir: harness.workspaceDir, project: harness.project, issue, providerType: ISSUE_PROVIDER.GITHUB, workflow: DEFAULT_WORKFLOW });
     mock.method(GitHubProvider.prototype, "getIssue", (id: number) => harness.provider.getIssue(id));
     const edit = mock.method(GitHubProvider.prototype, "editIssue", (...args: Parameters<GitHubProvider["editIssue"]>) => harness.provider.editIssue(...args));
     let acquired!: () => void;
@@ -50,7 +50,7 @@ it("waits for a concurrent transition and rejects editing the newly active state
     const released = new Promise<void>(resolve => { release = resolve; });
     const transition = withIssueOrchestrationLock(harness.workspaceDir, harness.project.slug, issue.iid, async () => {
       acquired(); await released;
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir: harness.workspaceDir, project: harness.project, issue,
         providerType: ISSUE_PROVIDER.GITHUB, workflow: DEFAULT_WORKFLOW, workflowState: "doing"
       });

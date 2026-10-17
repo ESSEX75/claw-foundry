@@ -24,22 +24,20 @@ export type InitialIssueRuntimeInput = Pick<
   | "notifyTarget"
 >;
 
-/** Application input combining provider projection with explicit lifecycle changes. */
+/** Explicit changes to an existing authoritative runtime record. */
 export type IssueStateWriteInput = {
   /** Workspace containing authoritative local state. */
   workspaceDir: string;
   /** Project that owns the provider issue. */
   project: Pick<Project, "slug" | "channels">;
-  /** Provider projection used only for explicit initialization. */
+  /** Provider issue identity; labels are ignored by updates. */
   issue: IssueProjectionSnapshot;
   /** Provider selected by project configuration. */
   providerType: IssueProviderId;
   /** Durable creation saga identifier. */
   creationOperationId?: string;
-  /** Resolved workflow used to interpret initialization labels. */
+  /** Resolved workflow validating explicit transitions. */
   workflow: WorkflowConfig;
-  /** Resolved roles permitting projection import on initialization; absent means no inferred assignment. */
-  initializationRoles?: ResolvedConfig["roles"];
   /** Explicit provider-facing workflow label. */
   workflowLabel?: string;
   /** Explicit canonical workflow state. */
@@ -66,6 +64,12 @@ export type IssueStateWriteInput = {
   integrityStatus?: IssueIntegrityStatus;
   /** Explicit closure timestamp replacement. */
   closedAt?: string | null;
+};
+
+/** Explicit initialization choices; projection import is confined to this API. */
+export type IssueStateInitializeInput = IssueStateWriteInput & {
+  /** Configured roles whose level labels may be imported during explicit initialization. */
+  initializationRoles?: ResolvedConfig["roles"];
 };
 
 /** Provider identity and labels used for initialization or an uninitialized observation. */

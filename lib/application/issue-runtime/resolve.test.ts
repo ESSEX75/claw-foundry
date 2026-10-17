@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 import { DEFAULT_WORKFLOW, ISSUE_PROVIDER } from "../../domain/index.js";
 import { createTestHarness } from "../../testing/index.js";
 import { resolveIssueRuntimeState } from "./resolve.js";
-import { writeIssueRuntimeState } from "./write.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 
 describe("resolveIssueRuntimeState", () => {
   it("reports uninitialized projection without creating files", async () => {
@@ -34,7 +34,7 @@ describe("resolveIssueRuntimeState", () => {
       const input = { workspaceDir: harness.workspaceDir, project: harness.project,
         issue: { iid: 42, labels: ["To Do"] }, workflow: DEFAULT_WORKFLOW };
 
-      await writeIssueRuntimeState({ ...input, providerType: ISSUE_PROVIDER.GITHUB });
+      await seedIssueRuntimeState({ ...input, providerType: ISSUE_PROVIDER.GITHUB });
       const drifted = { ...input, issue: { iid: 42, labels: ["Doing"] } };
       const result = await resolveIssueRuntimeState(drifted);
 

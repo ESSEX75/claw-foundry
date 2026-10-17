@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { STATE_TYPE, type WorkflowConfig, WORKFLOW_EVENT } from "../../../domain/index.js";
 import { createTestHarness, type TestHarness } from "../../../testing/index.js";
-import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { checkWorkerHealth } from "./index.js";
 
 /** Custom role used to exercise workflow-driven health diagnosis. */
@@ -49,7 +49,7 @@ describe("custom-role health checks", () => {
       },
     });
     const issue = harness.provider.seedIssue({ iid: 42, title: "Design", labels: ["Designing"] });
-    await writeIssueRuntimeState({
+    await seedIssueRuntimeState({
       workspaceDir: harness.workspaceDir, project: harness.project, issue,
       providerType: harness.project.provider, workflow: DESIGNER_WORKFLOW,
       workflowState: "designing", workflowLabel: "Designing",

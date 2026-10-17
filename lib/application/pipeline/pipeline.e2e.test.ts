@@ -31,7 +31,7 @@ import {
   type WorkflowStateKey,
 } from "../../domain/index.js";
 import { readProjects, getRoleWorker, getProject } from "../../state/index.js";
-import { writeIssueRuntimeState } from "../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import { readIssueArchiveStore, readIssueStateStore } from "../../state/index.js";
 import { slotName } from "../../names.js";
 import type { NotificationRuntime } from "../notifications/index.js";
@@ -89,8 +89,8 @@ describe("E2E pipeline", () => {
     owner?: string | null;
     workflow?: WorkflowConfig;
   }) {
-    const issue = h.provider.seedIssue(args);
-    await writeIssueRuntimeState({
+    const issue = await h.seedManagedIssue(args);
+    await seedIssueRuntimeState({
       workspaceDir: h.workspaceDir,
       project: h.project,
       issue,
@@ -116,7 +116,7 @@ describe("E2E pipeline", () => {
     await transitionWorkflowLabel(h.provider, h.workflow, issueId, from, to);
     const key = findStateKeyByLabel(DEFAULT_WORKFLOW, to);
     if (!key) throw new Error(`Unknown fixture state: ${to}`);
-    await writeIssueRuntimeState({
+    await seedIssueRuntimeState({
       workspaceDir: h.workspaceDir,
       project: h.project,
       issue: await h.provider.getIssue(issueId),
@@ -135,7 +135,7 @@ describe("E2E pipeline", () => {
     beforeEach(async () => {
       h = await createTestHarness();
       // Seed a "To Do" issue
-      h.provider.seedIssue({ iid: 42, title: "Add login page", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 42, title: "Add login page", labels: ["To Do"] });
     });
 
     it("should transition label, update worker state, and fire gateway calls", async () => {
@@ -222,7 +222,7 @@ describe("E2E pipeline", () => {
     });
 
     it("should set resolved model via sessions.patch, not agent RPC (#436)", async () => {
-      h.provider.seedIssue({ iid: 99, title: "Model test", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 99, title: "Model test", labels: ["To Do"] });
 
       const result = await dispatchTask({
         workspaceDir: h.workspaceDir,
@@ -293,7 +293,7 @@ describe("E2E pipeline", () => {
           },
         },
       });
-      h.provider.seedIssue({ iid: 42, title: "Quick fix", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 42, title: "Quick fix", labels: ["To Do"] });
 
       const result = await dispatchTask({
         workspaceDir: h.workspaceDir,
@@ -326,7 +326,7 @@ describe("E2E pipeline", () => {
           developer: { active: true, issueId: 10, level: "medior" },
         },
       });
-      h.provider.seedIssue({ iid: 10, title: "Build feature X", labels: ["Doing"] });
+      await h.seedManagedIssue({ iid: 10, title: "Build feature X", labels: ["Doing"] });
     });
 
     it("should transition Doing → To Review", async () => {
@@ -369,7 +369,7 @@ describe("E2E pipeline", () => {
           reviewer: { active: true, issueId: 25, level: "junior" },
         },
       });
-      h.provider.seedIssue({ iid: 25, title: "Review PR", labels: ["Reviewing"] });
+      await h.seedManagedIssue({ iid: 25, title: "Review PR", labels: ["Reviewing"] });
     });
 
     it("reviewer:approve should transition Reviewing → To Test, merge PR", async () => {
@@ -481,7 +481,7 @@ describe("E2E pipeline", () => {
           tester: { active: true, issueId: 30, level: "medior" },
         },
       });
-      h.provider.seedIssue({ iid: 30, title: "Verify login", labels: ["Testing"] });
+      await h.seedManagedIssue({ iid: 30, title: "Verify login", labels: ["Testing"] });
     });
 
     it("should transition Testing → Done, close issue", async () => {
@@ -516,7 +516,7 @@ describe("E2E pipeline", () => {
     it("sends pipelineComplete only after terminal state is persisted and reconciled", async () => {
       const issueBefore = await h.provider.getIssue(30);
 
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir: h.workspaceDir,
         project: h.project,
         issue: issueBefore,
@@ -569,7 +569,7 @@ describe("E2E pipeline", () => {
           tester: { active: true, issueId: 40, level: "medior" },
         },
       });
-      h.provider.seedIssue({ iid: 40, title: "Check signup", labels: ["Testing"], state: "closed" });
+      await h.seedManagedIssue({ iid: 40, title: "Check signup", labels: ["Testing"], state: "closed" });
     });
 
     it("should transition Testing → To Improve, reopen issue", async () => {
@@ -610,7 +610,7 @@ describe("E2E pipeline", () => {
           developer: { active: true, issueId: 50, level: "junior" },
         },
       });
-      h.provider.seedIssue({ iid: 50, title: "Fix CSS", labels: ["Doing"] });
+      await h.seedManagedIssue({ iid: 50, title: "Fix CSS", labels: ["Doing"] });
     });
 
     it("should transition Doing → Refining, no close/reopen", async () => {
@@ -651,7 +651,7 @@ describe("E2E pipeline", () => {
       title: string;
       labels: string[];
     }) {
-      const issue = h.provider.seedIssue(args);
+      const issue = await h.seedManagedIssue(args);
       const reviewPolicy = args.labels.includes("review:human")
         ? "human"
         : args.labels.includes("review:agent")
@@ -659,7 +659,7 @@ describe("E2E pipeline", () => {
           : args.labels.includes("review:skip")
             ? "skip"
             : null;
-      await writeIssueRuntimeState({
+      await seedIssueRuntimeState({
         workspaceDir: h.workspaceDir,
         project: h.project,
         issue,
@@ -952,7 +952,7 @@ describe("E2E pipeline", () => {
       h = await createTestHarness();
 
       // 1. Seed issue
-      h.provider.seedIssue({ iid: 100, title: "Build dashboard", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 100, title: "Build dashboard", labels: ["To Do"] });
 
       // 2. Dispatch developer
       await dispatchTask({
@@ -1041,7 +1041,7 @@ describe("E2E pipeline", () => {
     it("developer:done → human review pass → tester:pass (human review path)", async () => {
       h = await createTestHarness();
 
-      h.provider.seedIssue({ iid: 200, title: "Auth refactor", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 200, title: "Auth refactor", labels: ["To Do"] });
 
       // 1. Dispatch developer
       await dispatchTask({
@@ -1125,7 +1125,7 @@ describe("E2E pipeline", () => {
     it("developer:done → reviewer:reject → developer:done → reviewer:approve → tester:pass (reject cycle)", async () => {
       h = await createTestHarness();
 
-      h.provider.seedIssue({ iid: 300, title: "Payment flow", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 300, title: "Payment flow", labels: ["To Do"] });
 
       // 1. Dispatch developer
       await dispatchTask({
@@ -1400,7 +1400,7 @@ describe("E2E pipeline", () => {
   describe("role:level labels", () => {
     it("dispatch should apply role:level label to issue", async () => {
       h = await createTestHarness();
-      h.provider.seedIssue({ iid: 400, title: "Label test", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 400, title: "Label test", labels: ["To Do"] });
 
       await dispatchTask({
         workspaceDir: h.workspaceDir,
@@ -1428,7 +1428,7 @@ describe("E2E pipeline", () => {
 
     it("dispatch should apply default human review label for non-senior developer", async () => {
       h = await createTestHarness();
-      h.provider.seedIssue({ iid: 404, title: "Junior task", labels: ["To Do"] });
+      await h.seedManagedIssue({ iid: 404, title: "Junior task", labels: ["To Do"] });
 
       await dispatchTask({
         workspaceDir: h.workspaceDir,
@@ -1455,7 +1455,7 @@ describe("E2E pipeline", () => {
     it("dispatch should replace old role:level label", async () => {
       h = await createTestHarness();
       // Issue already has a developer:junior label from a previous dispatch
-      h.provider.seedIssue({ iid: 401, title: "Re-dispatch", labels: ["To Improve", "developer:junior"] });
+      await h.seedManagedIssue({ iid: 401, title: "Re-dispatch", labels: ["To Improve", "developer:junior"] });
 
       await dispatchTask({
         workspaceDir: h.workspaceDir,
@@ -1481,7 +1481,7 @@ describe("E2E pipeline", () => {
 
     it("dispatch should apply normalized reviewer label without worker name", async () => {
       h = await createTestHarness();
-      h.provider.seedIssue({ iid: 405, title: "Review task", labels: ["To Review"] });
+      await h.seedManagedIssue({ iid: 405, title: "Review task", labels: ["To Review"] });
 
       await dispatchTask({
         workspaceDir: h.workspaceDir,
@@ -1506,7 +1506,7 @@ describe("E2E pipeline", () => {
 
     it("dispatch should apply normalized tester label without worker name", async () => {
       h = await createTestHarness();
-      h.provider.seedIssue({ iid: 406, title: "Test task", labels: ["To Test"] });
+      await h.seedManagedIssue({ iid: 406, title: "Test task", labels: ["To Test"] });
 
       await dispatchTask({
         workspaceDir: h.workspaceDir,
@@ -1531,8 +1531,8 @@ describe("E2E pipeline", () => {
 
     it("projectTick should skip reviewer when local reviewPolicy=human", async () => {
       h = await createTestHarness();
-      const issue = h.provider.seedIssue({ iid: 402, title: "Senior review", labels: ["To Review", "developer:senior", "review:human"] });
-      await writeIssueRuntimeState({
+      const issue = await h.seedManagedIssue({ iid: 402, title: "Senior review", labels: ["To Review", "developer:senior", "review:human"] });
+      await seedIssueRuntimeState({
         workspaceDir: h.workspaceDir,
         project: h.project,
         issue,
@@ -1560,8 +1560,8 @@ describe("E2E pipeline", () => {
 
     it("projectTick should dispatch reviewer when local reviewPolicy=agent", async () => {
       h = await createTestHarness();
-      const issue = h.provider.seedIssue({ iid: 403, title: "Junior fix", labels: ["To Review", "developer:junior", "review:agent"] });
-      await writeIssueRuntimeState({
+      const issue = await h.seedManagedIssue({ iid: 403, title: "Junior fix", labels: ["To Review", "developer:junior", "review:agent"] });
+      await seedIssueRuntimeState({
         workspaceDir: h.workspaceDir,
         project: h.project,
         issue,
@@ -1598,7 +1598,7 @@ describe("E2E pipeline", () => {
           tester: { active: true, issueId: 90, level: "medior" },
         },
       });
-      h.provider.seedIssue({ iid: 90, title: "Test tracking", labels: ["Testing"] });
+      await h.seedManagedIssue({ iid: 90, title: "Test tracking", labels: ["Testing"] });
       h.provider.resetCalls();
 
       await executeCompletion({

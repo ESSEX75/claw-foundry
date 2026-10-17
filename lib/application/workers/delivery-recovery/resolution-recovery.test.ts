@@ -30,7 +30,7 @@ function dispatchInput(h: TestHarness): DispatchOpts {
  * @param h - Temporary project whose seeded issue is dispatched.
  */
 async function resolutionInput(h: TestHarness): Promise<ResolveWorkerDeliveryInput> {
-  h.provider.seedIssue({ iid: 42, labels: ["To Do"] });
+  await h.seedManagedIssue({ iid: 42, labels: ["To Do"] });
   const dispatched = await dispatchTask(dispatchInput(h));
 
   return { workspaceDir: h.workspaceDir, projectSlug: h.project.slug, issueId: 42,

@@ -3,6 +3,7 @@
 import { log as auditLog } from "../../audit.js";
 import { parseNotificationEndpoint, readProjects, updateProjects } from "../../state/index.js";
 import { validateDestinationAvailability, validateProjectRoute } from "../setup/index.js";
+import { PROJECT_AUDIT_EVENT } from "./const.js";
 import { allocateEndpointName, matchesProjectRoute, selectProject } from "./selection.js";
 import type { LinkProjectChannelInput, ProjectChannelInput, ProjectChannelResult } from "./types.js";
 
@@ -26,7 +27,7 @@ export async function linkProjectChannel(input: LinkProjectChannelInput): Promis
     return { data, result: { project, endpoint, changed: !existing } };
   });
 
-  if (result.changed) await auditLog(input.workspaceDir, "channel_link", {
+  if (result.changed) await auditLog(input.workspaceDir, PROJECT_AUDIT_EVENT.CHANNEL_LINK, {
     projectSlug: result.project.slug, agentId: input.agentId, ...result.endpoint,
   });
 
@@ -64,7 +65,7 @@ export async function unlinkProjectChannel(input: ProjectChannelInput & { confir
     return { data, result: { project, endpoint, changed: true } };
   });
 
-  await auditLog(input.workspaceDir, "channel_unlink", { projectSlug: result.project.slug, ...result.endpoint });
+  await auditLog(input.workspaceDir, PROJECT_AUDIT_EVENT.CHANNEL_UNLINK, { projectSlug: result.project.slug, ...result.endpoint });
 
   return result;
 }

@@ -6,7 +6,7 @@ import { it } from "node:test";
 
 import { DEFAULT_WORKFLOW } from "../../../domain/index.js";
 import { createTestHarness } from "../../../testing/index.js";
-import { getHeartbeatCandidates } from "../../heartbeat/local-candidates.js";
+import { getHeartbeatCandidates } from "../../heartbeat/issue-coordination/index.js";
 import { createManagedTaskIssue } from "../creation/index.js";
 import { getManagedTaskStatus } from "./get-task-status.js";
 import { listManagedTasks } from "./list-tasks.js";
@@ -41,4 +41,24 @@ it("status, listing and heartbeat each read one readiness snapshot for multiple 
   reads = 0;
   assert.equal((await getHeartbeatCandidates({ ...input, workflowLabel: "Planning" })).length, 3);
   assert.equal(reads, 1);
+});
+
+it("search reads each provider issue once per invocation and observes later title changes", async t => {
+  const h = await createTestHarness();
+
+  t.after(() => h.cleanup());
+  const created = await createManagedTaskIssue({ workspaceDir: h.workspaceDir, project: h.project,
+    providerType: h.project.provider, provider: h.provider, workflow: DEFAULT_WORKFLOW,
+    roles: ["developer"], title: "Search needle", description: "body", idempotencyKey: "search", requestedBy: "test" });
+
+  assert.ok(created.issue);
+  const input = { workspaceDir: h.workspaceDir, projectSlug: h.project.slug, workflow: DEFAULT_WORKFLOW,
+    provider: h.provider, roles: ["developer"], search: "needle" };
+  const before = h.provider.callsTo("getIssue").length;
+  const result = await listManagedTasks(input);
+
+  assert.equal(result.totalIssues, 1);
+  assert.equal(h.provider.callsTo("getIssue").length - before, 1);
+  await h.provider.editIssue(created.issue.iid, { title: "Changed" });
+  assert.equal((await listManagedTasks(input)).totalIssues, 0);
 });

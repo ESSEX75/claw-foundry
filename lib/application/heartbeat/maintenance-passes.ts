@@ -10,7 +10,7 @@ import { retryPendingPipelineNotifications } from "../notifications/retry-pipeli
 import { recoverTransitionWorkers } from "../pipeline/index.js";
 import { reconcileManagedTaskCreations } from "../tasks/index.js";
 import { HEARTBEAT_CREATION_LIMIT } from "./const.js";
-import { projectionIntegrityPass } from "./projection.js";
+import { projectionIntegrityPass } from "./projection-maintenance/index.js";
 
 /** Verify initialized managed issues against their provider projection.
  * @param workspaceDir - Workspace containing authoritative issue state.

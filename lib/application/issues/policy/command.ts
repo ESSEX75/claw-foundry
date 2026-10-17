@@ -8,7 +8,7 @@ import { type IssueRuntimeState, type Project, STATE_TYPE, type WorkflowConfig }
 import { createProvider, type IssueProvider } from "../../../integrations/index.js";
 import { loadConfig, readIssueStateStore, readProjects, updateIssueStateStore, withIssueOrchestrationLock } from "../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
-import { hasProjectWorkerSlot } from "../worker-slot.js";
+import { hasProjectWorkerSlot } from "../ownership/index.js";
 import { POLICY_EVENT, POLICY_SKIP_REASON } from "./const.js";
 import type { IssuePolicyMigrationChange, IssuePolicyMigrationResult, MigrationOptions, PolicyChangePlan } from "./types.js";
 

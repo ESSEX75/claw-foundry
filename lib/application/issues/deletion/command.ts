@@ -10,7 +10,7 @@ import { ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, PIPELINE_NOTIFICATION_STA
 import { isProviderIssueLookupError, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../integrations/index.js";
 import { readIssueArchiveStore, readIssueStateStore, readOptionalProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
 import { archiveManagedIssueLocked } from "../archive/index.js";
-import { hasProjectWorkerSlot } from "../worker-slot.js";
+import { hasProjectWorkerSlot } from "../ownership/index.js";
 import { DELETE_EVENT, DELETE_REASON } from "./const.js";
 import type { DeleteManagedIssueInput, DeleteManagedIssueResult } from "./types.js";
 

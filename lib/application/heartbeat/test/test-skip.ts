@@ -17,8 +17,8 @@ import {
 } from "../../../domain/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../../pipeline/index.js";
 import { planWorkflowEvent } from "../../pipeline/plan.js";
-import { getHeartbeatCandidates } from "../local-candidates.js";
-import { transitionHeartbeatIssue } from "../transition-state.js";
+import { getHeartbeatCandidates } from "../issue-coordination/index.js";
+import { transitionHeartbeatIssue } from "../issue-coordination/index.js";
 import { TEST_SKIP_AUDIT_EVENT, TEST_SKIP_TRANSITION_OWNER } from "./const.js";
 import type { TestSkipPassInput } from "./types.js";
 

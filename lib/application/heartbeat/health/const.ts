@@ -45,3 +45,12 @@ export const HEALTH_ISSUE_SEVERITY = {
   CRITICAL: "critical",
   WARNING: "warning",
 } as const;
+
+/** Owner recorded for verified health projection and transition effects. */
+export const WORKER_HEALTH_OWNER = "heartbeat_worker_health";
+
+/** Stable audit operations for manual inspection and completed remediation. */
+export const WORKER_HEALTH_AUDIT = {
+  INSPECTION: "health",
+  REMEDIATED: "worker_health_remediated",
+} as const;

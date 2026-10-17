@@ -2,7 +2,7 @@
 
 import { ISSUE_INTEGRITY_STATUS, type IssueCompletionReceipt, type IssueRuntimeState, type Project, sameWorkerRun, type WorkflowConfig } from "../../domain/index.js";
 import { type IssueProvider, PR_STATE } from "../../integrations/index.js";
-import { findTransitionWorker } from "./recovery.js";
+import { findProjectIssueWorker } from "../issues/index.js";
 import type { CompletionInput } from "./types.js";
 
 /** Require an open conflict-free exact PR, propagating lookup failures unchanged.
@@ -53,7 +53,7 @@ export function validateCompletionFrame(state: IssueRuntimeState, project: Proje
       throw new Error(`Completion for #${state.issueId} expected ${fromLabel}, found ${state.workflowLabel}.`);
     }
 
-    const selected = findTransitionWorker(project, state.issueId);
+    const selected = findProjectIssueWorker(project, state.issueId);
     const slot = project.workers[expected.role]?.levels[expected.level]?.[expected.slotIndex];
 
     if (!selected || !sameWorkerRun(selected, expected) || !slot?.active
@@ -61,7 +61,7 @@ export function validateCompletionFrame(state: IssueRuntimeState, project: Proje
       throw new Error(`Worker changed before completion of issue #${state.issueId}.`);
     }
   } else {
-    const reserved = findTransitionWorker(project, state.issueId);
+    const reserved = findProjectIssueWorker(project, state.issueId);
 
     if (reserved && !sameWorkerRun(reserved, expected)) throw new Error(`Issue #${state.issueId} has a replacement worker.`);
   }

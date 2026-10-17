@@ -249,3 +249,5 @@ Dry-run performs no provisioning. Ordinary existing-agent setup leaves implicit 
 resource creation with the host while explicit registration plans can be resumed.
 
 Operator tools render completion, dispatch, lifecycle and projection repair guidance from structured application facts. Worker prompts and outbound notifications remain application effects; gateway session labels belong to workers. Shared session-action semantics belong to domain/workers.
+
+Heartbeat projection-maintenance owns provider/metadata verification, confirmation policy, integrity persistence and its regression tests. Issue-coordination owns local candidate queries and locked heartbeat transitions; root heartbeat files compose passes. Issues/ownership exposes project reservation queries and exact worker selection without importing pipeline. Workers retain durable reservation/submission/settlement/recovery capabilities; pipeline retains transition, completion receipt and effect coordination. Collection search reuses provider observations only within one read-only invocation; mutation paths retain locked fresh reads.

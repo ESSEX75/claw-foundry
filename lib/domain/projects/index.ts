@@ -9,5 +9,7 @@ export {
   findSlotByIssue,
   reconcileSlots,
   releasedWorkerSlot,
+  sameSlotReservation,
+  slotOwnsWorkerRun,
 } from "./slots.js";
 export type { Project, RoleWorkerState, SlotLocation, SlotState } from "./types.js";

@@ -2,8 +2,8 @@
  * local-candidates.ts — Local issue-state candidate selection for heartbeat passes.
  */
 
-import { ISSUE_INTEGRITY_STATUS } from "../../domain/index.js";
-import { readIssueStateStore,readReadyIssueCreationIds } from "../../state/index.js";
+import { ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
+import { readIssueStateStore,readReadyIssueCreationIds } from "../../../state/index.js";
 import type { HeartbeatCandidate, HeartbeatCandidateInput } from "./types.js";
 
 /** Select initialized local issues and fetch provider context without importing provider labels as state.

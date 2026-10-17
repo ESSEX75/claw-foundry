@@ -9,10 +9,11 @@ import {
 } from "../../domain/index.js";
 import { readIssueStateStore, readOptionalProjects,readWorkerDeliveryResolution } from "../../state/index.js";
 import { writeIssueRuntimeState } from "../issue-runtime/index.js";
+import { findProjectIssueWorker } from "../issues/index.js";
 import { NOTIFICATION_EVENT } from "../notifications/index.js";
 import { transitionWorkflowLabel } from "../projection/index.js";
 import { reconcileManagedLabelsLocked } from "../projection/index.js";
-import { findTransitionWorker, releaseTransitionWorkerLocked } from "./recovery.js";
+import { releaseTransitionWorkerLocked } from "./recovery.js";
 import { archiveTerminalIssueLocked } from "./terminal-archive.js";
 import type { CommitTransitionInput } from "./types.js";
 
@@ -49,7 +50,7 @@ export async function commitWorkflowTransitionLocked(input: CommitTransitionInpu
   }
 
   const registry = await readOptionalProjects(workspaceDir);
-  const slotWorker = findTransitionWorker(registry?.projects[project.slug], issueId);
+  const slotWorker = findProjectIssueWorker(registry?.projects[project.slug], issueId);
   const worker = state.activeWorker;
 
   if ((slotWorker && (!worker || !sameWorkerRun(slotWorker, worker))) || (worker && !slotWorker)

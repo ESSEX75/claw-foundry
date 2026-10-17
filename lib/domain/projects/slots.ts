@@ -2,6 +2,7 @@
  * projects/slots.ts — Pure slot helpers (no I/O).
  */
 
+import type { WorkerRunIdentity } from "../workers/index.js";
 import type { RoleWorkerState, SlotLocation, SlotState } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -154,4 +155,24 @@ export function countActiveSlots(roleWorker: RoleWorkerState): number {
 export function releasedWorkerSlot(slot: SlotState, issueId: number | null): SlotState {
   return { ...slot, active: false, issueId: null, startTime: null, previousLabel: null,
     delivery: undefined, lastIssueId: issueId };
+}
+
+/** Check the issue and exact reusable-session run represented by a selected slot.
+ * Slot coordinates and delivery-token requirements remain with the caller.
+ * @param slot - Fresh selected reservation, if present.
+ * @param issueId - Expected provider-local issue identity.
+ * @param worker - Captured exact session and start timestamp.
+ */
+export function slotOwnsWorkerRun(slot: SlotState | undefined, issueId: number, worker: Pick<WorkerRunIdentity, "sessionKey" | "startedAt">): boolean {
+  return slot !== undefined && slot.issueId === issueId && slot.sessionKey === worker.sessionKey && (slot.startTime ?? "") === worker.startedAt;
+}
+
+/** Compare a captured reservation before health mutates or releases it; delivery replacements are fenced.
+ * @param actual - Fresh registry slot.
+ * @param expected - Reservation captured during diagnosis.
+ */
+export function sameSlotReservation(actual: SlotState | undefined, expected: SlotState): boolean {
+  return actual !== undefined && actual.active === expected.active && actual.issueId === expected.issueId
+    && actual.sessionKey === expected.sessionKey && actual.startTime === expected.startTime
+    && actual.delivery?.operationId === expected.delivery?.operationId;
 }

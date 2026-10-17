@@ -1,7 +1,7 @@
 /** Applies diagnosed worker actions after locking and re-reading ownership and issue state. */
 
 import { log as auditLog } from "../../../audit.js";
-import { DEFAULT_WORKFLOW, findStateKeyByLabel, getActiveLabel, getRevertLabel } from "../../../domain/index.js";
+import { DEFAULT_WORKFLOW, findStateKeyByLabel, getActiveLabel, getRevertLabel, releasedWorkerSlot, sameSlotReservation } from "../../../domain/index.js";
 import { AGENT_TURN_STATUS, submitAgentTurn } from "../../../integrations/index.js";
 import {
   getProject, getRoleWorker, loadConfig, readIssueStateStore, readProjects,
@@ -11,6 +11,7 @@ import { releaseTransitionWorkerLocked } from "../../pipeline/recovery.js";
 import { commitWorkflowTransitionLocked } from "../../pipeline/transition.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { reconcileUncertainDispatch } from "../../workers/index.js";
+import { WORKER_HEALTH_AUDIT, WORKER_HEALTH_OWNER } from "./const.js";
 import { HEALTH_ACTION, NUDGE_COMMAND_TIMEOUT_MS, NUDGE_MESSAGE, NUDGE_RETRY_INTERVAL_MS } from "./const.js";
 import type { HealthFix, WorkerHealthInput } from "./types.js";
 import { diagnoseWorkerHealth } from "./worker-diagnosis.js";
@@ -31,8 +32,7 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
     const project = getProject(await readProjects(workspaceDir), projectSlug);
     const slot = project ? getRoleWorker(project, role).levels[level]?.[slotIndex] : undefined;
 
-    if (!project || !slot || slot.issueId !== expected.issueId || slot.sessionKey !== expected.sessionKey
-      || slot.startTime !== expected.startTime || slot.active !== expected.active) return finding;
+    if (!project || !slot || !sameSlotReservation(slot, expected)) return finding;
     if (input.roleEnabled === true && (await loadConfig(workspaceDir, projectSlug)).roles[role]?.enabled !== true) {
       return { ...finding, fixed: false, error: "Role became disabled or was removed; rerun health before repair." };
     }
@@ -63,7 +63,7 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
 
     if (fresh.plannedAction === HEALTH_ACTION.RECONCILE_PROJECTION) {
       if (!issueId || !state) return fresh;
-      await reconcileManagedLabelsLocked({ workspaceDir, projectSlug, issueId, workflow, provider: input.provider, owner: "heartbeat_worker_health" });
+      await reconcileManagedLabelsLocked({ workspaceDir, projectSlug, issueId, workflow, provider: input.provider, owner: WORKER_HEALTH_OWNER });
     } else if (fresh.plannedAction === HEALTH_ACTION.NUDGE) {
       if (!issueId || !slot.sessionKey || !state?.activeWorker) return fresh;
       const lastNudgeAt = state.activeWorker.lastNudgeAt;
@@ -100,7 +100,7 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
       const committed = await commitWorkflowTransitionLocked({
         workspaceDir, project, issueId, provider: input.provider, workflow,
         plan: { from, toLabel: to, toState, actions: [] },
-        issue: await input.provider.getIssue(issueId), owner: "heartbeat_worker_health", checkLocalState: true,
+        issue: await input.provider.getIssue(issueId), owner: WORKER_HEALTH_OWNER, checkLocalState: true,
       });
 
       if (!committed) return fresh;
@@ -122,18 +122,17 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
         let released = false;
 
         await updateSlot(workspaceDir, projectSlug, role, level, slotIndex, (current) => {
-          if (current.issueId !== slot.issueId || current.sessionKey !== slot.sessionKey
-            || current.startTime !== slot.startTime || current.active !== slot.active) return current;
+          if (!sameSlotReservation(current, slot)) return current;
           released = true;
 
-          return { ...current, active: false, issueId: null, startTime: null, previousLabel: null, lastIssueId: current.issueId };
+          return releasedWorkerSlot(current, current.issueId);
         });
         if (!released) return fresh;
       }
     } else return fresh;
     fresh.fixed = true;
     fresh.appliedAction = fresh.plannedAction;
-    await auditLog(workspaceDir, "worker_health_remediated", {
+    await auditLog(workspaceDir, WORKER_HEALTH_AUDIT.REMEDIATED, {
       projectSlug, role, level, slotIndex, issueId, finding: fresh.issue.type, action: fresh.plannedAction,
     }).catch((error: unknown) => {
       fresh.error = `Remediation completed but audit failed: ${error instanceof Error ? error.message : String(error)}`;

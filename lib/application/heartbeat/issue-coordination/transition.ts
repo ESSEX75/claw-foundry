@@ -2,8 +2,8 @@
  * transition-state.ts — Keep project-local issue runtime state in sync after heartbeat transitions.
  */
 
-import { withIssueOrchestrationLock } from "../../state/index.js";
-import { commitWorkflowTransitionLocked } from "../pipeline/transition.js";
+import { withIssueOrchestrationLock } from "../../../state/index.js";
+import { commitWorkflowTransitionLocked } from "../../pipeline/transition.js";
 import type { HeartbeatTransitionInput } from "./types.js";
 
 /** Recheck the local source state under the issue lock before actions and commit.

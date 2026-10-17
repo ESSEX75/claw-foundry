@@ -8,7 +8,7 @@ import { it } from "node:test";
 import type { ActiveIssueWorker } from "../../domain/index.js";
 import { DATA_DIR, loadConfig, readIssueStateStore, updateIssueRuntimeRecord, updateProjects, withIssueOrchestrationLock } from "../../state/index.js";
 import { createTestHarness, type TestHarness } from "../../testing/index.js";
-import { projectionIntegrityPass } from "../heartbeat/projection.js";
+import { projectionIntegrityPass } from "../heartbeat/projection-maintenance/index.js";
 import { executeCompletion } from "./completion.js";
 import type { CompletionInput } from "./types.js";
 

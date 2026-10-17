@@ -1,7 +1,7 @@
 /** Owns worker-slot reservation and the authoritative issue runtime commit. */
 
 import type { IssueRuntimeState, WorkerDeliveryState } from "../../../domain/index.js";
-import { EXECUTION_MODE, releasedWorkerSlot, sameWorkerRun, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
+import { EXECUTION_MODE, releasedWorkerSlot, sameWorkerRun, slotOwnsWorkerRun, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import type { ResolvedConfig } from "../../../state/index.js";
 import { activateWorker, getLevelMaxWorkers, readIssueStateStore, updateIssueRuntimeRecord, updateSlot } from "../../../state/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -43,7 +43,7 @@ export async function reserveDispatchSlot(opts: DispatchOpts, plan: DispatchAtte
  */
 export async function releaseDispatchSlot(opts: DispatchOpts, plan: DispatchAttempt): Promise<void> {
   await updateSlot(opts.workspaceDir, opts.project.slug, plan.role, plan.level, plan.slotIndex, (slot) => {
-    if (slot.issueId !== opts.issueId || slot.sessionKey !== plan.sessionKey || slot.startTime !== plan.startedAt || slot.delivery?.operationId !== plan.deliveryId) {
+    if (!slotOwnsWorkerRun(slot, opts.issueId, plan) || slot.delivery?.operationId !== plan.deliveryId) {
       throw new Error("Worker reservation changed before release.");
     }
 

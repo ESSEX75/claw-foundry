@@ -9,6 +9,7 @@ import {
 } from "../../state/index.js";
 import { provisionLabelCatalog } from "../labels/index.js";
 import { validateDestinationAvailability, validateProjectRoute } from "../setup/index.js";
+import { PROJECT_AUDIT_EVENT } from "./const.js";
 import { allocateEndpointName, matchesProjectRoute } from "./selection.js";
 import type { RegisterProjectInput, RegisterProjectResult } from "./types.js";
 
@@ -78,7 +79,7 @@ export async function registerProject(input: RegisterProjectInput): Promise<Regi
     scaffoldError = error instanceof Error ? error.message : String(error);
   }
 
-  await auditLog(input.workspaceDir, "project_register", { projectSlug: slug, isNewProject: committed.isNewProject, scaffoldError });
+  await auditLog(input.workspaceDir, PROJECT_AUDIT_EVENT.REGISTER, { projectSlug: slug, isNewProject: committed.isNewProject, scaffoldError });
 
   return { ...committed, workflow: config.workflow,
     labelsEnsured: catalog.stateLabels.length + catalog.roleLabels.length + catalog.routingLabels.length,

@@ -18,8 +18,8 @@ import {
 } from "../../../domain/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../../pipeline/index.js";
 import { planWorkflowEvent } from "../../pipeline/plan.js";
-import { getHeartbeatCandidates } from "../local-candidates.js";
-import { transitionHeartbeatIssue } from "../transition-state.js";
+import { getHeartbeatCandidates } from "../issue-coordination/index.js";
+import { transitionHeartbeatIssue } from "../issue-coordination/index.js";
 import {
   DEFAULT_REVIEW_GIT_PULL_TIMEOUT_MS, REVIEW_AUDIT_EVENT,
   REVIEW_TRANSITION_OWNER,

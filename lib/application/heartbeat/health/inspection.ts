@@ -4,6 +4,7 @@ import { log as auditLog } from "../../../audit.js";
 import { fetchGatewaySessions } from "../../../integrations/index.js";
 import { loadConfig, parseProjectSlug, readProjects } from "../../../state/index.js";
 import { resolveProvider } from "../../projects/index.js";
+import { WORKER_HEALTH_AUDIT } from "./const.js";
 import { healthInspectionFailure } from "./inspection-failure.js";
 import { performHealthPass } from "./pass.js";
 import type { HealthFix, InspectWorkerHealthInput, InspectWorkerHealthResult } from "./types.js";
@@ -38,7 +39,7 @@ export async function inspectWorkerHealth(input: InspectWorkerHealthInput): Prom
     }
   }
 
-  await auditLog(input.workspaceDir, "health", { projectCount: projects.length, fix,
+  await auditLog(input.workspaceDir, WORKER_HEALTH_AUDIT.INSPECTION, { projectCount: projects.length, fix,
     issuesFound: issues.length, issuesFixed: issues.filter(issue => issue.fixed).length,
     sessionsCached: sessions?.sessions.size ?? 0, sessionInventoryComplete: sessions?.complete ?? false });
 

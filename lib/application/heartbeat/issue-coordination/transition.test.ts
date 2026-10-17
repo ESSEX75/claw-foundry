@@ -4,19 +4,19 @@ import assert from "node:assert";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { RunCommand } from "../../context.js";
-import { createProvider, isProviderIssueLookupError } from "../../integrations/index.js";
+import type { RunCommand } from "../../../context.js";
+import { createProvider, isProviderIssueLookupError } from "../../../integrations/index.js";
 
-import { seedIssueRuntimeState } from "../../testing/index.js";
-import { readIssueArchiveStore, readIssueStateStore } from "../../state/index.js";
-import { renderIssueMetadata } from "../../projection/index.js";
-import { TestProvider } from "../../testing/test-provider.js";
-import { ACTION, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, WORKFLOW_EVENT, type Project } from "../../domain/index.js";
-import { DEFAULT_WORKFLOW } from "../../domain/index.js";
-import { projectionIntegrityPass } from "./projection.js";
-import { reviewPass, reviewSkipPass } from "./review/index.js";
-import { testSkipPass } from "./test/index.js";
-import { transitionHeartbeatIssue } from "./transition-state.js";
+import { seedIssueRuntimeState } from "../../../testing/index.js";
+import { readIssueArchiveStore, readIssueStateStore } from "../../../state/index.js";
+import { renderIssueMetadata } from "../../../projection/index.js";
+import { TestProvider } from "../../../testing/test-provider.js";
+import { ACTION, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, WORKFLOW_EVENT, type Project } from "../../../domain/index.js";
+import { DEFAULT_WORKFLOW } from "../../../domain/index.js";
+import { projectionIntegrityPass } from "../projection-maintenance/index.js";
+import { reviewPass, reviewSkipPass } from "../review/index.js";
+import { testSkipPass } from "../test/index.js";
+import { transitionHeartbeatIssue } from "./transition.js";
 
 async function withProject<T>(fn: (ctx: {
   workspaceDir: string;

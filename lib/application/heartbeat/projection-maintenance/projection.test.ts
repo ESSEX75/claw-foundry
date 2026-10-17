@@ -5,19 +5,19 @@ import assert from "node:assert";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { readIssueArchiveStore, readIssueStateStore } from "../../state/index.js";
+import { readIssueArchiveStore, readIssueStateStore } from "../../../state/index.js";
 import {
   createEmptyIssueStateStoreForTesting as emptyIssueStateStore,
   replaceIssueStateStoreForTesting as writeIssueStateStore,
-} from "../../testing/index.js";
-import { renderIssueMetadata } from "../../projection/index.js";
-import { TestProvider } from "../../testing/test-provider.js";
-import { PROVIDER_ISSUE_LOOKUP_ERROR, ProviderIssueLookupError } from "../../integrations/index.js";
+} from "../../../testing/index.js";
+import { renderIssueMetadata } from "../../../projection/index.js";
+import { TestProvider } from "../../../testing/test-provider.js";
+import { PROVIDER_ISSUE_LOOKUP_ERROR, ProviderIssueLookupError } from "../../../integrations/index.js";
 
-import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../domain/index.js";
-import { DEFAULT_WORKFLOW } from "../../domain/index.js";
-import { getHeartbeatCandidates } from "./local-candidates.js";
-import { projectionIntegrityPass } from "./projection.js";
+import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../../domain/index.js";
+import { DEFAULT_WORKFLOW } from "../../../domain/index.js";
+import { getHeartbeatCandidates } from "../issue-coordination/index.js";
+import { projectionIntegrityPass } from "./coordinator.js";
 
 /** Build initialized state with explicit overrides for each integrity scenario.
  * @param overrides - Fields replacing healthy defaults.

@@ -83,3 +83,5 @@ and successfully processed actions; provider observations never determine local 
 Completion receipts retain that processed sequence for accurate same-run replay.
 
 Workers also own the shared session-action registry and its derived type, used by dispatch and notifications without application implementation imports.
+
+Project slot semantics expose exact run and reservation comparisons alongside the shared released-slot transformation. Callers retain active, delivery-token and release authorization policy.

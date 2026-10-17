@@ -13,6 +13,7 @@ import {
   isScopeApprovalRequiredError,
   runSetup,
   SETUP_NOTIFICATION_CHANNELS,
+  SetupApplyError,
   type SetupOpts,
 } from "../../application/index.js";
 import { EXECUTION_MODE } from "../../domain/index.js";
@@ -95,6 +96,7 @@ export function createSetupTool(ctx: Pick<SetupOpts, "runtime" | "runCommand">):
           });
         }
 
+        if (err instanceof SetupApplyError) return jsonResult({ success: false, ...err.result, summary: err.message });
         throw err;
       }
 

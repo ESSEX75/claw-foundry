@@ -150,3 +150,6 @@ Creation operations optionally retain a reconciliation-attempt count, distinct f
 provider submission attempts, so application scheduling can rotate retries durably.
 Creation readiness query APIs produce per-invocation snapshots only; callers must
 not reuse them to authorize a later mutation. Strict locked readiness reads remain available.
+
+SDK-owned OpenClaw agent directories are provisioned by integrations/agents. State
+continues to own only DevClaw workspace scaffolding, instructions and model YAML writes.

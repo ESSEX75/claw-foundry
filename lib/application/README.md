@@ -239,3 +239,11 @@ reconciliation attempt counts rotate failed retries without modifying immutable 
 or provider submission evidence. Concurrent stale selections do not repeat a newer attempt.
 Collection queries may read one creation-readiness snapshot per invocation; mutating
 lifecycle/dispatch paths retain fresh readiness checks under their issue lock.
+
+Setup selects targets and coordinates SDK registration, integration-owned directories,
+route/plugin configuration and state-owned scaffolding/model writes. Apply failures
+raise SetupApplyError with the confirmed partial result, stopped step and exact recovery
+target. A confirmed new agent is retained and resumed by existing agentId without
+newAgentName; unconfirmed registration requires configuration inspection before retry.
+Dry-run performs no provisioning. Ordinary existing-agent setup leaves implicit SDK
+resource creation with the host while explicit registration plans can be resumed.

@@ -96,3 +96,7 @@ semantics; creation, projection summaries, lifecycle locks and worker recovery t
 live beside their application owners. Root registration tests exercise the external
 public API and preserve the exact registered names. Broad architectural refactors
 must pass arch/check/build/full tests and a logic review before committing.
+
+Setup partial-apply errors are returned as unsuccessful structured results with the
+stopped effect, confirmed agent creation and recovery target. They never become a
+successful setup response merely because registration or configuration already committed.

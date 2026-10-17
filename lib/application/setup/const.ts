@@ -22,3 +22,19 @@ export const CONFIG_RELOAD_MODE = {
 
 /** Display sentinel for workspace-only setup with no agent target. */
 export const UNKNOWN_AGENT_ID = "unknown";
+
+/** Ordered setup effects retained when an apply operation stops after partial success. */
+export const SETUP_APPLY_STEP = {
+  AGENT_REGISTRATION: "agent-registration",
+  RESOURCES: "agent-resources",
+  BINDING: "channel-binding",
+  PLUGIN: "plugin-configuration",
+  SCAFFOLD: "workspace-scaffold",
+  MODELS: "model-write",
+} as const;
+
+/** Explicit recovery choices; an unconfirmed registration is never blindly repeated. */
+export const SETUP_RECOVERY_ACTION = {
+  INSPECT_REGISTRATION: "inspect-registration",
+  RESUME_TARGET: "resume-target",
+} as const;

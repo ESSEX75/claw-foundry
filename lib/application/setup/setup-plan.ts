@@ -1,7 +1,7 @@
 /** Resolves setup targets, route validation, and model changes without side effects. */
 
-import { findConfiguredAgent } from "../../integrations/index.js";
-import { getAgentId, getAgentWorkspacePath, resolveWorkspacePath } from "./agents/index.js";
+import { findConfiguredAgent, resolveNewAgentResources } from "../../integrations/index.js";
+import { getAgentId, resolveWorkspacePath } from "./agents/index.js";
 import { SETUP_OPERATION, UNKNOWN_AGENT_ID } from "./const.js";
 import { resolveSetupModels } from "./model-configuration.js";
 import { planChannelBinding } from "./routing/index.js";
@@ -21,7 +21,7 @@ export async function planSetup(opts: Omit<SetupOpts, "runCommand">): Promise<Se
 
   const agentCreated = Boolean(opts.newAgentName);
   const agentId = opts.newAgentName ? getAgentId(opts.newAgentName) : opts.agentId ?? UNKNOWN_AGENT_ID;
-  const workspacePath = opts.newAgentName ? getAgentWorkspacePath(agentId)
+  const workspacePath = opts.newAgentName ? (await resolveNewAgentResources(agentId)).workspacePath
     : opts.workspacePath ?? (opts.agentId ? await resolveWorkspacePath(opts.runtime, opts.agentId) : undefined);
 
   if (!workspacePath) throw new Error("Setup requires either newAgentName, agentId, or workspacePath");

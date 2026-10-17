@@ -1,11 +1,10 @@
 /** Contracts owned by setup coordination. */
 
-import type { PluginRuntime } from "openclaw/plugin-sdk/core";
-
 import type { RunCommand } from "../../context.js";
 import type { ExecutionMode } from "../../domain/index.js";
+import type { AgentConfigurationRuntime } from "../../integrations/index.js";
 import type { ValueOf } from "../../types.js";
-import type { SETUP_OPERATION } from "./const.js";
+import type { SETUP_APPLY_STEP, SETUP_OPERATION, SETUP_RECOVERY_ACTION } from "./const.js";
 import type { ScopePreflightResult } from "./permissions/types.js";
 import type { SetupNotificationChannel } from "./routing/types.js";
 
@@ -46,19 +45,21 @@ export type SetupOpts = {
 
 /** Outcome of a validated setup operation or preview. */
 export type SetupResult = {
+  /** Partial-apply details carried by SetupApplyError; successful results omit them. */
+  recovery?: SetupRecovery;
   /** Requested operation; file operations do not configure an agent. */
   operation: ValueOf<typeof SETUP_OPERATION>;
   /** Scope preflight outcome; absent for preview and file-only operations. */
   scopePreflight?: ScopePreflightResult;
   /** Resolved agent identifier, or unknown for a workspace-only operation. */
   agentId: string;
-  /** Whether the operation creates an agent (planned during preview). */
+  /** Whether this invocation confirmed agent registration (planned during preview); failures may remain unconfirmed. */
   agentCreated: boolean;
   /** Resolved filesystem workspace target. */
   workspacePath: string;
   /** Effective models after explicit overrides; empty for file-only operations. */
   models: ModelConfig;
-  /** Workspace-relative paths actually written; empty during preview. */
+  /** Workspace-relative paths from completed write phases; a failed phase may have additional partial files. Empty during preview. */
   filesWritten: string[];
   /** Nonfatal operation diagnostics. */
   warnings: string[];
@@ -76,16 +77,22 @@ export type SetupResult = {
   plannedChanges: string[];
 };
 
-/** Runtime capabilities needed by setup; SDK-owned persistence supplies writable drafts. */
-export type SetupRuntime = {
-  /** Live read snapshot and focused config mutation transport. */
-  config: {
-    /** Obtain the current read-only configuration. */
-    current: PluginRuntime["config"]["current"];
-    /** Persist a focused mutation with the SDK's concurrency protection. */
-    mutateConfigFile: (params: Parameters<PluginRuntime["config"]["mutateConfigFile"]>[0]) => Promise<unknown>;
-  };
+/** Concrete target and stopped effect retained after an incomplete setup apply. */
+export type SetupRecovery = {
+  /** Effect that failed; preceding effects may already be committed. */
+  step: ValueOf<typeof SETUP_APPLY_STEP>;
+  /** Original diagnostic without discarding the thrown cause. */
+  reason: string;
+  /** Whether registration needs inspection before selecting an existing target. */
+  action: ValueOf<typeof SETUP_RECOVERY_ACTION>;
+  /** Agent to inspect or resume, absent for workspace-only setup. */
+  agentId?: string;
+  /** Exact workspace selected before any effects. */
+  workspacePath: string;
 };
+
+/** Runtime capabilities needed by setup; SDK-owned persistence supplies writable drafts. */
+export type SetupRuntime = Pick<AgentConfigurationRuntime, "config">;
 
 /** Read-only SDK configuration capability for setup endpoint discovery. */
 type SetupConfigReader = {
@@ -101,3 +108,6 @@ export type SetupEndpointChoicesInput = Pick<SetupOpts, "agentId" | "newAgentNam
 
 /** Read-only target selection shared by setup planning and effective model queries. */
 export type SetupModelQueryInput = Pick<SetupOpts, "runtime" | "newAgentName" | "agentId" | "workspacePath">;
+
+/** Partial setup result always contains a concrete stopped effect and recovery target. */
+export type SetupIncompleteResult = SetupResult & Required<Pick<SetupResult, "recovery">>;

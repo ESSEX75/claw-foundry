@@ -224,3 +224,10 @@ capacity-blocked candidates without holding another issue lock and recheck only 
 issue under its lock. Each tick makes at most one pickup per role and respects the total
 pickup budget; atomic reservation still enforces role/project execution constraints.
 Invalid source pairs or PICKUP targets never become managed candidates.
+
+Route-based task lifecycle commands capture project and endpoint before locking and
+validate that same target under its issue lock. Shared prerequisites reject creation
+not ready, canonical state drift, missing provider identity and pending worker
+release/resolution before provider effects. Start/level changes additionally require
+no active worker or reservation; architect edits retain their operation-specific allowance.
+Ownership-only writes preserve the stored workflow pair but do not bypass pending recovery.

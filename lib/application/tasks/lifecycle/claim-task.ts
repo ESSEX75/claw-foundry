@@ -5,6 +5,7 @@ import {
   isIssueCreationReady,
   readIssueStateStore,
   readProjects,
+  readWorkerDeliveryResolution,
   withIssueOrchestrationLock,
 } from "../../../state/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -28,6 +29,11 @@ export async function claimManagedTask(input: ClaimManagedTaskInput): Promise<Cl
       if (!await isIssueCreationReady(input.workspaceDir, input.project.slug, state.creationOperationId)) {
         return { claimed: false, reason: "Issue creation is not ready" };
       }
+
+      if (state.pendingWorkerRelease) return { claimed: false, reason: "Issue has a pending worker release" };
+      const resolution = await readWorkerDeliveryResolution(input.workspaceDir, input.project.slug, input.issueId);
+
+      if (resolution && !resolution.completed) return { claimed: false, reason: "Issue has a pending worker delivery resolution" };
 
       if (input.queuedOnly) {
         const configured = Object.hasOwn(input.workflow.states, state.workflowState)

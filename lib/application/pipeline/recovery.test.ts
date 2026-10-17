@@ -8,16 +8,15 @@ import { readIssueStateStore, readProjects, reservePipelineNotification, updateP
 import { createTestHarness, type TestHarness } from "../../testing/index.js";
 import { archiveManagedIssue } from "../issues/index.js";
 import { retryPendingPipelineNotifications } from "../notifications/index.js";
-import { executeCompletion } from "./completion.js";
+import { completeWorkerForTesting } from "../../testing/index.js";
 import { recoverTransitionWorkers } from "./recovery.js";
-import type { CompletionInput } from "./types.js";
 
 /** Build one completion request without an externally routed notification transport.
  * @param h - Temporary project and provider fixture.
  * @param role - Completing built-in role.
  * @param result - Result selecting the workflow event.
  */
-function input(h: TestHarness, role = "tester", result = "pass"): CompletionInput {
+function input(h: TestHarness, role = "tester", result = "pass"): Parameters<typeof completeWorkerForTesting>[0] {
   return { workspaceDir: h.workspaceDir, projectSlug: h.project.slug, projectName: h.project.name,
     channels: h.project.channels, issueId: 42, role, result, provider: h.provider,
     repoPath: h.project.repo, runCommand: h.runCommand, workflow: DEFAULT_WORKFLOW };
@@ -29,13 +28,13 @@ describe("completion interruption recovery", () => {
 
     try {
       await h.seedManagedIssue({ iid: 42, labels: ["Testing"] });
-      await executeCompletion(input(h));
+      await completeWorkerForTesting(input(h));
       const state = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"];
 
       assert.equal(state.workflowState, "done");
       assert.equal(state.pipelineNotification?.status, PIPELINE_NOTIFICATION_STATUS.BLOCKED);
       assert.equal(state.pendingWorkerRelease, null);
-      await executeCompletion(input(h));
+      await completeWorkerForTesting(input(h));
       assert.equal(h.provider.callsTo("closeIssue").length, 1);
       const archived = await archiveManagedIssue({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug,
         issueId: 42, archiveReason: ISSUE_ARCHIVE_REASON.TERMINAL, workflow: DEFAULT_WORKFLOW, actor: "test", correlationId: "test-42" });
@@ -51,11 +50,11 @@ describe("completion interruption recovery", () => {
       await h.seedManagedIssue({ iid: 42, labels: ["Testing"] });
       const close = t.mock.method(h.provider, "closeIssue", async () => { throw new Error("close unavailable"); });
 
-      await assert.rejects(executeCompletion(input(h)), /close unavailable/);
+      await assert.rejects(completeWorkerForTesting(input(h)), /close unavailable/);
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "Testing");
       assert.ok((await h.provider.getIssue(42)).labels.includes("Done"));
       close.mock.restore();
-      await executeCompletion(input(h));
+      await completeWorkerForTesting(input(h));
       assert.equal((await h.provider.getIssue(42)).state, "closed");
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "Done");
     } finally { await h.cleanup(); }
@@ -68,9 +67,9 @@ describe("completion interruption recovery", () => {
       await h.seedManagedIssue({ iid: 42, labels: ["Testing"], state: "closed" });
       const reopen = t.mock.method(h.provider, "reopenIssue", async () => { throw new Error("reopen unavailable"); });
 
-      await assert.rejects(executeCompletion(input(h, "tester", "fail")), /reopen unavailable/);
+      await assert.rejects(completeWorkerForTesting(input(h, "tester", "fail")), /reopen unavailable/);
       reopen.mock.restore();
-      await executeCompletion(input(h, "tester", "fail"));
+      await completeWorkerForTesting(input(h, "tester", "fail"));
       assert.equal((await h.provider.getIssue(42)).state, "opened");
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].closedAt, null);
     } finally { await h.cleanup(); }
@@ -84,9 +83,9 @@ describe("completion interruption recovery", () => {
       h.provider.setPrStatus(42, { state: "open", url: "https://example.com/pr/42" });
       const transition = t.mock.method(h.provider, "addLabels", async () => { throw new Error("transition unavailable"); });
 
-      await assert.rejects(executeCompletion(input(h, "reviewer", "approve")), /transition unavailable/);
+      await assert.rejects(completeWorkerForTesting(input(h, "reviewer", "approve")), /transition unavailable/);
       transition.mock.restore();
-      await executeCompletion(input(h, "reviewer", "approve"));
+      await completeWorkerForTesting(input(h, "reviewer", "approve"));
       assert.equal(h.provider.callsTo("mergePr").length, 1);
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "To Test");
     } finally { await h.cleanup(); }
@@ -101,7 +100,7 @@ describe("completion interruption recovery", () => {
       const merge = h.provider.mergePr.bind(h.provider);
 
       t.mock.method(h.provider, "mergePr", async (issueId: number) => { await merge(issueId); throw new Error("response lost"); });
-      await executeCompletion(input(h, "reviewer", "approve"));
+      await completeWorkerForTesting(input(h, "reviewer", "approve"));
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "To Test");
       assert.equal(h.provider.callsTo("mergePr").length, 1);
     } finally { await h.cleanup(); }
@@ -126,10 +125,10 @@ describe("completion interruption recovery", () => {
         await transition(...args);
         failWrites = true;
       });
-      await assert.rejects(executeCompletion(input(h, "reviewer", "approve")), /state disk unavailable/);
+      await assert.rejects(completeWorkerForTesting(input(h, "reviewer", "approve")), /state disk unavailable/);
       failWrites = false;
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "Reviewing");
-      await executeCompletion(input(h, "reviewer", "approve"));
+      await completeWorkerForTesting(input(h, "reviewer", "approve"));
       assert.equal(h.provider.callsTo("mergePr").length, 1);
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "To Test");
     } finally { fault.mock.restore(); await h.cleanup(); }
@@ -156,9 +155,9 @@ describe("completion interruption recovery", () => {
         return read(issueId);
       });
 
-      await assert.rejects(executeCompletion(input(h, "reviewer", "approve")), /read unavailable/);
+      await assert.rejects(completeWorkerForTesting(input(h, "reviewer", "approve")), /read unavailable/);
       fault.mock.restore();
-      await executeCompletion(input(h, "reviewer", "approve"));
+      await completeWorkerForTesting(input(h, "reviewer", "approve"));
       assert.equal(h.provider.callsTo("mergePr").length, 1);
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "To Test");
     } finally { await h.cleanup(); }
@@ -171,7 +170,7 @@ describe("completion interruption recovery", () => {
       await h.seedManagedIssue({ iid: 42, labels: ["Reviewing"] });
       h.provider.setPrStatus(42, { state: "open", url: "https://example.com/pr/42" });
       t.mock.method(h.provider, "mergePr", async () => { throw new Error("response lost"); });
-      await assert.rejects(executeCompletion(input(h, "reviewer", "approve")), /response lost/);
+      await assert.rejects(completeWorkerForTesting(input(h, "reviewer", "approve")), /response lost/);
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "Reviewing");
     } finally { await h.cleanup(); }
   });
@@ -197,7 +196,7 @@ describe("completion interruption recovery", () => {
           return { data, result: undefined };
         });
       });
-      await assert.rejects(executeCompletion(input(h)), /replacement worker/);
+      await assert.rejects(completeWorkerForTesting(input(h)), /replacement worker/);
       const state = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"];
 
       assert.equal(state.workflowState, "done");

@@ -2,12 +2,14 @@
 
 import {
   ISSUE_ARCHIVE_REASON,
-  STATE_TYPE
+  STATE_TYPE,
+  type WorkflowConfig,
 } from "../../../domain/index.js";
 import {
-  readIssueStateStore
+  readIssueArchiveStore,
+  readIssueStateStore,
 } from "../../../state/index.js";
-import { archiveManagedIssue } from "./command.js";
+import { archiveManagedIssue, archiveManagedIssueLocked } from "./command.js";
 import { ARCHIVE_RECOVERY_ACTOR, ARCHIVE_RECOVERY_CORRELATION_PREFIX, ARCHIVE_RECOVERY_UNKNOWN_REASON } from "./const.js";
 import { validateRetentionBudget } from "./planning.js";
 import type { ArchiveRecoveryInput, ArchiveRecoveryResult } from "./types.js";
@@ -40,4 +42,25 @@ export async function recoverTerminalIssueArchives(opts: ArchiveRecoveryInput): 
   }
 
   return { archived, skipped };
+}
+
+/** Resume an existing terminal archive before another pass alters its exact active source snapshot.
+ * The caller owns the issue lock; a changed snapshot or blocked archive remains an error.
+ * @param workspaceDir - Workspace containing both local stores.
+ * @param projectSlug - Canonical project identity.
+ * @param issueId - Locally terminal issue potentially duplicated by archive-first interruption.
+ * @param workflow - Resolved workflow validating the local terminal pair.
+ */
+export async function recoverArchivedIssueLocked(workspaceDir: string, projectSlug: string, issueId: number, workflow: WorkflowConfig): Promise<boolean> {
+  const archived = Object.values((await readIssueArchiveStore(workspaceDir, projectSlug)).issues)
+    .find(record => record.issueId === issueId && record.archiveReason === ISSUE_ARCHIVE_REASON.TERMINAL);
+
+  if (!archived) return false;
+  const recovered = await archiveManagedIssueLocked({ workspaceDir, projectSlug, issueId, workflow,
+    archiveReason: ISSUE_ARCHIVE_REASON.TERMINAL, actor: ARCHIVE_RECOVERY_ACTOR,
+    correlationId: `${ARCHIVE_RECOVERY_CORRELATION_PREFIX}${projectSlug}:${issueId}` });
+
+  if (!recovered.archived) throw new Error(`Interrupted terminal archive could not resume: ${recovered.reason}`);
+
+  return true;
 }

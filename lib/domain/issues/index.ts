@@ -18,6 +18,7 @@ export type {
   ArchivedIssueRecord,
   AttachmentDisposition,
   IssueArchiveReason,
+  IssueCompletionReceipt,
   IssueCreationErrorCode,
   IssueCreationStatus,
   IssueIntegrityStatus,

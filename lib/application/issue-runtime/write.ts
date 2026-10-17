@@ -20,6 +20,7 @@ export async function writeIssueRuntimeState(input: IssueStateWriteInput): Promi
     return {
       ...base,
       ...workflow,
+      ...(input.lastCompletion !== undefined ? { lastCompletion: input.lastCompletion } : {}),
       ...(input.creationOperationId !== undefined ? { creationOperationId: input.creationOperationId } : {}),
       assignedRole: input.assignedRole !== undefined ? input.assignedRole : base.assignedRole,
       assignedLevel: input.assignedLevel !== undefined ? input.assignedLevel : base.assignedLevel,

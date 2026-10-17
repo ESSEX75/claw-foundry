@@ -21,11 +21,13 @@ import {
   NOTIFICATION_CHANNEL,
   type Project,
   type RoleWorkerState,
+  STATE_TYPE,
   type WorkflowConfig,
   type WorkflowLabel,
 } from "../domain/index.js";
 import { type Issue, registerBootstrapHook } from "../integrations/index.js";
 import { DATA_DIR, loadConfig, type ProjectsData, readIssueStateStore, readProjects } from "../state/index.js";
+import { bindWorkerForTesting } from "./state-fixtures.js";
 import { TestProvider } from "./test-provider.js";
 
 /** Filename used by the test harness for the projects-registry fixture. */
@@ -349,6 +351,11 @@ export async function createTestHarness(opts?: HarnessOptions): Promise<TestHarn
         await initializeIssueRuntimeState({ workspaceDir, project, issue, providerType: project.provider, workflow: opts?.workflow ?? config.workflow,
           initializationRoles: config.roles, reviewPolicy: config.workflow.reviewPolicy, testPolicy: config.workflow.testPolicy,
           notifyTarget: { channel: NOTIFICATION_CHANNEL.TELEGRAM, name: "primary" }, activeWorker: frame ?? null });
+        const initialized = (await readIssueStateStore(workspaceDir, project.slug)).issues[String(issue.iid)];
+
+        if (config.workflow.states[initialized.workflowState]?.type === STATE_TYPE.ACTIVE && !initialized.activeWorker) {
+          await bindWorkerForTesting(workspaceDir, project.slug, issue.iid);
+        }
       }
 
       return issue;

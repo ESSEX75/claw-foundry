@@ -2,7 +2,7 @@
 
 import type { RunCommand } from "../../context.js";
 import type {
-  ActiveIssueWorker, CompletionRule, IssueRuntimeState, NotificationEndpoint, Project, TransitionAction, WorkflowConfig, WorkflowPolicyRouting,
+  ActiveIssueWorker, CompletionRule, IssueCompletionReceipt, IssueRuntimeState, NotificationEndpoint, Project, TransitionAction, WorkflowConfig, WorkflowPolicyRouting,
 } from "../../domain/index.js";
 import type { Issue, IssueProvider } from "../../integrations/index.js";
 import type { NotificationCreatedTask, NotificationRuntime } from "../notifications/index.js";
@@ -51,6 +51,8 @@ export type CompletionOutput = {
 
 /** Arguments for a transition while its caller holds the issue lock. */
 export type CommitTransitionInput = {
+  /** Exact completion identity written with transition, release and notification intents. */
+  completion?: IssueCompletionReceipt;
   /** Workspace containing the authoritative issue record. */
   workspaceDir: string;
   /** Project whose issue is transitioning. */
@@ -86,7 +88,7 @@ export type CommitTransitionInput = {
 /** Validated completion command and the capabilities needed to execute it. */
 export type CompletionInput = {
   /** Exact worker observed by finish-work, rechecked before provider effects. */
-  expectedWorker?: ActiveIssueWorker;
+  expectedWorker: ActiveIssueWorker;
   /** Workspace containing authoritative state. */
   workspaceDir: string;
   /** Canonical project identity. */
@@ -113,7 +115,7 @@ export type CompletionInput = {
   pluginConfig?: Record<string, unknown>;
   /** Plugin runtime for direct API access (avoids CLI subprocess timeouts) */
   runtime?: NotificationRuntime;
-  /** Workflow config (defaults to DEFAULT_WORKFLOW) */
+  /** Optional captured workflow; changes to this completion transition in fresh configuration are rejected. */
   workflow?: WorkflowConfig;
   /** Tasks created during this work session (e.g. architect implementation tasks) */
   createdTasks?: NotificationCreatedTask[];

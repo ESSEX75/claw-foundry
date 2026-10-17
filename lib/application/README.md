@@ -200,3 +200,8 @@ effects. Standalone file recovery does not load or validate the existing workflo
 
 Doctor exposes its canonical `RoutingDoctorReport` DTO and `DOCTOR_SEVERITY` registry
 for adapter-owned rendering without duplicating diagnostic protocol values.
+
+Completion requires an exact captured worker frame, one matching active slot and live exact PR validation inside the issue lock. A completion receipt commits with transition/release/notification intents; only the same run/result resumes it after release. Archive-first duplicates resume before reconciliation alters the exact source snapshot.
+
+Heartbeat also resumes terminal archive-first duplicates before provider projection
+can change the exact source snapshot. Failed snapshot verification stops that pass.

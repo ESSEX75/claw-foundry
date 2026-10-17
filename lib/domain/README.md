@@ -75,3 +75,5 @@ or explicit operator evidence may confirm that pending context.
 Worker semantics expose exact run identity comparison (including start time); projects
 own the pure transformation of a verified released slot. Application owns the evidence
 authorizing release, and state owns conditional persistence.
+
+Issue semantics own completion receipts bound to the exact worker run and result. They describe a committed transition and cannot authorize another run.

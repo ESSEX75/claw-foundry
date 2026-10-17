@@ -15,7 +15,8 @@ import { createEmptyIssueStateStoreForTesting, createTestHarness, replaceIssueSt
 import { dispatchTask } from "./dispatch-task.js";
 import { WORKER_DELIVERY_RESOLUTION } from "../../../domain/index.js";
 import { resolveWorkerDelivery } from "../delivery-recovery/index.js";
-import { executeCompletion, recoverTransitionWorkers } from "../../pipeline/index.js";
+import { completeWorkerForTesting } from "../../../testing/index.js";
+import { recoverTransitionWorkers } from "../../pipeline/index.js";
 
 /** Build a dispatch input for a seeded issue in the temporary project. */
 function dispatchInput(h: Awaited<ReturnType<typeof createTestHarness>>, issueId: number, runCommand: RunCommand) {
@@ -207,7 +208,7 @@ describe("worker delivery outcome", () => {
       assert.equal(before.processedReviewSummaries?.length ?? 0, 0);
       assert.equal(before.pendingReviewSummaryDelivery?.operationId, result.deliveryId);
       assert.ok(before.activeWorker);
-      await executeCompletion({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug, projectName: h.project.name,
+      await completeWorkerForTesting({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug, projectName: h.project.name,
         channels: h.project.channels, issueId: 93, role: "developer", result: "done", provider: h.provider,
         repoPath: h.project.repo, runCommand: h.runCommand, workflow: h.workflow, expectedWorker: before.activeWorker });
       const completed = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["93"];
@@ -221,11 +222,12 @@ describe("worker delivery outcome", () => {
   it("uses distinct gateway submission identities for successive feedback turns in the same session", async () => {
     const h = await createTestHarness();
     await h.seedManagedIssue({ iid: 94, labels: ["To Do"] });
+    h.provider.setPrStatus(94, { state: PR_STATE.OPEN, url: "https://example.test/pr/94" });
     try {
       const first = await dispatchTask(dispatchInput(h, 94, h.runCommand));
       const firstState = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["94"];
       assert.ok(firstState.activeWorker);
-      await executeCompletion({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug, projectName: h.project.name,
+      await completeWorkerForTesting({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug, projectName: h.project.name,
         channels: h.project.channels, issueId: 94, role: "developer", result: "done", provider: h.provider,
         repoPath: h.project.repo, runCommand: h.runCommand, workflow: h.workflow, expectedWorker: firstState.activeWorker });
       await updateIssueRuntimeRecord(h.workspaceDir, h.project.slug, 94, previous => {
@@ -233,6 +235,7 @@ describe("worker delivery outcome", () => {
         return { ...previous, workflowState: "todo", workflowLabel: "To Do" };
       });
       await h.seedManagedIssue({ iid: 94, labels: ["To Do"] });
+    h.provider.setPrStatus(94, { state: PR_STATE.OPEN, url: "https://example.test/pr/94" });
       const second = await dispatchTask(dispatchInput(h, 94, h.runCommand));
       assert.equal(first.sessionKey, second.sessionKey);
       const keys = h.commands.commands.filter(command => command.argv[3] === "agent").map(command => {

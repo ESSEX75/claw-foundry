@@ -3,7 +3,7 @@
  */
 
 import type {
-  ActiveIssueWorker, IssueIntegrityStatus, IssueProviderId, IssueRuntimeState, NotifyBindingRef,
+  ActiveIssueWorker, IssueCompletionReceipt, IssueIntegrityStatus, IssueProviderId, IssueRuntimeState, NotifyBindingRef,
   Project, ReviewPolicy, TestPolicy, WorkflowConfig, WorkflowStateConfig,
 } from "../../domain/index.js";
 import type { Issue } from "../../integrations/index.js";
@@ -58,6 +58,8 @@ export type IssueStateWriteInput = {
   activeWorker?: ActiveIssueWorker | null;
   /** Worker release intent persisted with the workflow transition. */
   pendingWorkerRelease?: ActiveIssueWorker | null;
+  /** Exact completion result committed atomically with its transition. */
+  lastCompletion?: IssueCompletionReceipt;
   /** Terminal delivery intent persisted with the workflow transition. */
   pipelineNotification?: IssueRuntimeState["pipelineNotification"];
   /** Explicit integrity status replacement. */
@@ -67,7 +69,7 @@ export type IssueStateWriteInput = {
 };
 
 /** Explicit initialization choices; projection import is confined to this API. */
-export type IssueStateInitializeInput = IssueStateWriteInput & {
+export type IssueStateInitializeInput = Omit<IssueStateWriteInput, "lastCompletion"> & {
   /** Configured roles whose level labels may be imported during explicit initialization. */
   initializationRoles?: ResolvedConfig["roles"];
 };

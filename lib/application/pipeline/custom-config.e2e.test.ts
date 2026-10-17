@@ -23,7 +23,7 @@ import { readIssueArchiveStore, readIssueStateStore } from "../../state/index.js
 import { getProject, getRoleWorker, readProjects } from "../../state/index.js";
 import { createTestHarness, type TestHarness } from "../../testing/index.js";
 import { projectTick } from "../queue/tick.js";
-import { executeCompletion } from "./completion.js";
+import { completeWorkerForTesting } from "../../testing/index.js";
 
 const CUSTOM_ROLE = "security_auditor";
 const CUSTOM_QUEUE = "securityQueue";
@@ -184,15 +184,15 @@ workflow:
     };
 
     await assert.rejects(
-      executeCompletion({ ...completionInput, result: "unmapped" }),
+      completeWorkerForTesting({ ...completionInput, result: "unmapped" }),
       /No completion event configured/,
     );
     assert.equal(harness.provider.callsTo("mergePr").length, 0);
     assert.equal(harness.provider.callsTo("addLabels").length, 1);
-    await executeCompletion({ ...completionInput, result: "audited" });
+    await completeWorkerForTesting({ ...completionInput, result: "audited" });
 
     const transitionsAfterCompletion = harness.provider.callsTo("addLabels").length;
-    await executeCompletion({ ...completionInput, result: "audited" });
+    await completeWorkerForTesting({ ...completionInput, result: "audited" });
     assert.equal(harness.provider.callsTo("addLabels").length, transitionsAfterCompletion);
 
     const completedProjects = await readProjects(harness.workspaceDir);

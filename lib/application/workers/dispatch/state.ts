@@ -53,7 +53,7 @@ export async function releaseDispatchSlot(opts: DispatchOpts, plan: DispatchAtte
 
 /**
  * Persist the intended active worker before gateway submission, then reconcile projection.
- * The caller holds the issue lock and retains the slot if this post-delivery step fails.
+ * The caller holds the issue lock and compensates this intent if submission does not begin.
  * @param opts - Issue, project, provider, and ownership inputs.
  * @param plan - Worker identity selected before delivery.
  * @param config - Resolved workflow and roles used for projection.
@@ -89,7 +89,6 @@ export async function commitWorkerDispatch(
     assignedRole: role,
     assignedLevel: level,
     owner,
-
     activeWorker: {
       role, level, slotIndex: plan.slotIndex, sessionKey: plan.sessionKey,
       startedAt: plan.startedAt,

@@ -13,7 +13,7 @@ import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import { createTestHarness, type TestHarness } from "../../testing/index.js";
 import { dispatchTask } from "../workers/index.js";
-import { executeCompletion } from "./completion.js";
+import { bindWorkerForTesting, completeWorkerForTesting } from "../../testing/index.js";
 import { projectTick } from "../queue/tick.js";
 import { reviewPass } from "../heartbeat/review/index.js";
 import {
@@ -125,6 +125,7 @@ describe("E2E pipeline", () => {
       workflowState: key,
       workflowLabel: to,
     });
+    await bindWorkerForTesting(h.workspaceDir, h.project.slug, issueId);
   }
 
   // =========================================================================
@@ -328,10 +329,11 @@ describe("E2E pipeline", () => {
         },
       });
       await h.seedManagedIssue({ iid: 10, title: "Build feature X", labels: ["Doing"] });
+      h.provider.setPrStatus(10, { state: "open", url: "https://example.com/pr/10" });
     });
 
     it("should transition Doing → To Review", async () => {
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -376,7 +378,7 @@ describe("E2E pipeline", () => {
     it("reviewer:approve should transition Reviewing → To Test, merge PR", async () => {
       h.provider.setPrStatus(25, { state: "open", url: "https://example.com/pr/7" });
 
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -402,7 +404,7 @@ describe("E2E pipeline", () => {
       h.provider.setPrStatus(25, { state: "open", url: "https://example.com/pr/7" });
       h.provider.mergePrFailures.add(25);
 
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -431,7 +433,7 @@ describe("E2E pipeline", () => {
     });
 
     it("reviewer:reject should transition Reviewing → To Improve", async () => {
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -451,7 +453,7 @@ describe("E2E pipeline", () => {
     });
 
     it("reviewer:blocked should transition Reviewing → Refining", async () => {
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -486,7 +488,7 @@ describe("E2E pipeline", () => {
     });
 
     it("should transition Testing → Done, close issue", async () => {
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -526,7 +528,7 @@ describe("E2E pipeline", () => {
         notifyTarget: { channel: h.project.channels[0]!.channel, name: h.project.channels[0]!.name },
       });
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -574,7 +576,7 @@ describe("E2E pipeline", () => {
     });
 
     it("should transition Testing → To Improve, reopen issue", async () => {
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -615,7 +617,7 @@ describe("E2E pipeline", () => {
     });
 
     it("should transition Doing → Refining, no close/reopen", async () => {
-      const output = await executeCompletion({
+      const output = await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -954,6 +956,7 @@ describe("E2E pipeline", () => {
 
       // 1. Seed issue
       await h.seedManagedIssue({ iid: 100, title: "Build dashboard", labels: ["To Do"] });
+      h.provider.setPrStatus(100, { state: "open", url: "https://example.com/pr/100" });
 
       // 2. Dispatch developer
       await dispatchTask({
@@ -973,7 +976,7 @@ describe("E2E pipeline", () => {
       });
 
       // 3. Developer done → To Review
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -997,7 +1000,7 @@ describe("E2E pipeline", () => {
       });
       await activateFixtureState(100, "To Review", "Reviewing");
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1020,7 +1023,7 @@ describe("E2E pipeline", () => {
       });
       await activateFixtureState(100, "To Test", "Testing");
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1043,6 +1046,7 @@ describe("E2E pipeline", () => {
       h = await createTestHarness();
 
       await h.seedManagedIssue({ iid: 200, title: "Auth refactor", labels: ["To Do"] });
+      h.provider.setPrStatus(200, { state: "open", url: "https://example.com/pr/50" });
 
       // 1. Dispatch developer
       await dispatchTask({
@@ -1062,7 +1066,7 @@ describe("E2E pipeline", () => {
       });
 
       // 2. Developer done → To Review (same state regardless of level)
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1104,7 +1108,7 @@ describe("E2E pipeline", () => {
       });
       await activateFixtureState(200, "To Test", "Testing");
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1127,6 +1131,7 @@ describe("E2E pipeline", () => {
       h = await createTestHarness();
 
       await h.seedManagedIssue({ iid: 300, title: "Payment flow", labels: ["To Do"] });
+      h.provider.setPrStatus(300, { state: "open", url: "https://example.com/pr/300" });
 
       // 1. Dispatch developer
       await dispatchTask({
@@ -1146,7 +1151,7 @@ describe("E2E pipeline", () => {
       });
 
       // 2. Developer done → To Review
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1169,7 +1174,7 @@ describe("E2E pipeline", () => {
       });
       await activateFixtureState(300, "To Review", "Reviewing");
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1203,7 +1208,7 @@ describe("E2E pipeline", () => {
         runCommand: h.runCommand,
       });
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1226,7 +1231,7 @@ describe("E2E pipeline", () => {
       });
       await activateFixtureState(300, "To Review", "Reviewing");
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1249,7 +1254,7 @@ describe("E2E pipeline", () => {
       });
       await activateFixtureState(300, "To Test", "Testing");
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,
@@ -1602,7 +1607,7 @@ describe("E2E pipeline", () => {
       await h.seedManagedIssue({ iid: 90, title: "Test tracking", labels: ["Testing"] });
       h.provider.resetCalls();
 
-      await executeCompletion({
+      await completeWorkerForTesting({
         workspaceDir: h.workspaceDir,
         projectSlug: h.project.slug,
         channels: h.project.channels,

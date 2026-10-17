@@ -1,13 +1,11 @@
 /** Coordinates worker completion after unambiguous slot selection and mandatory PR checks. */
 
 import { log as auditLog } from "../../../audit.js";
-import { COMPLETION_RESULT, DEFAULT_ROLES } from "../../../domain/index.js";
 import { resolveRepoPath } from "../../../state/index.js";
 import { executeCompletion } from "../../pipeline/index.js";
 import { resolveProvider } from "../../projects/index.js";
 import { WORKER_AUDIT_EVENT } from "../const.js";
 import { loadFinishWorkContext } from "./finish-context.js";
-import { validateFinishPullRequest } from "./finish-preconditions.js";
 import type { FinishWorkInput, FinishWorkResult } from "./types.js";
 
 /** Finish the captured worker run; provider lookup failures do not authorize completion.
@@ -18,11 +16,6 @@ export async function finishWork(input: FinishWorkInput): Promise<FinishWorkResu
   const { project, config, issueId, worker } = await loadFinishWorkContext(input);
   const { provider } = await resolveProvider(workspaceDir, project, runCommand);
   const repoPath = resolveRepoPath(project.repo);
-
-  //TODO: The behavior of the tester, reviewer, etc. is hard-coded.
-  if (role === DEFAULT_ROLES.DEVELOPER && result === COMPLETION_RESULT.DONE) {
-    await validateFinishPullRequest(provider, issueId, prUrl);
-  }
 
   const completion = await executeCompletion({
     workspaceDir, projectSlug: project.slug, role, result, issueId,

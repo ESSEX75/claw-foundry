@@ -40,6 +40,10 @@ const RuntimeIssueSchema = z.object({
   reviewPolicy: z.enum(REVIEW_POLICY).nullable(), testPolicy: z.enum(TEST_POLICY).nullable(),
   notifyTarget: z.object({ channel: z.enum(NOTIFICATION_CHANNEL), name: z.string() }).strict().nullable(),
   activeWorker: ActiveWorkerSchema.nullable(),
+  lastCompletion: z.object({
+    worker: ActiveWorkerSchema.omit({ delivery: true, lastNudgeAt: true }), result: z.string(),
+    fromState: z.string(), toState: z.string(), toLabel: z.string(), prUrl: z.string().optional(),
+  }).strict().optional(),
   pendingWorkerRelease: ActiveWorkerSchema.nullable().optional(),
   processedReviewSummaries: z.array(ReviewSummaryReceiptSchema).optional(),
   pendingReviewSummaryDelivery: z.object({ operationId: z.string().uuid(),

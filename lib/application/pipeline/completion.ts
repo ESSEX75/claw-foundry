@@ -4,15 +4,21 @@
  * Uses workflow config to determine transitions and side effects.
  */
 
+import { isDeepStrictEqual } from "node:util";
+
 import { log as auditLog } from "../../audit.js";
-import { ACTION, DEFAULT_WORKFLOW, findStateByLabel, STATE_TYPE } from "../../domain/index.js";
-import { getProject, getRoleWorker, loadConfig, readIssueStateStore, readProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../state/index.js";
+import { ACTION, COMPLETION_RESULT, DEFAULT_ROLES, findStateByLabel, sameWorkerRun, STATE_TYPE, type WorkflowConfig } from "../../domain/index.js";
+import {
+  getProject, getRoleWorker, isIssueCreationReady, loadConfig, readIssueStateStore, readProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock,
+} from "../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../projection/index.js";
 import { confirmReviewSummaryDelivery } from "../review/index.js";
 import { renderCompletionAnnouncement } from "./announcement.js";
+import { resumeCompletionArchive } from "./completion-archive.js";
 import { notifyCompletion } from "./completion-notifications.js";
 import { PIPELINE_AUDIT, PIPELINE_OWNER } from "./const.js";
 import { planCompletion, planMergeFailure } from "./plan.js";
+import { requireCompletionPullRequest, validateCompletionFrame } from "./preconditions.js";
 import { applyCompletionLifecycle, executeCompletionActions } from "./provider-actions.js";
 import { releaseTransitionWorkerLocked } from "./recovery.js";
 import { archiveTerminalIssueLocked } from "./terminal-archive.js";
@@ -39,15 +45,21 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
   const {
     workspaceDir, projectSlug, role, result, issueId, provider,
     projectName,
-    workflow = DEFAULT_WORKFLOW,
   } = opts;
 
   const key = `${role}:${result}`;
   const config = await loadConfig(workspaceDir, projectSlug);
+
+  const workflow: WorkflowConfig = config.workflow;
   const completion = config.roles[role]?.completion;
 
   if (!completion) throw new Error(`No completion event configured for ${key}`);
   const completionPlan = planCompletion(workflow, role, result, completion);
+
+  if (opts.workflow && !isDeepStrictEqual(planCompletion(opts.workflow, role, result, completion).transition, completionPlan.transition)) {
+    throw new Error("Workflow changed before completion; reload project configuration and retry.");
+  }
+
   const { rule } = completionPlan;
 
   const project = getProject(await readProjects(workspaceDir), projectSlug);
@@ -60,43 +72,40 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
 
   if (!currentState) throw new Error(`Issue #${issueId} has no initialized local runtime state.`);
 
-  if (currentState.workflowLabel !== rule.from && currentState.workflowLabel !== rule.to) {
-    throw new Error(`Completion for #${issueId} expected ${rule.from}, found ${currentState.workflowLabel}.`);
+  const expected = opts.expectedWorker;
+  const receipt = validateCompletionFrame(currentState, project, opts, workflow, rule.from);
+  const resuming = receipt !== undefined;
+
+  if (!resuming && !await isIssueCreationReady(workspaceDir, projectSlug, currentState.creationOperationId)) {
+    throw new Error(`Issue #${issueId} is not ready for completion.`);
   }
 
-  if (opts.expectedWorker) {
-    const expected = opts.expectedWorker;
-    const slot = project.workers[expected.role]?.levels[expected.level]?.[expected.slotIndex];
-
-    if (!slot?.active || slot.issueId !== issueId || slot.sessionKey !== expected.sessionKey || (slot.startTime ?? "") !== expected.startedAt) {
-      throw new Error(`Worker changed before completion of issue #${issueId}.`);
-    }
-  }
-
+  const effectivePlan = resuming ? { ...completionPlan, rule: { ...rule, to: receipt.toLabel },
+    transition: { ...completionPlan.transition, toState: receipt.toState, toLabel: receipt.toLabel },
+    nextState: receipt.toLabel === rule.to ? completionPlan.nextState : receipt.toLabel } : completionPlan;
   const deliveryResolution = await readWorkerDeliveryResolution(workspaceDir, projectSlug, issueId);
 
   if (deliveryResolution && !deliveryResolution.completed) throw new Error(`Issue #${issueId} has a pending operator delivery resolution.`);
 
-  const pendingSummaries = currentState?.pendingReviewSummaryDelivery;
+  if (receipt) {
+    const archived = await resumeCompletionArchive({ ...opts, workflow }, currentState, receipt, effectivePlan);
 
-  if (opts.expectedWorker && pendingSummaries) {
-    const expected = opts.expectedWorker;
-    const captured = pendingSummaries.worker;
+    if (archived) return archived;
+  }
 
-    if (expected.role === captured.role && expected.level === captured.level && expected.slotIndex === captured.slotIndex
-      && expected.sessionKey === captured.sessionKey && expected.startedAt === captured.startedAt) {
-      await confirmReviewSummaryDelivery({ workspaceDir, projectSlug }, issueId, pendingSummaries.operationId);
-    }
+  const pendingSummaries = currentState.pendingReviewSummaryDelivery;
+
+  if (pendingSummaries && sameWorkerRun(pendingSummaries.worker, expected)) {
+    await confirmReviewSummaryDelivery({ workspaceDir, projectSlug }, issueId, pendingSummaries.operationId);
   }
 
   const currentIssue = await provider.getIssue(issueId);
 
-  const resuming = currentState.workflowLabel === rule.to && rule.from !== rule.to;
-
-  if (resuming && currentState.activeWorker) throw new Error(`Issue #${issueId} has a new active worker.`);
+  const selectedPrUrl = !resuming && role === DEFAULT_ROLES.DEVELOPER && result === COMPLETION_RESULT.DONE
+    ? await requireCompletionPullRequest(provider, issueId, opts.prUrl) : resuming ? receipt?.prUrl ?? opts.prUrl : opts.prUrl;
   const actions = resuming
-    ? { prUrl: opts.prUrl, mergedPr: false, mergeFailure: null }
-    : await executeCompletionActions(opts, rule, config.timeouts.gitPullMs);
+    ? { prUrl: selectedPrUrl, mergedPr: false, mergeFailure: null }
+    : await executeCompletionActions({ ...opts, prUrl: selectedPrUrl }, rule, config.timeouts.gitPullMs);
   const { prUrl, mergeFailure } = actions;
 
   const issue = currentIssue;
@@ -116,6 +125,9 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
       issue,
       workflow,
       plan: failedTransition,
+      completion: { worker: { role: expected.role, level: expected.level, slotIndex: expected.slotIndex,
+        sessionKey: expected.sessionKey, startedAt: expected.startedAt }, result, fromState: currentState.workflowState,
+        toState: failedTransition.toState, toLabel: failedTransition.toLabel, prUrl },
       roles: Object.keys(config.roles),
       owner: PIPELINE_OWNER.MERGE_FAILURE,
     });
@@ -142,7 +154,7 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
   }
 
   // Get next state description from workflow
-  const nextState = completionPlan.nextState;
+  const nextState = effectivePlan.nextState;
 
   // Retrieve worker name from project state (best-effort)
   let workerName: string | undefined;
@@ -165,6 +177,9 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
     provider,
     workflow,
     plan: completionPlan.transition,
+    completion: { worker: { role: expected.role, level: expected.level, slotIndex: expected.slotIndex,
+      sessionKey: expected.sessionKey, startedAt: expected.startedAt }, result, fromState: currentState.workflowState,
+      toState: completionPlan.transition.toState, toLabel: rule.to, prUrl },
     owner: PIPELINE_OWNER.COMPLETION,
     issue,
     closedAt: rule.actions.includes(ACTION.CLOSE_ISSUE) ? new Date().toISOString() : rule.actions.includes(ACTION.REOPEN_ISSUE) ? null : undefined,
@@ -180,8 +195,8 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
 
   if (!runtimeState) throw new Error(`Completion state for #${issueId} was not persisted.`);
 
-  await notifyCompletion({ opts, project, issue, runtimeState, plan: completionPlan, actions, workerName, notifyAuxiliary: !resuming });
-  const targetState = findStateByLabel(workflow, rule.to);
+  await notifyCompletion({ opts: { ...opts, workflow }, project, issue, runtimeState, plan: effectivePlan, actions, workerName, notifyAuxiliary: !resuming });
+  const targetState = findStateByLabel(workflow, effectivePlan.rule.to);
 
   if (targetState?.type === STATE_TYPE.TERMINAL) {
     await archiveTerminalIssueLocked({
@@ -198,7 +213,7 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
   const announcement = renderCompletionAnnouncement(opts, issue.web_url, prUrl, nextState);
 
   return {
-    labelTransition: `${rule.from} → ${rule.to}`,
+    labelTransition: `${rule.from} → ${effectivePlan.rule.to}`,
     announcement,
     nextState,
     prUrl,

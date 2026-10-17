@@ -11,7 +11,7 @@ import type { CompletionActions, CompletionInput } from "./types.js";
  * @param rule - Validated workflow actions.
  * @param gitPullMs - Configured best-effort checkout refresh timeout.
  */
-export async function executeCompletionActions(opts: CompletionInput, rule: CompletionRule<string>, gitPullMs: number): Promise<CompletionActions> {
+export async function executeCompletionActions(opts: Omit<CompletionInput, "expectedWorker">, rule: CompletionRule<string>, gitPullMs: number): Promise<CompletionActions> {
   const { workspaceDir, issueId, role, provider, repoPath, runCommand: rc } = opts;
   let prUrl = opts.prUrl;
   let mergedPr = false;
@@ -88,7 +88,7 @@ export async function executeCompletionActions(opts: CompletionInput, rule: Comp
  * @param rule - Ordered lifecycle actions from the configured completion.
  * @param issue - Provider snapshot read before the attempt.
  */
-export async function applyCompletionLifecycle(opts: CompletionInput, rule: CompletionRule<string>, issue: Issue): Promise<void> {
+export async function applyCompletionLifecycle(opts: Omit<CompletionInput, "expectedWorker">, rule: CompletionRule<string>, issue: Issue): Promise<void> {
   let closed = issue.state === PROVIDER_CLOSED_ISSUE_STATE;
 
   for (const action of rule.actions) {

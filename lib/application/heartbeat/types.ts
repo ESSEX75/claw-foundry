@@ -165,7 +165,7 @@ export type ProjectionIntegrityEvent = {
 export type ProjectionIntegrityResult = {
   /** Ready managed issues inspected under their locks. */
   checked: number;
-  /** Confirmed missing provider issues successfully archived. */
+  /** Issues removed through confirmed provider absence or exact archive-first recovery. */
   removed: number;
   /** Issues whose labels required changes. */
   repaired: number;

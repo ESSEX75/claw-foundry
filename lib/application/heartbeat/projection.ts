@@ -3,14 +3,14 @@
  */
 
 import { log as auditLog } from "../../audit.js";
-import { ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, type IssueRuntimeState, UNVERIFIED_INTEGRITY_ERROR } from "../../domain/index.js";
+import { ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, type IssueRuntimeState, STATE_TYPE, UNVERIFIED_INTEGRITY_ERROR } from "../../domain/index.js";
 import { isProviderIssueLookupError, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../integrations/index.js";
 import {
   extractIssueMetadata,
   metadataMatches,
 } from "../../projection/index.js";
 import { isIssueCreationReady, readIssueStateStore, updateIssueStateStore, withIssueOrchestrationLock } from "../../state/index.js";
-import { archiveManagedIssueLocked } from "../issues/index.js";
+import { archiveManagedIssueLocked, recoverArchivedIssueLocked } from "../issues/index.js";
 import { reconcileManagedLabelsLocked } from "../projection/index.js";
 import {
   HEARTBEAT_MISSING_CONFIRMATIONS,
@@ -47,6 +47,13 @@ export async function projectionIntegrityPass(opts: ProjectionIntegrityInput): P
 
       if (!state) return;
       if (!await isIssueCreationReady(workspaceDir, project.slug, state.creationOperationId)) return;
+      if (workflow.states[state.workflowState]?.type === STATE_TYPE.TERMINAL
+        && await recoverArchivedIssueLocked(workspaceDir, project.slug, state.issueId, workflow)) {
+        result.removed++;
+
+        return;
+      }
+
       result.checked++;
       let issue: Awaited<ReturnType<typeof provider.getIssue>>;
 

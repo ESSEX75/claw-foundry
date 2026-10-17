@@ -3,6 +3,7 @@
 import {
   getStateLabels,
   PIPELINE_NOTIFICATION_STATUS,
+  sameWorkerRun,
   STATE_TYPE,
 } from "../../domain/index.js";
 import { readIssueStateStore, readOptionalProjects,readWorkerDeliveryResolution } from "../../state/index.js";
@@ -23,11 +24,15 @@ export async function commitWorkflowTransitionLocked(input: CommitTransitionInpu
 
   const state = (await readIssueStateStore(workspaceDir, project.slug)).issues[String(issueId)];
 
+  if (!state) throw new Error(`Issue #${issueId} has no initialized local runtime state.`);
+
   if (input.checkLocalState) {
 
     if (state?.workflowLabel !== plan.from) return false;
     if (input.routing && state[input.routing.field] !== input.routing.value) return false;
   }
+
+  if (workflow.states[state.workflowState]?.label !== state.workflowLabel) throw new Error(`Issue #${issueId} has workflow configuration drift.`);
 
   const deliveryResolution = await readWorkerDeliveryResolution(workspaceDir, project.slug, issueId);
 
@@ -43,11 +48,16 @@ export async function commitWorkflowTransitionLocked(input: CommitTransitionInpu
   }
 
   const registry = await readOptionalProjects(workspaceDir);
-  const worker = findTransitionWorker(registry?.projects[project.slug], issueId) ?? state?.activeWorker ?? null;
+  const slotWorker = findTransitionWorker(registry?.projects[project.slug], issueId);
+  const worker = state.activeWorker;
 
-  if (worker && state?.activeWorker && (worker.sessionKey !== state.activeWorker.sessionKey
-    || worker.role !== state.activeWorker.role || worker.level !== state.activeWorker.level || worker.slotIndex !== state.activeWorker.slotIndex)) {
+  if ((slotWorker && (!worker || !sameWorkerRun(slotWorker, worker))) || (worker && !slotWorker)
+    || (slotWorker?.delivery && worker?.delivery && slotWorker.delivery.operationId !== worker.delivery.operationId)) {
     throw new Error(`Issue #${issueId} has inconsistent worker ownership.`);
+  }
+
+  if (input.completion && (!sameWorkerRun(worker, input.completion.worker) || state.workflowLabel !== plan.from)) {
+    throw new Error(`Worker changed before transition commit of issue #${issueId}.`);
   }
 
   await input.beforeCommit?.();
@@ -64,6 +74,7 @@ export async function commitWorkflowTransitionLocked(input: CommitTransitionInpu
     workflowState: plan.toState,
     workflowLabel: plan.toLabel,
     activeWorker: null,
+    lastCompletion: input.completion,
     pendingWorkerRelease: worker,
     pipelineNotification: terminal ? { eventKey, status: PIPELINE_NOTIFICATION_STATUS.PENDING, attemptedAt: new Date().toISOString() } : undefined,
     closedAt: input.closedAt,

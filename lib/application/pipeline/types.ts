@@ -43,9 +43,9 @@ export type CompletionOutput = {
   prUrl?: string;
   /** URL of the completed issue. */
   issueUrl?: string;
-  /** Whether the issue was closed during completion. */
+  /** Final committed issue closure, including previously closed issues. */
   issueClosed?: boolean;
-  /** Whether the issue was reopened during completion. */
+  /** Whether the processed lifecycle actions ended by reopening the issue. */
   issueReopened?: boolean;
 };
 
@@ -79,8 +79,6 @@ export type CommitTransitionInput = {
   routing?: WorkflowPolicyRouting;
   /** Policy-specific provider actions performed only after the state check. */
   beforeCommit?: () => Promise<void>;
-  /** Provider lifecycle actions performed after the visible label transition. */
-  afterLabel?: () => Promise<void>;
   /** Archive terminal state after its durable notification is handled. */
   archiveTerminal?: boolean;
 };
@@ -129,6 +127,8 @@ export type CompletionInput = {
 
 /** Observations from completion provider actions, retained for rendering. */
 export type CompletionActions = {
+  /** Processed prefix retained when merge conflicts after an earlier lifecycle action. */
+  processedActions?: readonly TransitionAction[];
   /** Resolved pull request URL. */
   prUrl?: string;
   /** Whether the provider confirmed a merged PR. */

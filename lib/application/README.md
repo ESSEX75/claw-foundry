@@ -205,3 +205,16 @@ Completion requires an exact captured worker frame, one matching active slot and
 
 Heartbeat also resumes terminal archive-first duplicates before provider projection
 can change the exact source snapshot. Failed snapshot verification stops that pass.
+
+`pipeline/effects` owns ordered merge, lifecycle, detection and optional checkout effects.
+Completion and heartbeat use this supported API while retaining policy and notification
+ownership. Merge observes the captured exact PR, submits once per attempt and reads back
+that same PR after an ambiguous response. Only confirmed merge/conflict selects a workflow
+outcome; observation failure or unknown response retains the local source for retry.
+Human review rechecks its configured approval gate under the issue lock. Review-skip's
+explicit no-PR policy and human review's verified direct-base-commit path remain distinct.
+Lifecycle setters inspect fresh provider state, and the ordered lifecycle result determines
+committed closedAt and notifications. Completion receipts retain processed actions so
+replay cannot report an unexecuted reopen after merge-conflict recovery. Provider effects
+and local persistence are separate transactions; retry reconciles existing effects rather
+than treating provider labels as authoritative transition evidence.

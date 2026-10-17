@@ -40,6 +40,7 @@ export {
   getStepRoutingLabels,
   resolveReviewRouting,
 } from "./labels.js";
+export { resolveIssueClosedAt } from "./lifecycle.js";
 export {
   detectRoleFromLabel,
   findStateByLabel,

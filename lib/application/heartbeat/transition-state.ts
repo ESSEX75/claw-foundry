@@ -19,7 +19,7 @@ export async function transitionHeartbeatIssue(opts: HeartbeatTransitionInput): 
       issueId: opts.issueId,
       provider: opts.provider,
       workflow: opts.workflow,
-      plan: { from: opts.fromLabel, toState: opts.workflowState, toLabel: opts.workflowLabel, actions: [] },
+      plan: { from: opts.fromLabel, toState: opts.workflowState, toLabel: opts.workflowLabel, actions: opts.actions ?? [] },
       owner: opts.owner,
       issue,
       closedAt: opts.closedAt,

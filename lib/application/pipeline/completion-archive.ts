@@ -1,6 +1,6 @@
 /** Resumes archive-first completion without mutating the immutable active source snapshot. */
 
-import { type IssueCompletionReceipt, type IssueRuntimeState, STATE_TYPE } from "../../domain/index.js";
+import { type IssueCompletionReceipt, type IssueRuntimeState, resolveIssueClosedAt, STATE_TYPE } from "../../domain/index.js";
 import { readIssueArchiveStore } from "../../state/index.js";
 import { archiveManagedIssueLocked } from "../issues/index.js";
 import { renderCompletionAnnouncement } from "./announcement.js";
@@ -29,5 +29,6 @@ export async function resumeCompletionArchive(input: CompletionInput & Required<
 
   return { labelTransition: `${plan.rule.from} \u2192 ${receipt.toLabel}`,
     announcement: renderCompletionAnnouncement(input, archived.issueUrl ?? "", receipt.prUrl, plan.nextState),
-    nextState: plan.nextState, prUrl: receipt.prUrl, issueUrl: archived.issueUrl, issueClosed: state.closedAt !== null };
+    nextState: plan.nextState, prUrl: receipt.prUrl, issueUrl: archived.issueUrl, issueClosed: state.closedAt !== null,
+    issueReopened: resolveIssueClosedAt(receipt.actions, state.closedAt, new Date().toISOString()) === null };
 }

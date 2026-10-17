@@ -5,7 +5,7 @@
 import type { ValueOf } from "../../types.js";
 import type { NotifyBindingRef } from "../notifications/index.js";
 import type { WorkerDeliveryState, WorkerRunIdentity } from "../workers/index.js";
-import type { ReviewPolicy, TestPolicy } from "../workflow/index.js";
+import type { ReviewPolicy, TestPolicy, TransitionAction } from "../workflow/index.js";
 import {
   ATTACHMENT_DISPOSITION,
   ISSUE_ARCHIVE_REASON,
@@ -96,6 +96,8 @@ export type ActiveIssueWorker = WorkerRunIdentity & {
 
 /** Durable result bound to the exact worker run whose transition committed. */
 export type IssueCompletionReceipt = {
+  /** Processed actions, including a successful prefix before a recovered merge conflict. */
+  actions: readonly TransitionAction[];
   /** Captured run that completed, independent of current slot reservation. */
   worker: WorkerRunIdentity;
   /** Role-specific result supplied for that run. */

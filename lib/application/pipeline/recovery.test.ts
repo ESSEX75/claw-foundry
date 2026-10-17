@@ -43,7 +43,7 @@ describe("completion interruption recovery", () => {
     } finally { await h.cleanup(); }
   });
 
-  it("retries a failed close after the label changed without losing the source state", async (t) => {
+  it("retries a failed close before publishing the target label without losing the source state", async (t) => {
     const h = await createTestHarness();
 
     try {
@@ -52,7 +52,7 @@ describe("completion interruption recovery", () => {
 
       await assert.rejects(completeWorkerForTesting(input(h)), /close unavailable/);
       assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowLabel, "Testing");
-      assert.ok((await h.provider.getIssue(42)).labels.includes("Done"));
+      assert.ok((await h.provider.getIssue(42)).labels.includes("Testing"));
       close.mock.restore();
       await completeWorkerForTesting(input(h));
       assert.equal((await h.provider.getIssue(42)).state, "closed");
@@ -183,10 +183,10 @@ describe("completion interruption recovery", () => {
       const original = (await readProjects(h.workspaceDir)).projects[h.project.slug].workers.tester.levels.medior?.[0];
 
       assert.ok(original);
-      const close = h.provider.closeIssue.bind(h.provider);
+      const addLabels = h.provider.addLabels.bind(h.provider);
 
-      t.mock.method(h.provider, "closeIssue", async (issueId: number) => {
-        await close(issueId);
+      t.mock.method(h.provider, "addLabels", async (issueId: number, labels: string[]) => {
+        await addLabels(issueId, labels);
         await updateProjects(h.workspaceDir, (data) => {
           const slots = data.projects[h.project.slug].workers.tester.levels.medior;
 

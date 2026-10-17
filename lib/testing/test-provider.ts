@@ -216,14 +216,22 @@ export class TestProvider implements IssueProvider {
     return this.mergedMrUrls.get(issueId) ?? null;
   }
 
-  async getPrStatus(issueId: number): Promise<PrStatus> {
-    this.calls.push({ method: "getPrStatus", args: { issueId } });
+  /** Return the seeded observation and record exact-request lookup arguments for assertions.
+   * @param issueId - Issue whose deterministic status is seeded in this fake.
+   * @param prUrl - Exact request identity supplied by the application, when captured.
+   */
+  async getPrStatus(issueId: number, prUrl?: string): Promise<PrStatus> {
+    this.calls.push({ method: "getPrStatus", args: { issueId, prUrl } });
 
     return this.prStatuses.get(issueId) ?? { state: "closed", url: null };
   }
 
-  async mergePr(issueId: number): Promise<void> {
-    this.calls.push({ method: "mergePr", args: { issueId } });
+  /** Record the selected request and simulate either a successful merge or confirmed conflict.
+   * @param issueId - Issue whose PR fixture is being merged.
+   * @param prUrl - Exact request identity selected by the application.
+   */
+  async mergePr(issueId: number, prUrl?: string): Promise<void> {
+    this.calls.push({ method: "mergePr", args: { issueId, prUrl } });
     if (this.mergePrFailures.has(issueId)) {
       const observed = this.prStatuses.get(issueId);
 

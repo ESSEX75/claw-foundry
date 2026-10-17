@@ -5,7 +5,14 @@ import type { Project, WorkflowConfig } from "../../../domain/index.js";
 import type { IssueProvider } from "../../../integrations/index.js";
 import type { ValueOf } from "../../../types.js";
 import type { NotificationConfig, NotificationRuntime, NotifyEvent } from "../../notifications/index.js";
+import type { TransitionEffectsResult } from "../../pipeline/index.js";
 import type { REVIEW_OUTCOME, REVIEW_TRANSITION_REASON } from "./const.js";
+
+/** Retains locked effect observations for the caller's post-commit routing and notifications. */
+export type ReviewEffectsCapture = {
+  /** Result becomes available only after the ordered action executor returns. */
+  result?: TransitionEffectsResult;
+};
 
 /** Project and provider context shared by the review heartbeat passes. */
 type ReviewProjectInput = {

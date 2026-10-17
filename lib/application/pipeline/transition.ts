@@ -3,6 +3,7 @@
 import {
   getStateLabels,
   PIPELINE_NOTIFICATION_STATUS,
+  resolveIssueClosedAt,
   sameWorkerRun,
   STATE_TYPE,
 } from "../../domain/index.js";
@@ -62,7 +63,6 @@ export async function commitWorkflowTransitionLocked(input: CommitTransitionInpu
 
   await input.beforeCommit?.();
   if (!issue.labels.includes(plan.toLabel)) await transitionWorkflowLabel(provider, workflow, issueId, plan.from, plan.toLabel);
-  await input.afterLabel?.();
   const labels = issue.labels.filter((label) => !getStateLabels(workflow).includes(label)).concat(plan.toLabel);
 
   await writeIssueRuntimeState({
@@ -77,7 +77,7 @@ export async function commitWorkflowTransitionLocked(input: CommitTransitionInpu
     lastCompletion: input.completion,
     pendingWorkerRelease: worker,
     pipelineNotification: terminal ? { eventKey, status: PIPELINE_NOTIFICATION_STATUS.PENDING, attemptedAt: new Date().toISOString() } : undefined,
-    closedAt: input.closedAt,
+    closedAt: input.closedAt !== undefined ? input.closedAt : resolveIssueClosedAt(plan.actions, state.closedAt, new Date().toISOString()),
   });
   await releaseTransitionWorkerLocked(workspaceDir, project.slug, issueId);
   await reconcileManagedLabelsLocked({

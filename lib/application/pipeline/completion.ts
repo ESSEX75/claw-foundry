@@ -7,7 +7,7 @@
 import { isDeepStrictEqual } from "node:util";
 
 import { log as auditLog } from "../../audit.js";
-import { ACTION, COMPLETION_RESULT, DEFAULT_ROLES, findStateByLabel, sameWorkerRun, STATE_TYPE, type WorkflowConfig } from "../../domain/index.js";
+import { COMPLETION_RESULT, DEFAULT_ROLES, findStateByLabel, resolveIssueClosedAt, sameWorkerRun, STATE_TYPE, type WorkflowConfig } from "../../domain/index.js";
 import {
   getProject, getRoleWorker, isIssueCreationReady, loadConfig, readIssueStateStore, readProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock,
 } from "../../state/index.js";
@@ -19,7 +19,7 @@ import { notifyCompletion } from "./completion-notifications.js";
 import { PIPELINE_AUDIT, PIPELINE_OWNER } from "./const.js";
 import { planCompletion, planMergeFailure } from "./plan.js";
 import { requireCompletionPullRequest, validateCompletionFrame } from "./preconditions.js";
-import { applyCompletionLifecycle, executeCompletionActions } from "./provider-actions.js";
+import { executeCompletionActions } from "./provider-actions.js";
 import { releaseTransitionWorkerLocked } from "./recovery.js";
 import { archiveTerminalIssueLocked } from "./terminal-archive.js";
 import { commitWorkflowTransitionLocked } from "./transition.js";
@@ -80,8 +80,8 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
     throw new Error(`Issue #${issueId} is not ready for completion.`);
   }
 
-  const effectivePlan = resuming ? { ...completionPlan, rule: { ...rule, to: receipt.toLabel },
-    transition: { ...completionPlan.transition, toState: receipt.toState, toLabel: receipt.toLabel },
+  const effectivePlan = resuming ? { ...completionPlan, rule: { ...rule, to: receipt.toLabel, actions: [...receipt.actions] },
+    transition: { ...completionPlan.transition, toState: receipt.toState, toLabel: receipt.toLabel, actions: receipt.actions },
     nextState: receipt.toLabel === rule.to ? completionPlan.nextState : receipt.toLabel } : completionPlan;
   const deliveryResolution = await readWorkerDeliveryResolution(workspaceDir, projectSlug, issueId);
 
@@ -117,6 +117,13 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
       throw new Error(`mergePr failed for #${issueId}, and workflow has no MERGE_FAILED recovery transition: ${mergeFailure.error}`);
     }
 
+    const recovery = await executeCompletionActions({ ...opts, prUrl },
+      { from: failedTransition.from, to: failedTransition.toLabel, actions: [...failedTransition.actions] }, config.timeouts.gitPullMs);
+
+    if (recovery.mergeFailure) throw new Error(`Recovery merge failed: ${recovery.mergeFailure.error}`);
+    const lifecycleActions = [...(actions.processedActions ?? []), ...failedTransition.actions];
+    const closedAt = resolveIssueClosedAt(lifecycleActions, currentState.closedAt, new Date().toISOString());
+
     await commitWorkflowTransitionLocked({
       workspaceDir,
       project,
@@ -125,9 +132,10 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
       issue,
       workflow,
       plan: failedTransition,
+      closedAt,
       completion: { worker: { role: expected.role, level: expected.level, slotIndex: expected.slotIndex,
         sessionKey: expected.sessionKey, startedAt: expected.startedAt }, result, fromState: currentState.workflowState,
-        toState: failedTransition.toState, toLabel: failedTransition.toLabel, prUrl },
+        toState: failedTransition.toState, toLabel: failedTransition.toLabel, prUrl, actions: lifecycleActions },
       roles: Object.keys(config.roles),
       owner: PIPELINE_OWNER.MERGE_FAILURE,
     });
@@ -148,8 +156,8 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
       nextState: failedTransition.toLabel,
       prUrl,
       issueUrl: issue.web_url,
-      issueClosed: false,
-      issueReopened: false,
+      issueClosed: (closedAt === undefined ? currentState.closedAt : closedAt) !== null,
+      issueReopened: closedAt === null,
     };
   }
 
@@ -179,12 +187,10 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
     plan: completionPlan.transition,
     completion: { worker: { role: expected.role, level: expected.level, slotIndex: expected.slotIndex,
       sessionKey: expected.sessionKey, startedAt: expected.startedAt }, result, fromState: currentState.workflowState,
-      toState: completionPlan.transition.toState, toLabel: rule.to, prUrl },
+      toState: completionPlan.transition.toState, toLabel: rule.to, prUrl, actions: [...rule.actions] },
     owner: PIPELINE_OWNER.COMPLETION,
     issue,
-    closedAt: rule.actions.includes(ACTION.CLOSE_ISSUE) ? new Date().toISOString() : rule.actions.includes(ACTION.REOPEN_ISSUE) ? null : undefined,
     roles: Object.keys(config.roles),
-    afterLabel: () => applyCompletionLifecycle(opts, rule, issue),
   });
   if (resuming) {
     await releaseTransitionWorkerLocked(workspaceDir, projectSlug, issueId);
@@ -218,7 +224,7 @@ async function executeCompletionLocked(opts: CompletionInput): Promise<Completio
     nextState,
     prUrl,
     issueUrl: issue.web_url,
-    issueClosed: rule.actions.includes(ACTION.CLOSE_ISSUE),
-    issueReopened: rule.actions.includes(ACTION.REOPEN_ISSUE),
+    issueClosed: runtimeState.closedAt !== null,
+    issueReopened: resolveIssueClosedAt(effectivePlan.rule.actions, currentState.closedAt, new Date().toISOString()) === null,
   };
 }

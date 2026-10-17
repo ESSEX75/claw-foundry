@@ -142,3 +142,6 @@ marked complete; a different submission may replace only a completed record.
 Corrupt or unreadable recovery evidence is an error, never an empty store.
 
 Active records may retain completion receipts bound to the exact worker run, result and committed destination. Application supplies these atomically with transition intents; persistence never infers completion from project slots or provider labels.
+
+Completion receipts validate their processed workflow action sequence. This preserves
+the lifecycle outcome of a recovered merge conflict independently of later configuration.

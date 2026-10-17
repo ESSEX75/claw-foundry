@@ -77,3 +77,7 @@ own the pure transformation of a verified released slot. Application owns the ev
 authorizing release, and state owns conditional persistence.
 
 Issue semantics own completion receipts bound to the exact worker run and result. They describe a committed transition and cannot authorize another run.
+
+Workflow owns pure ordered lifecycle metadata resolution. Application supplies timestamps
+and successfully processed actions; provider observations never determine local closedAt.
+Completion receipts retain that processed sequence for accurate same-run replay.

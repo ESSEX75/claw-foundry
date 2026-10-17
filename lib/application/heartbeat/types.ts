@@ -1,7 +1,7 @@
 /** Reports and execution contracts shared by heartbeat coordinators. */
 
 import type { RunCommand } from "../../context.js";
-import type { IssueRuntimeState, Project, WorkflowConfig, WorkflowPolicyRouting } from "../../domain/index.js";
+import type { IssueRuntimeState, Project, TransitionAction, WorkflowConfig, WorkflowPolicyRouting } from "../../domain/index.js";
 import type { Issue, IssueProvider, IssueReader,SessionLookup } from "../../integrations/index.js";
 import type { ProjectionDiff } from "../../projection/index.js";
 import type { ValueOf } from "../../types.js";
@@ -35,6 +35,8 @@ export type HeartbeatCandidate = {
 
 /** Exact local precondition and provider effects for one heartbeat transition. */
 export type HeartbeatTransitionInput = {
+  /** Ordered effects whose lifecycle is committed after successful execution. */
+  actions?: readonly TransitionAction[];
   /** Workspace containing authoritative issue runtime state. */
   workspaceDir: string;
   /** Project identity and provider routing for the issue. */

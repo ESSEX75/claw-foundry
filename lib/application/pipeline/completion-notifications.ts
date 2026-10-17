@@ -2,7 +2,7 @@
 
 import { log as auditLog } from "../../audit.js";
 import {
-  ACTION, COMPLETION_RESULT, DEFAULT_ROLES, DEFAULT_WORKFLOW, findStateByLabel, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, REVIEW_POLICY, STATE_TYPE,
+  COMPLETION_RESULT, DEFAULT_ROLES, DEFAULT_WORKFLOW, findStateByLabel, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, REVIEW_POLICY, STATE_TYPE,
 } from "../../domain/index.js";
 import { PR_STATE } from "../../integrations/index.js";
 import { reservePipelineNotification } from "../../state/index.js";
@@ -65,7 +65,7 @@ export async function notifyCompletion(input: CompletionNotificationInput): Prom
         const outcome = await notify({
           ...context, type: NOTIFICATION_EVENT.PIPELINE_COMPLETE, issueTitle: issue.title,
           terminalState: rule.to, pullRequestUrl: prUrl, mergeResult: mergedPr ? PR_STATE.MERGED : undefined,
-          testResult: role === DEFAULT_ROLES.TESTER ? result : undefined, issueClosed: rule.actions.includes(ACTION.CLOSE_ISSUE),
+          testResult: role === DEFAULT_ROLES.TESTER ? result : undefined, issueClosed: runtimeState.closedAt !== null,
         }, delivery);
 
         await recordPipelineNotificationOutcome(workspaceDir, projectSlug, issueId, eventKey, token, outcome);

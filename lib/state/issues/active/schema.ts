@@ -5,6 +5,7 @@
 import { z } from "zod";
 
 import {
+  ACTION,
   ISSUE_INTEGRITY_STATUS,
   ISSUE_PROVIDER,
   NOTIFICATION_CHANNEL,
@@ -41,6 +42,7 @@ const RuntimeIssueSchema = z.object({
   notifyTarget: z.object({ channel: z.enum(NOTIFICATION_CHANNEL), name: z.string() }).strict().nullable(),
   activeWorker: ActiveWorkerSchema.nullable(),
   lastCompletion: z.object({
+    actions: z.array(z.enum(ACTION)),
     worker: ActiveWorkerSchema.omit({ delivery: true, lastNudgeAt: true }), result: z.string(),
     fromState: z.string(), toState: z.string(), toLabel: z.string(), prUrl: z.string().optional(),
   }).strict().optional(),

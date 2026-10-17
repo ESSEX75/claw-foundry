@@ -34,6 +34,7 @@ describe("creation adapters", () => {
       const output = z.object({ success: z.literal(true), issue: z.object({ id: z.number(), url: z.string(), workflowState: z.string() }),
         announcement: z.string() }).parse(result.details);
       assert.equal(output.issue.workflowState, "planning"); assert.ok(output.announcement.includes(output.issue.url));
+      assert.match(output.announcement, /Waiting in the initial hold state\. Use task_start/);
       const retry = await tool.execute("new-invocation", input);
       assert.equal(z.object({ issue: z.object({ id: z.number() }) }).parse(retry.details).issue.id, output.issue.id);
       assert.equal(h.provider.callsTo("createIssue").length, 1);

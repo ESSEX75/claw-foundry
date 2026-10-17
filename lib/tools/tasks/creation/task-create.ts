@@ -21,6 +21,7 @@ import { loadConfig } from "../../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../../context/index.js";
 import { channelIdInput, requiredTextInput, toolInputParameters } from "../../validation/index.js";
 import { TASK_CREATE_TOOL_NAME } from "./const.js";
+import { renderCreationResult } from "./result-render.js";
 
 /** Validates task-create arguments before context resolution or effects. */
 const taskCreateInput = z.strictObject({
@@ -63,7 +64,7 @@ export function createTaskCreateTool(ctx: PluginContext): OpenClawPluginToolFact
       const instanceName = await loadInstanceName(workspaceDir, resolvedConfig.instanceName);
       const notifyTarget: NotifyBindingRef = { channel: endpoint.channel, name: endpoint.name };
 
-      const created = await createManagedTaskIssue({
+      const creation = await createManagedTaskIssue({
         workspaceDir,
         project,
         providerType,
@@ -78,6 +79,8 @@ export function createTaskCreateTool(ctx: PluginContext): OpenClawPluginToolFact
         idempotencyKey,
         requestedBy: toolCtx.agentId ?? "agent",
       });
+
+      const created = renderCreationResult(creation);
 
       if (created.success && created.issue) provider.reactToIssue(created.issue.iid, EYES_EMOJI).catch(() => {});
 

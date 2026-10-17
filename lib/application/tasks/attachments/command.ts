@@ -50,6 +50,5 @@ export async function manageTaskAttachments(input: TaskAttachmentInput) {
       ...attachment,
       localPath: await getAttachmentPath(workspaceDir, project.slug, issueId, attachment.localPath)
     },
-    announcement: `📎 File "${attachment.filename}" attached to #${issueId}`
   };
 }

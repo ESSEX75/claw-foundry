@@ -46,8 +46,6 @@ export type CreatedManagedTask = {
   recovery?: CreationRecovery;
   /** Shared identifier for creation audit events. */
   auditCorrelationId: string;
-  /** Caller-facing status text appended to the announcement. */
-  announcementSuffix: string;
 };
 
 /** Input required to start or idempotently resume one managed issue creation. */
@@ -119,6 +117,4 @@ type CreationRecovery = {
   automatic: boolean;
   /** Earliest provider retry time. */
   nextAttemptAt?: string;
-  /** Operator guidance when a provider issue exists. */
-  repairHint?: string;
 };

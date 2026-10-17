@@ -47,8 +47,11 @@ Use cases:
     async execute(_id: string, rawParams: Record<string, unknown>) {
       const input = taskAttachInput.parse(rawParams);
 
-      return jsonResult(await manageTaskAttachments({ ...input, action: input.action ?? "list",
-        channelId: resolveChannelId(toolCtx, input.channelId), workspaceDir: requireWorkspaceDir(toolCtx), runCommand: ctx.runCommand }));
+      const result = await manageTaskAttachments({ ...input, action: input.action ?? "list",
+        channelId: resolveChannelId(toolCtx, input.channelId), workspaceDir: requireWorkspaceDir(toolCtx), runCommand: ctx.runCommand });
+
+      return jsonResult({ ...result, ...(input.action === "add" && result.attachment
+        ? { announcement: `📎 File "${result.attachment.filename}" attached to #${result.issueId}` } : {}) });
     },
   });
 }

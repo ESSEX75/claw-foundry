@@ -53,7 +53,6 @@ export async function commentOnTask(input: CommentOnTaskInput) {
     success: true, issueId, issueTitle: issue.title, issueUrl: issue.web_url,
     auditError, commentAdded: true, authorRole: authorRole ?? null, bodyLength: body.length,
     project: project.name, provider: providerType,
-    announcement: `💬 Comment added to #${issueId}${authorRole ? ` by ${authorRole.toUpperCase()}` : ""}`,
   };
 }
 

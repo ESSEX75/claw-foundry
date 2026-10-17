@@ -8,6 +8,7 @@ import { requireWorkspaceDir } from "../../context/index.js";
 import { channelIdInput, requiredTextInput, toolInputParameters } from "../../validation/index.js";
 import { RESEARCH_TASK_TOOL_NAME } from "./const.js";
 import { renderDispatchAnnouncement } from "./dispatch-render.js";
+import { renderCreationResult } from "./result-render.js";
 
 /** Validates research-task arguments before context resolution or effects. */
 const researchTaskInput = z.strictObject({
@@ -67,6 +68,7 @@ Example arguments:
         runtime: ctx.runtime, runCommand: ctx.runCommand });
 
       return jsonResult({ ...result,
+        creation: result.creation ? renderCreationResult(result.creation) : undefined,
         issue: result.issue ? { id: result.issue.iid, title: result.issue.title, url: result.issue.web_url, label: result.label }
           : params.dryRun ? { title: params.title, label: result.label } : undefined,
         research: { level: result.level, model: result.model, status: result.status,

@@ -156,7 +156,7 @@ describe("task_create managed initial-state flow", () => {
       assert.strictEqual(result.label, "Planning");
       assert.strictEqual(result.workflowState, "planning");
       assert.strictEqual(result.role, null);
-      assert.match(result.announcementSuffix, /task_start/);
+      assert.equal(result.success, true);
       assert.strictEqual(state.workflowState, "planning");
       assert.strictEqual(state.workflowLabel, "Planning");
       assert.strictEqual(state.assignedRole, null);

@@ -71,8 +71,10 @@ describe("task lifecycle adapters", () => {
       const args = { channelId: h.channelId, issueId: 42, level: "expert" };
       const first = await tool.execute("set", args);
       assert.equal(z.object({ changed: z.boolean() }).parse(first.details).changed, true);
+      assert.equal(z.object({ announcement: z.string() }).parse(first.details).announcement, "🔧 Updated #42: level none → expert");
       const again = await tool.execute("retry", args);
       assert.equal(z.object({ changed: z.boolean() }).parse(again.details).changed, false);
+      assert.equal(z.object({ announcement: z.string() }).parse(again.details).announcement, 'Issue #42 already has level "expert".');
       const local = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"];
       assert.equal(local.assignedRole, "developer"); assert.equal(local.assignedLevel, "expert");
       assert.equal(local.workflowState, "planning");
@@ -95,6 +97,8 @@ describe("task lifecycle adapters", () => {
       const first = await tool.execute("edit", args);
       await published;
       assert.equal(z.object({ changed: z.boolean() }).parse(first.details).changed, true);
+      assert.match(z.object({ announcement: z.string() }).parse(first.details).announcement,
+        /^✏️ Updated title and body of #42: "After" — Clarified requirements\n🔗/);
       const issue = await h.provider.getIssue(42);
       assert.equal(issue.title, "After"); assert.ok(issue.description.includes("Updated body"));
       assert.equal(extractIssueMetadata(issue.description)?.projectSlug, h.project.slug);
@@ -103,8 +107,26 @@ describe("task lifecycle adapters", () => {
       assert.match(comment, /Reason:.*Clarified requirements/); assert.match(comment, /\d{4}-\d\d-\d\dT/);
       const retry = await tool.execute("repeat-edit", { ...args, addComment: false });
       assert.equal(z.object({ changed: z.boolean() }).parse(retry.details).changed, false);
+      assert.match(z.object({ announcement: z.string() }).parse(retry.details).announcement, /already has the requested content — no changes made/);
       assert.equal(h.provider.callsTo("editIssue").length, 1);
     } finally { await h.cleanup(); }
+  });
+
+  it("renders approval from the committed transition without dispatching a worker", async t => {
+    const h = await createTestHarness();
+
+    t.after(() => h.cleanup());
+    await seedManaged(h);
+    bindProvider(t, h);
+    const tool = createTaskStartTool(pluginContext(h))({ config: {}, workspaceDir: h.workspaceDir });
+
+    assert.ok(tool && !Array.isArray(tool));
+    const output = await tool.execute("approve", { channelId: h.channelId, issueId: 42, level: "medior" });
+
+    assert.equal(z.object({ announcement: z.string() }).parse(output.details).announcement,
+      '▶️ #42 moved to "To Do" (level: medior) — heartbeat will dispatch.');
+    assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].workflowState, "todo");
+    assert.equal(h.commands.commands.length, 0);
   });
 
   it("never initializes provider-only issues through edit, level, or approval tools", async t => {

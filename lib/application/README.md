@@ -264,3 +264,5 @@ the documented worker-input boundary independently of task command aggregation. 
 parent const/types contracts, worker evidence/session policy, setup root/child types and
 heartbeat's service context type remain narrow internal exceptions. Architecture checks
 enforce sibling/child entrypoints, own/ancestor barrel rejection and hierarchical exports.
+
+Task creation, discussion and manual attachments also return structured facts. Their tool adapters own readiness/repair guidance and command acknowledgements; provider comments, worker prompts and notification bodies remain application-owned effect content.

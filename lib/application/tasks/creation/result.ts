@@ -43,15 +43,7 @@ export function resultFromOperation(operation: IssueCreationOperation): CreatedM
     recovery: ready ? undefined : {
       automatic: !manual && operation.lastError?.retryable !== false,
       nextAttemptAt: operation.retryAfter,
-      repairHint: operation.providerIssue
-        ? `Run issue_repair for provider issue #${operation.providerIssue.issueId} after creation reconciliation stops retrying.`
-        : undefined,
     },
     auditCorrelationId: operation.auditCorrelationId,
-    announcementSuffix: ready
-      ? operation.input.assignedRole
-        ? "\nQueued for heartbeat dispatch."
-        : "\nWaiting in the initial hold state. Use task_start when the task is ready for dispatch."
-      : "\nCreation is pending reconciliation; the issue is not available to heartbeat or workers.",
   };
 }

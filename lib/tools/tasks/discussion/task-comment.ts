@@ -57,7 +57,9 @@ Examples:
       const authorRole = params.authorRole;
       const workspaceDir = requireWorkspaceDir(toolCtx);
 
-      return jsonResult(await commentOnTask({ workspaceDir, channelId, issueId, body, authorRole, runCommand: ctx.runCommand }));
+      const result = await commentOnTask({ workspaceDir, channelId, issueId, body, authorRole, runCommand: ctx.runCommand });
+
+      return jsonResult({ ...result, announcement: `💬 Comment added to #${issueId}${authorRole ? ` by ${authorRole.toUpperCase()}` : ""}` });
     },
   });
 }

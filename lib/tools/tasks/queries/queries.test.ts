@@ -33,9 +33,10 @@ describe("task browsing adapters", () => {
       const before = await readIssueStateStore(h.workspaceDir, h.project.slug);
       const result = await status.execute("status", { channelId: h.channelId });
       const output = z.object({ summary: z.object({ totalHold: z.number(), totalActive: z.number(), totalQueued: z.number() }),
-        hold: z.record(z.string(), z.object({ count: z.number() })) }).parse(result.details);
+        hold: z.record(z.string(), z.object({ count: z.number(), issues: z.array(z.object({ projection: z.object({ repairHint: z.string().nullable() }) })) })) }).parse(result.details);
       assert.deepEqual(output.summary, { totalHold: 1, totalActive: 0, totalQueued: 0 });
       assert.equal(output.hold.Planning.count, 1);
+      assert.equal(output.hold.Planning.issues[0].projection.repairHint, "devclaw issue_repair 42 --source local-state --dry-run");
       const limited = await list.execute("list", { channelId: h.channelId, label: "Planning", limit: 0 });
       const listed = z.object({ totalIssues: z.number(), states: z.array(z.object({ total: z.number(), issues: z.array(z.unknown()) })) }).parse(limited.details);
       assert.equal(listed.totalIssues, 1); assert.equal(listed.states[0].total, 1); assert.deepEqual(listed.states[0].issues, []);

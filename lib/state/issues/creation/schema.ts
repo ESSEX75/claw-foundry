@@ -36,6 +36,7 @@ const CreationOperationSchema = z.object({
   status: z.enum(ISSUE_CREATION_STATUS), input: CreationInputSchema, expectedLabels: z.array(z.string()),
   providerIssue: z.object({ issueId: z.number().int().positive(), url: z.string(), createdAt: z.string() }).strict().optional(),
   completedSteps: z.array(z.string()), pendingSteps: z.array(z.string()), attempts: z.number().int().nonnegative(),
+  reconciliationAttempts: z.number().int().nonnegative().safe().optional(),
   retryAfter: z.string().optional(), lastError: CreationFailureSchema.optional(), auditCorrelationId: z.string().uuid(),
 }).strict();
 

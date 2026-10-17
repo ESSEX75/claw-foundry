@@ -6,7 +6,7 @@ import {
   STATE_TYPE,
   type WorkflowConfig,
 } from "../../../domain/index.js";
-import { isIssueCreationReady, readIssueStateStore } from "../../../state/index.js";
+import { readIssueStateStore,readReadyIssueCreationIds } from "../../../state/index.js";
 import { ALL_TASK_STATES, DEFAULT_TASK_LIST_LIMIT } from "./const.js";
 import { summarizeLocalIssueStates } from "./projection-summary.js";
 import type { ListManagedTasksInput, ProjectionViewContext, TaskListResult, TaskListStateGroup } from "./types.js";
@@ -27,9 +27,11 @@ export async function listManagedTasks(opts: ListManagedTasksInput): Promise<Tas
   const store = await readIssueStateStore(opts.workspaceDir, opts.projectSlug);
   const projectionCtx: ProjectionViewContext = { states: store.issues, workflow: opts.workflow, roles: opts.roles };
   const localStates: IssueRuntimeState[] = [];
+  const ready = Object.values(store.issues).some(state => state.creationOperationId)
+    ? await readReadyIssueCreationIds(opts.workspaceDir, opts.projectSlug) : new Set<string>();
 
   for (const state of Object.values(store.issues)) {
-    if (await isIssueCreationReady(opts.workspaceDir, opts.projectSlug, state.creationOperationId)) {
+    if ((!state.creationOperationId || ready.has(state.creationOperationId))) {
       localStates.push(state);
     }
   }

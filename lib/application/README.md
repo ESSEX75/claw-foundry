@@ -231,3 +231,11 @@ not ready, canonical state drift, missing provider identity and pending worker
 release/resolution before provider effects. Start/level changes additionally require
 no active worker or reservation; architect edits retain their operation-specific allowance.
 Ownership-only writes preserve the stored workflow pair but do not bypass pending recovery.
+
+Creation reconciliation budgets runnable attempts rather than unfinished records.
+Manual/permanent failures and backoff are reported separately; candidates recheck
+status/backoff under their idempotency lock before consuming budget. Persisted
+reconciliation attempt counts rotate failed retries without modifying immutable payloads
+or provider submission evidence. Concurrent stale selections do not repeat a newer attempt.
+Collection queries may read one creation-readiness snapshot per invocation; mutating
+lifecycle/dispatch paths retain fresh readiness checks under their issue lock.

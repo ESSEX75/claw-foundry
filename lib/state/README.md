@@ -145,3 +145,8 @@ Active records may retain completion receipts bound to the exact worker run, res
 
 Completion receipts validate their processed workflow action sequence. This preserves
 the lifecycle outcome of a recovered merge conflict independently of later configuration.
+
+Creation operations optionally retain a reconciliation-attempt count, distinct from
+provider submission attempts, so application scheduling can rotate retries durably.
+Creation readiness query APIs produce per-invocation snapshots only; callers must
+not reuse them to authorize a later mutation. Strict locked readiness reads remain available.

@@ -94,7 +94,7 @@ type CreationReconciliationContext = Pick<
 
 /** Bounds the amount of unfinished creation work inspected in one pass. */
 type CreationReconciliationLimit = {
-  /** Maximum number of unfinished operations inspected in this pass. */
+  /** Maximum number of runnable operations attempted in this pass. */
   maxItems: number;
 };
 
@@ -107,8 +107,10 @@ export type ReconcileManagedTaskCreationsResult = {
   ready: number[];
   /** Operation IDs still pending automatic recovery. */
   pending: string[];
-  /** Operation IDs requiring manual repair. */
+  /** Operation IDs requiring manual repair or an explicit correction of a permanent failure. */
   manual: string[];
+  /** Snapshot operation IDs waiting for automatic retry backoff, without consuming attempt budget. */
+  waiting: string[];
 };
 
 /** Recovery guidance for an unfinished creation operation. */

@@ -3,7 +3,7 @@
  */
 
 import { ISSUE_INTEGRITY_STATUS } from "../../domain/index.js";
-import { isIssueCreationReady, readIssueStateStore } from "../../state/index.js";
+import { readIssueStateStore,readReadyIssueCreationIds } from "../../state/index.js";
 import type { HeartbeatCandidate, HeartbeatCandidateInput } from "./types.js";
 
 /** Select initialized local issues and fetch provider context without importing provider labels as state.
@@ -21,9 +21,11 @@ export async function getHeartbeatCandidates(opts: HeartbeatCandidateInput): Pro
     .sort((a, b) => a.issueId - b.issueId);
 
   const candidates: HeartbeatCandidate[] = [];
+  const ready = states.some(state => state.creationOperationId)
+    ? await readReadyIssueCreationIds(opts.workspaceDir, opts.projectSlug) : new Set<string>();
 
   for (const localState of states) {
-    if (!await isIssueCreationReady(opts.workspaceDir, opts.projectSlug, localState.creationOperationId)) continue;
+    if (localState.creationOperationId && !ready.has(localState.creationOperationId)) continue;
     const issue = await opts.provider.getIssue(localState.issueId);
 
     candidates.push({ issue, localState });

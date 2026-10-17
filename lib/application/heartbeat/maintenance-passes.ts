@@ -57,7 +57,7 @@ export async function performIssueCreationPass(
     maxItems: HEARTBEAT_CREATION_LIMIT,
   });
 
-  return { ready: result.ready.length, pending: result.pending.length, manual: result.manual.length };
+  return { ready: result.ready.length, pending: result.pending.length + result.waiting.length, manual: result.manual.length };
 }
 
 /**

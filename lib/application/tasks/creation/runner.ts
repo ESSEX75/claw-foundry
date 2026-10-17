@@ -7,7 +7,8 @@ import { composeIssueCreationBody } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
 import { initializeIssueRuntimeState } from "../../issue-runtime/index.js";
 import { creationAudit } from "./audit.js";
-import { CREATION_EVENT, CREATION_REQUEST_BUDGET, CREATION_RETRY_DELAY_MS, CREATION_STEPS } from "./const.js";
+import { CREATION_EVENT, CREATION_RECOVERY_ELIGIBILITY, CREATION_REQUEST_BUDGET, CREATION_RETRY_DELAY_MS, CREATION_STEPS } from "./const.js";
+import { creationRecoveryEligibility } from "./eligibility.js";
 import { creationFailureFromProvider, IssueCreationFailureError } from "./failure.js";
 import { reconcileCreatedProviderIssue } from "./projection.js";
 import { completeStep, failOperation, markStep, transitionStatus, updateOperation } from "./record.js";
@@ -29,13 +30,7 @@ export async function runCreationOperation(
 ): Promise<CreatedManagedTask> {
   let current = operation;
 
-  if (current.status === ISSUE_CREATION_STATUS.READY) return resultFromOperation(current);
-  if (current.status === ISSUE_CREATION_STATUS.MANUAL_REPAIR_REQUIRED) return resultFromOperation(current);
-  if (current.status === ISSUE_CREATION_STATUS.CREATION_FAILED && current.lastError?.retryable === false) {
-    return resultFromOperation(current);
-  }
-
-  if (current.retryAfter && Date.parse(current.retryAfter) > Date.now()) return resultFromOperation(current);
+  if (creationRecoveryEligibility(current, Date.now()) !== CREATION_RECOVERY_ELIGIBILITY.RUNNABLE) return resultFromOperation(current);
 
   if (!current.providerIssue) {
     if (

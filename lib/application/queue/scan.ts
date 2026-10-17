@@ -3,7 +3,7 @@
 import type { IssueRuntimeState, WorkflowConfig } from "../../domain/index.js";
 import { getQueueLabels } from "../../domain/index.js";
 import type { IssueReader } from "../../integrations/index.js";
-import { isIssueCreationReady, readIssueStateStore, readWorkerDeliveryResolution } from "../../state/index.js";
+import { isIssueCreationReady, readIssueStateStore, readReadyIssueCreationIds, readWorkerDeliveryResolution } from "../../state/index.js";
 import { selectLocalQueueCandidates } from "./select.js";
 import type { QueueCandidate, QueueStateLocation } from "./types.js";
 
@@ -51,7 +51,12 @@ export async function readQueueCandidate(provider: Pick<IssueReader, "getIssue">
  */
 export async function findNextIssueForRole(provider: Pick<IssueReader, "getIssue">, role: string, workflow: WorkflowConfig,
   instanceName: string | undefined, localState: QueueStateLocation): Promise<QueueCandidate | null> {
-  for (const state of await listQueueCandidates(role, workflow, instanceName, localState)) {
+  const candidates = await listQueueCandidates(role, workflow, instanceName, localState);
+  const ready = candidates.some(state => state.creationOperationId)
+    ? await readReadyIssueCreationIds(localState.workspaceDir, localState.projectSlug) : new Set<string>();
+
+  for (const state of candidates) {
+    if (state.creationOperationId && !ready.has(state.creationOperationId)) continue;
     const candidate = await readQueueCandidate(provider, role, workflow, instanceName, localState, state.issueId);
 
     if (candidate) return candidate;

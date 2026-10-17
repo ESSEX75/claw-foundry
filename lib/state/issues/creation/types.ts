@@ -91,6 +91,8 @@ export type IssueCreationOperation = {
   pendingSteps: string[];
   /** Provider or recovery attempt count. */
   attempts: number;
+  /** Number of scheduled reconciliation attempts; absent until the first such attempt. */
+  reconciliationAttempts?: number;
   /** Earliest ISO retry timestamp. */
   retryAfter?: string;
   /** Most recent durable failure. */

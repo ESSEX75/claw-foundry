@@ -3,7 +3,7 @@
 import { ISSUE_CREATION_STATUS, STATE_TYPE, type WorkflowConfig } from "../../../domain/index.js";
 import type { IssueReader } from "../../../integrations/index.js";
 import {
-  isIssueCreationReady,
+  getReadyIssueCreationIds,
   readIssueCreationStore,
   readIssueStateStore
 } from "../../../state/index.js";
@@ -18,14 +18,15 @@ export async function getManagedTaskStatus(opts: GetManagedTaskStatusInput): Pro
   const store = await readIssueStateStore(opts.workspaceDir, opts.projectSlug);
   const projectionCtx: ProjectionViewContext = { states: store.issues, workflow: opts.workflow, roles: opts.roles };
   const openLocalStates = [];
+  const creationStore = await readIssueCreationStore(opts.workspaceDir, opts.projectSlug);
+  const ready = getReadyIssueCreationIds(creationStore);
 
   for (const state of Object.values(store.issues)) {
-    if (state.closedAt == null && await isIssueCreationReady(opts.workspaceDir, opts.projectSlug, state.creationOperationId)) {
+    if (state.closedAt == null && (!state.creationOperationId || ready.has(state.creationOperationId))) {
       openLocalStates.push(state);
     }
   }
 
-  const creationStore = await readIssueCreationStore(opts.workspaceDir, opts.projectSlug);
   const unfinished = Object.values(creationStore.operations)
     .filter((operation) => operation.status !== ISSUE_CREATION_STATUS.READY)
     .map((operation) => ({

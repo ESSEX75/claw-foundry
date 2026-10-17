@@ -288,7 +288,8 @@ describe("E2E pipeline", () => {
         workers: {
           developer: {
             level: "medior",
-            issueId: 42,
+            issueId: null,
+            lastIssueId: 42,
             sessionKey: existingSessionKey,
           },
         },

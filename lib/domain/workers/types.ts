@@ -18,3 +18,17 @@ export type WorkerDeliveryState = {
   /** Whether the gateway session was observed; existence does not prove turn acceptance. */
   sessionObserved?: boolean | null;
 };
+
+/** Exact reusable-session run identity shared by local issue ownership and captured commands. */
+export type WorkerRunIdentity = {
+  /** Configured role owning the run. */
+  role: string;
+  /** Configured worker level. */
+  level: string;
+  /** Concrete capacity reservation. */
+  slotIndex: number;
+  /** Session identity; alone it cannot distinguish replacement runs. */
+  sessionKey: string | null;
+  /** Timestamp selected when this run reserved its slot. */
+  startedAt: string;
+};

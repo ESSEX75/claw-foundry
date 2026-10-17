@@ -71,3 +71,7 @@ Issue semantics own non-formal review-summary receipts and pending submitted con
 bound to an exact worker frame. These describe delivery evidence, never review resolution
 or provider-label authority. Application decides when external acceptance, completion
 or explicit operator evidence may confirm that pending context.
+
+Worker semantics expose exact run identity comparison (including start time); projects
+own the pure transformation of a verified released slot. Application owns the evidence
+authorizing release, and state owns conditional persistence.

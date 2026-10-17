@@ -8,8 +8,8 @@
 import {
   countActiveSlots,
   EXECUTION_MODE,
-  getActiveLabel,
   reconcileSlots,
+  WORKFLOW_EVENT,
 } from "../../domain/index.js";
 import { createProvider, isProviderIssueLookupError } from "../../integrations/index.js";
 import { getConfiguredRoleIds, getLevelMaxWorkers, loadConfig } from "../../state/index.js";
@@ -153,7 +153,10 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
 
           if (!runCommand) throw new Error("runCommand is required for queue dispatch.");
 
-          const targetLabel = getActiveLabel(workflow, role);
+          const pickupTarget = workflow.states[lockedNext.localState.workflowState]?.on?.[WORKFLOW_EVENT.PICKUP]?.target;
+          const targetLabel = pickupTarget ? workflow.states[pickupTarget]?.label : undefined;
+
+          if (!targetLabel) throw new Error("Queue state has no configured PICKUP target.");
           const dispatch = await dispatchTaskLocked({
             workspaceDir,
             roleExecution,

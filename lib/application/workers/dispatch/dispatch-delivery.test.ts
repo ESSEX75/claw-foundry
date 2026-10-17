@@ -15,7 +15,7 @@ import { createEmptyIssueStateStoreForTesting, createTestHarness, replaceIssueSt
 import { dispatchTask } from "./dispatch-task.js";
 import { WORKER_DELIVERY_RESOLUTION } from "../../../domain/index.js";
 import { resolveWorkerDelivery } from "../delivery-recovery/index.js";
-import { executeCompletion } from "../../pipeline/index.js";
+import { executeCompletion, recoverTransitionWorkers } from "../../pipeline/index.js";
 
 /** Build a dispatch input for a seeded issue in the temporary project. */
 function dispatchInput(h: Awaited<ReturnType<typeof createTestHarness>>, issueId: number, runCommand: RunCommand) {
@@ -28,6 +28,133 @@ function dispatchInput(h: Awaited<ReturnType<typeof createTestHarness>>, issueId
 }
 
 describe("worker delivery outcome", () => {
+  it("recovers a proven non-start when releasing its slot fails after the source-state rollback", async t => {
+    const h = await createTestHarness();
+
+    t.after(() => h.cleanup());
+    await h.seedManagedIssue({ iid: 101, labels: ["To Do"] });
+    const rename = fs.rename;
+    let projectWrites = 0;
+    const replacement = t.mock.method(fs, "rename", async (...args: Parameters<typeof fs.rename>) => {
+      if (path.basename(String(args[1])) === "projects.json" && ++projectWrites === 2) {
+        throw new Error("release persistence unavailable");
+      }
+
+      return rename(...args);
+    });
+
+    await assert.rejects(dispatchTask({ ...dispatchInput(h, 101, h.runCommand), agentId: "" }), /invalid local submission input/);
+    const before = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["101"];
+
+    assert.equal(before.workflowLabel, "To Do");
+    assert.equal(before.activeWorker, null);
+    assert.ok(before.pendingWorkerRelease);
+    assert.equal(getRoleWorker((await h.readProjects()).projects[h.project.slug], "developer").levels.medior?.[0]?.active, true);
+    replacement.mock.restore();
+    await recoverTransitionWorkers(h.workspaceDir, h.project.slug, 1);
+    assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["101"].pendingWorkerRelease, null);
+    assert.equal(getRoleWorker((await h.readProjects()).projects[h.project.slug], "developer").levels.medior?.[0]?.active, false);
+    assert.equal(h.commands.taskMessages().length, 0);
+  });
+
+  it("persists the exact submitting run before the gateway receives any task", async t => {
+    const h = await createTestHarness();
+
+    t.after(() => h.cleanup());
+    await h.seedManagedIssue({ iid: 97, labels: ["To Do"] });
+    let submissions = 0;
+    const runCommand: RunCommand = async (argv, options) => {
+      if (argv[3] === "agent") {
+        const local = (await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["97"];
+        const slot = getRoleWorker((await h.readProjects()).projects[h.project.slug], "developer").levels.medior?.[0];
+
+        assert.equal(local.workflowLabel, "Doing");
+        assert.equal(local.activeWorker?.delivery?.status, WORKER_DELIVERY_STATUS.SUBMITTING);
+        assert.equal(local.activeWorker?.delivery?.operationId, slot?.delivery?.operationId);
+        submissions++;
+      }
+
+      return h.runCommand(argv, options);
+    };
+
+    await dispatchTask(dispatchInput(h, 97, runCommand));
+    assert.equal(submissions, 1);
+  });
+
+  it("never submits a worker when its durable intent cannot commit", async t => {
+    const h = await createTestHarness();
+
+    t.after(() => h.cleanup());
+    await h.seedManagedIssue({ iid: 98, labels: ["To Do"] });
+    const rename = fs.rename;
+    let failed = false;
+
+    t.mock.method(fs, "rename", async (...args: Parameters<typeof fs.rename>) => {
+      if (!failed && path.basename(String(args[1])) === "issues.json") {
+        failed = true;
+        throw new Error("intent persistence unavailable");
+      }
+
+      return rename(...args);
+    });
+    await assert.rejects(dispatchTask(dispatchInput(h, 98, h.runCommand)), /intent persistence unavailable/);
+    assert.equal(h.commands.taskMessages().length, 0);
+    assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["98"].workflowLabel, "To Do");
+    assert.equal(getRoleWorker((await h.readProjects()).projects[h.project.slug], "developer").levels.medior?.[0]?.active, false);
+  });
+
+  for (const failedStore of ["issues.json", "projects.json"]) {
+    it(`retains an accepted run when ${failedStore} settlement fails`, async t => {
+      const h = await createTestHarness();
+
+      t.after(() => h.cleanup());
+      await h.seedManagedIssue({ iid: 99, labels: ["To Do"] });
+      const rename = fs.rename;
+      let armed = false;
+
+      t.mock.method(fs, "rename", async (...args: Parameters<typeof fs.rename>) => {
+        if (armed && path.basename(String(args[1])) === failedStore) {
+          armed = false;
+          throw new Error("settlement persistence unavailable");
+        }
+
+        return rename(...args);
+      });
+      const runCommand: RunCommand = async (argv, options) => {
+        const outcome = await h.runCommand(argv, options);
+
+        if (argv[3] === "agent") armed = true;
+
+        return outcome;
+      };
+      const dispatched = await dispatchTask(dispatchInput(h, 99, runCommand));
+      const project = (await h.readProjects()).projects[h.project.slug];
+
+      assert.equal(dispatched.deliveryStatus, "accepted");
+      await checkWorkerHealth({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug, project,
+        role: "developer", provider: h.provider, sessions: null, workflow: h.workflow, runCommand: h.runCommand, autoFix: true });
+      assert.equal(getRoleWorker((await h.readProjects()).projects[h.project.slug], "developer").levels.medior?.[0]?.active, true);
+      assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["99"].workflowLabel, "Doing");
+      await assert.rejects(dispatchTask(dispatchInput(h, 99, h.runCommand)), /active worker/);
+      assert.equal(h.commands.taskMessages().length, 1);
+    });
+  }
+
+  it("rejects stale source and foreign PICKUP targets before all effects", async t => {
+    const h = await createTestHarness();
+
+    t.after(() => h.cleanup());
+    await h.seedManagedIssue({ iid: 100, labels: ["To Do"] });
+    const before = await h.readProjects();
+
+    for (const change of [{ fromLabel: "To Improve" }, { toLabel: "Testing" }]) {
+      await assert.rejects(dispatchTask({ ...dispatchInput(h, 100, h.runCommand), ...change }), /queue\/PICKUP/);
+    }
+    assert.deepEqual(await h.readProjects(), before);
+    assert.equal(h.commands.commands.length, 0);
+    assert.equal(h.provider.calls.length, 0);
+  });
+
   it("rejects provider-only issues before model setup, reservation or provider mutation", async t => {
     const h = await createTestHarness();
 

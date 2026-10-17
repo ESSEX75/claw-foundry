@@ -29,8 +29,8 @@ export async function settleDispatchDelivery(opts: DispatchOpts, plan: DispatchA
     if (resolved?.deliveryId === deliveryId || current?.activeWorker?.delivery?.operationId !== deliveryId) return;
     if (outcome.kind === AGENT_TURN_STATUS.ACCEPTED) {
       if (context.prFeedback) await confirmReviewSummaryDelivery({ workspaceDir, projectSlug: project.slug }, issueId, deliveryId);
-      await recordSlotDelivery(opts.workspaceDir, opts.project.slug, opts.issueId, plan, undefined);
       await recordIssueDelivery(workspaceDir, project.slug, issueId, sessionKey, deliveryId, undefined);
+      await recordSlotDelivery(opts.workspaceDir, opts.project.slug, opts.issueId, plan, undefined);
       provider.reactToIssue(issueId, EYES_EMOJI).catch(() => {});
       provider.reactToPr(issueId, EYES_EMOJI).catch(() => {});
       acknowledgeComments(provider, issueId, context.isConflictFix ? [] : context.comments, context.prFeedback, workspaceDir).catch(() => {});

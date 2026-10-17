@@ -232,6 +232,8 @@ export type HarnessOptions = {
     sessionKey?: string | null;
     startTime?: string | null;
     previousLabel?: WorkflowLabel | null;
+    /** Last explicitly released issue, retained for session reuse scenarios. */
+    lastIssueId?: number | null;
   }>;
   /** Additional projects to seed. */
   extraProjects?: Record<string, Project>;
@@ -290,6 +292,7 @@ export async function createTestHarness(opts?: HarnessOptions): Promise<TestHarn
         sessionKey: overrides.sessionKey ?? null,
         startTime: overrides.startTime ?? null,
         previousLabel: overrides.previousLabel ?? null,
+        lastIssueId: overrides.lastIssueId,
       }];
       defaultWorkers[role] = rw;
     }

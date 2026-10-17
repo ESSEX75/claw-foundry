@@ -87,7 +87,13 @@ separate READMEs. Their file responsibilities and API details belong in source J
   only the matching pending context. Receipts suppress duplicate heartbeat feedback events;
   retried workers still receive original feedback, since delivery does not prove resolution.
   Formal review decisions and edited summaries remain independently actionable.
-- Dispatch atomically enforces capacity and execution mode. Proven local rejection
+- Dispatch validates the authoritative configured source pair and its exact PICKUP target.
+  After model confirmation and projection, it commits a submitting worker intent before
+  gateway submission. Failed intent persistence never submits a turn. Acceptance clears
+  issue uncertainty before slot evidence; reconciliation can finish that exact settlement.
+  Proven non-submission persists a source-state rollback and release intent before slot
+  cleanup, so interrupted compensation remains recoverable.
+  Dispatch atomically enforces capacity and execution mode. Proven local rejection
   rolls back reservation; unknown submission retains issue/slot ownership and evidence.
   Pre-submission failure attempts to restore the selected source projection even when adding the
   target succeeded and subsequent cleanup failed. Compensation starts from the attempted

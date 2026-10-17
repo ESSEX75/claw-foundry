@@ -1,9 +1,9 @@
 /** Owns worker-slot reservation and the authoritative issue runtime commit. */
 
-import type { WorkerDeliveryState } from "../../../domain/index.js";
-import { EXECUTION_MODE, hasTestPhase, ISSUE_PROVIDER, producesReviewableWork, REVIEW_POLICY, TEST_POLICY, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
+import type { IssueRuntimeState, WorkerDeliveryState } from "../../../domain/index.js";
+import { EXECUTION_MODE, releasedWorkerSlot, sameWorkerRun, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import type { ResolvedConfig } from "../../../state/index.js";
-import { activateWorker, getLevelMaxWorkers, readIssueStateStore, updateSlot } from "../../../state/index.js";
+import { activateWorker, getLevelMaxWorkers, readIssueStateStore, updateIssueRuntimeRecord, updateSlot } from "../../../state/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { WORKER_DISPATCH_OWNER } from "./const.js";
@@ -43,17 +43,16 @@ export async function reserveDispatchSlot(opts: DispatchOpts, plan: DispatchAtte
  */
 export async function releaseDispatchSlot(opts: DispatchOpts, plan: DispatchAttempt): Promise<void> {
   await updateSlot(opts.workspaceDir, opts.project.slug, plan.role, plan.level, plan.slotIndex, (slot) => {
-    if (slot.issueId !== opts.issueId || slot.sessionKey !== plan.sessionKey || slot.delivery?.operationId !== plan.deliveryId) {
+    if (slot.issueId !== opts.issueId || slot.sessionKey !== plan.sessionKey || slot.startTime !== plan.startedAt || slot.delivery?.operationId !== plan.deliveryId) {
       throw new Error("Worker reservation changed before release.");
     }
 
-    return { active: false, issueId: null, sessionKey: slot.sessionKey, startTime: null,
-      previousLabel: null, name: slot.name, lastIssueId: opts.issueId };
+    return releasedWorkerSlot(slot, opts.issueId);
   });
 }
 
 /**
- * Persist the active worker from local truth, then reconcile its provider projection.
+ * Persist the intended active worker before gateway submission, then reconcile projection.
  * The caller holds the issue lock and retains the slot if this post-delivery step fails.
  * @param opts - Issue, project, provider, and ownership inputs.
  * @param plan - Worker identity selected before delivery.
@@ -71,11 +70,9 @@ export async function commitWorkerDispatch(
   const { workspaceDir, project, issueId, role, level, fromLabel, toLabel, provider } = opts;
   const { workflow } = config;
   const current = (await readIssueStateStore(workspaceDir, project.slug)).issues[String(issueId)];
-  const owner = current?.owner ?? opts.instanceName ?? null;
-  const reviewPolicy = current ? current.reviewPolicy : producesReviewableWork(workflow, role)
-    ? workflow.reviewPolicy ?? REVIEW_POLICY.HUMAN : null;
-  const testPolicy = current ? current.testPolicy : hasTestPhase(workflow)
-    ? workflow.testPolicy ?? TEST_POLICY.SKIP : null;
+
+  if (!current) throw new Error(`Issue #${issueId} has no initialized local runtime state.`);
+  const owner = current.owner ?? opts.instanceName ?? null;
 
   await writeIssueRuntimeState({
     workspaceDir,
@@ -86,14 +83,13 @@ export async function commitWorkerDispatch(
         .filter((label) => label !== fromLabel && !label.startsWith(`${role}:`))
         .concat(toLabel, `${role}:${level}`),
     },
-    providerType: project.provider === ISSUE_PROVIDER.GITHUB ? ISSUE_PROVIDER.GITHUB : ISSUE_PROVIDER.GITLAB,
+    providerType: project.provider,
     workflow,
     workflowLabel: toLabel,
     assignedRole: role,
     assignedLevel: level,
     owner,
-    reviewPolicy,
-    testPolicy,
+
     activeWorker: {
       role, level, slotIndex: plan.slotIndex, sessionKey: plan.sessionKey,
       startedAt: plan.startedAt,
@@ -108,5 +104,39 @@ export async function commitWorkerDispatch(
     roles: Object.keys(config.roles),
     provider,
     owner: WORKER_DISPATCH_OWNER,
+  });
+}
+
+/** Persist a recoverable release intent before releasing a proven unsubmitted reservation.
+ * @param opts - Original issue identity and transport context.
+ * @param plan - Exact reservation whose gateway send did not begin or was rejected locally.
+ * @param source - Authoritative source fields captured before reservation.
+ */
+export async function restoreDispatchRuntime(opts: DispatchOpts, plan: DispatchAttempt, source: IssueRuntimeState): Promise<void> {
+  await updateIssueRuntimeRecord(opts.workspaceDir, opts.project.slug, opts.issueId, current => {
+    if (!current) throw new Error("Issue disappeared before dispatch compensation.");
+    if (!current.activeWorker) return current;
+    if (!sameWorkerRun(current.activeWorker, plan) || current.activeWorker.delivery?.operationId !== plan.deliveryId) {
+      throw new Error("Worker changed before dispatch compensation.");
+    }
+
+    return { ...current, workflowState: source.workflowState, workflowLabel: source.workflowLabel,
+      assignedRole: source.assignedRole, assignedLevel: source.assignedLevel, owner: source.owner,
+      activeWorker: null, pendingWorkerRelease: current.activeWorker,
+      pendingReviewSummaryDelivery: current.pendingReviewSummaryDelivery?.operationId === plan.deliveryId ? undefined : current.pendingReviewSummaryDelivery,
+      updatedAt: new Date().toISOString() };
+  });
+}
+
+/** Clear only this compensation's release intent after its exact slot was released.
+ * @param opts - Original issue store location.
+ * @param plan - Reservation whose release finished.
+ */
+export async function completeDispatchRollback(opts: DispatchOpts, plan: DispatchAttempt): Promise<void> {
+  await updateIssueRuntimeRecord(opts.workspaceDir, opts.project.slug, opts.issueId, current => {
+    if (!current) throw new Error("Issue disappeared after dispatch compensation.");
+    if (!sameWorkerRun(current.pendingWorkerRelease, plan)) return current;
+
+    return { ...current, pendingWorkerRelease: null, updatedAt: new Date().toISOString() };
   });
 }

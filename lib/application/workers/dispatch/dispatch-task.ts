@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 
 import { log as auditLog } from "../../../audit.js";
 import type { WorkerDeliveryState } from "../../../domain/index.js";
-import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
+import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, STATE_TYPE, WORKER_DELIVERY_STATUS, WORKFLOW_EVENT } from "../../../domain/index.js";
 import { AGENT_TURN_STATUS, deleteWorkerSession, ensureSessionModel } from "../../../integrations/index.js";
 import { isIssueCreationReady, loadConfig } from "../../../state/index.js";
 import { readIssueStateStore, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
@@ -20,14 +20,14 @@ import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageRev
 import { buildAnnouncement, formatSessionLabel } from "../../tasks/context/index.js";
 import { REVIEW_SUMMARY_RECEIPT_STEP, WORKER_AUDIT_EVENT } from "../const.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
-import { recordSlotDelivery } from "../delivery-state.js";
+import { recordIssueDelivery, recordSlotDelivery } from "../delivery-state.js";
 import { shouldClearSession } from "../session-budget.js";
 import { auditDispatch, dispatchErrorMessage } from "./audit.js";
 import { settleDispatchDelivery } from "./delivery-settlement.js";
 import { loadDispatchContext } from "./dispatch-context.js";
 import { buildDispatchPlan } from "./plan.js";
 import { beginWorkerDelivery } from "./session-delivery.js";
-import { commitWorkerDispatch, releaseDispatchSlot, reserveDispatchSlot } from "./state.js";
+import { commitWorkerDispatch, completeDispatchRollback, releaseDispatchSlot, reserveDispatchSlot, restoreDispatchRuntime } from "./state.js";
 import type { DispatchOpts, DispatchResult } from "./types.js";
 
 /**
@@ -36,9 +36,9 @@ import type { DispatchOpts, DispatchResult } from "./types.js";
  * Flow:
  *   1. Resolve model, session key, and task context.
  *   2. Atomically reserve the selected worker slot.
- *   3. Transition the provider label and send notification.
- *   4. Ensure the session and send the task to the agent.
- *   5. Persist issue runtime state and audit the dispatch.
+ *   3. Confirm the session model and project the selected transition.
+ *   4. Persist the exact submitting worker intent before sending the task.
+ *   5. Settle delivery evidence, notify, and audit without losing ownership.
  *
  * Failures before agent send release the slot and best-effort restore the provider label.
  * State update failures after dispatch are audited because the session is already running.
@@ -91,6 +91,16 @@ export async function dispatchTaskLocked(
   }
 
   const resolvedConfig = await loadConfig(workspaceDir, project.slug);
+  const source = resolvedConfig.workflow.states[existingState.workflowState];
+  const pickup = source?.on?.[WORKFLOW_EVENT.PICKUP];
+  const target = pickup ? resolvedConfig.workflow.states[pickup.target] : undefined;
+
+  if (source?.type !== STATE_TYPE.QUEUE || source.label !== existingState.workflowLabel || source.label !== fromLabel
+    || source.role !== role || target?.type !== STATE_TYPE.ACTIVE || target.role !== role || target.label !== toLabel) {
+    throw new Error(`Issue #${issueId} no longer matches its configured queue/PICKUP transition.`);
+  }
+
+  if (existingState.providerMissing) throw new Error(`Issue #${issueId} is unavailable for dispatch.`);
   const resolvedRole = resolvedConfig.roles[role];
 
   if (!resolvedRole?.enabled) throw new Error(`Role "${role}" is not configured or is disabled.`);
@@ -99,7 +109,7 @@ export async function dispatchTaskLocked(
 
   if (!freshProject) throw new Error(`Project not found: ${project.slug}`);
   const alreadyReserved = Object.values(freshProject.workers).some((worker) =>
-    Object.values(worker.levels).some((slots) => slots?.some((candidate) => candidate.active && candidate.issueId === issueId)));
+    Object.values(worker.levels).some((slots) => slots?.some((candidate) => candidate.issueId === issueId)));
 
   if (alreadyReserved) throw new Error(`Issue #${issueId} already has a reserved worker slot.`);
   const roleWorker = getRoleWorker(freshProject, role);
@@ -137,6 +147,11 @@ export async function dispatchTaskLocked(
     await transitionWorkflowLabel(provider, resolvedConfig.workflow, issueId, fromLabel, toLabel);
 
     const issue = await provider.getIssue(issueId);
+    const submitting: WorkerDeliveryState = { operationId: plan.deliveryId, status: WORKER_DELIVERY_STATUS.SUBMITTING,
+      recordedAt: plan.startedAt, reason: "Worker intent committed before gateway submission." };
+
+    await commitWorkerDispatch(opts, plan, resolvedConfig, issue.labels, submitting);
+    await stageReviewSummaryDelivery({ workspaceDir, projectSlug: project.slug }, issueId, plan.deliveryId, plan, prFeedback);
 
     // Model is set on the session via sessions.patch, not on the agent RPC —
     // the gateway's agent endpoint rejects unknown properties like 'model'.
@@ -163,7 +178,14 @@ export async function dispatchTaskLocked(
         : delivery.initial.reason,
     };
 
-    await recordSlotDelivery(opts.workspaceDir, opts.project.slug, opts.issueId, plan, unresolved).catch(() => { });
+    // Settle local acceptance before removing the slot's durable submission protection.
+    try {
+      await recordIssueDelivery(workspaceDir, project.slug, issueId, sessionKey, plan.deliveryId, unresolved);
+      await recordSlotDelivery(workspaceDir, project.slug, issueId, plan, unresolved);
+    } catch (error) {
+      await auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, { issue: issueId, role,
+        step: "settleDelivery", error: dispatchErrorMessage(error) }).catch(() => {});
+    }
 
     // Notify only after the gateway did not explicitly reject delivery.
     const notifyConfig = getNotificationConfig(pluginConfig);
@@ -184,22 +206,6 @@ export async function dispatchTaskLocked(
         step: "notify", issue: issueId, role, error: dispatchErrorMessage(err),
       }).catch(() => { });
     });
-
-    // Commit active runtime state after delivery is accepted or remains uncertain.
-    try {
-      await commitWorkerDispatch(opts, plan, resolvedConfig, issue.labels, unresolved);
-    } catch (err) {
-      // Session is already dispatched — log warning but don't fail
-      await auditLog(workspaceDir, WORKER_AUDIT_EVENT.DISPATCH, {
-        project: project.name, issue: issueId, role,
-        warning: "State update failed after successful dispatch",
-        error: dispatchErrorMessage(err), sessionKey,
-      }).catch(() => { });
-    }
-
-    await stageReviewSummaryDelivery({ workspaceDir, projectSlug: project.slug }, issueId, plan.deliveryId, plan, prFeedback)
-      .catch(error => auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, { step: REVIEW_SUMMARY_RECEIPT_STEP, issue: issueId,
-        error: dispatchErrorMessage(error) }).catch(() => {}));
 
     if (delivery.initial.kind === AGENT_TURN_STATUS.UNKNOWN) {
       await reconcileUncertainDispatch({
@@ -251,7 +257,9 @@ export async function dispatchTaskLocked(
       }
 
       try {
+        await restoreDispatchRuntime(opts, plan, existingState);
         await releaseDispatchSlot(opts, plan);
+        await completeDispatchRollback(opts, plan);
       } catch (rollbackError) {
         await auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, {
           step: "releaseWorkerReservation",

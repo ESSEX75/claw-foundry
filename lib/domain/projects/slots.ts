@@ -145,3 +145,13 @@ export function countActiveSlots(roleWorker: RoleWorkerState): number {
 
   return count;
 }
+
+/** Clear a verified reservation while retaining reusable session and display metadata.
+ * The caller must validate ownership before applying this transformation.
+ * @param slot - Slot whose run has been explicitly released.
+ * @param issueId - Released issue retained for same-issue context policy.
+ */
+export function releasedWorkerSlot(slot: SlotState, issueId: number | null): SlotState {
+  return { ...slot, active: false, issueId: null, startTime: null, previousLabel: null,
+    delivery: undefined, lastIssueId: issueId };
+}

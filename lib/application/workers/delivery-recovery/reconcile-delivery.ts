@@ -2,11 +2,11 @@
 
 import { log as auditLog } from "../../../audit.js";
 import type { WorkerDeliveryState } from "../../../domain/index.js";
-import { WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
+import { sameWorkerRun, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import { fetchGatewaySessions, isSessionAlive } from "../../../integrations/index.js";
 import { getProject, getRoleWorker, readIssueStateStore, readProjects, readWorkerDeliveryResolution, updateSlot } from "../../../state/index.js";
 import { WORKER_AUDIT_EVENT } from "../const.js";
-import { recordIssueDelivery } from "../delivery-state.js";
+import { recordIssueDelivery, recordSlotDelivery } from "../delivery-state.js";
 import { DELIVERY_ATTENTION_AFTER_MS, DELIVERY_INSPECTION_TIMEOUT_MS } from "./const.js";
 import type { UnknownDispatchInput } from "./types.js";
 
@@ -31,6 +31,15 @@ export async function reconcileUncertainDispatch(input: UnknownDispatchInput): P
   const resolution = await readWorkerDeliveryResolution(workspaceDir, projectSlug, issueId);
 
   if (resolution && resolution.deliveryId === marker.operationId) return;
+  // An exact local frame with cleared uncertainty is durable acceptance evidence.
+  if (slotOwned && state?.activeWorker && !state.activeWorker.delivery && marker.operationId
+    && sameWorkerRun(state.activeWorker, { role, level, slotIndex, sessionKey, startedAt: slot?.startTime ?? "" })) {
+    await recordSlotDelivery(workspaceDir, projectSlug, issueId,
+      { role, level, slotIndex, sessionKey, deliveryId: marker.operationId }, undefined);
+
+    return;
+  }
+
   const sessions = input.sessions !== undefined ? input.sessions : await fetchGatewaySessions(DELIVERY_INSPECTION_TIMEOUT_MS, runCommand);
   const sessionObserved = isSessionAlive(sessionKey, sessions);
   const elapsed = Date.now() - Date.parse(marker.recordedAt);

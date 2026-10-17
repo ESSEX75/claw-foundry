@@ -8,5 +8,6 @@ export {
   findFreeSlot,
   findSlotByIssue,
   reconcileSlots,
+  releasedWorkerSlot,
 } from "./slots.js";
 export type { Project, RoleWorkerState, SlotLocation, SlotState } from "./types.js";

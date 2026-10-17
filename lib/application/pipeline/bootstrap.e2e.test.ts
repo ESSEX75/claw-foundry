@@ -172,7 +172,7 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
 
   it("should resolve architect instructions with project override", async () => {
     h = await createTestHarness({ projectName: "arch-proj" });
-    await h.seedManagedIssue({ iid: 6, title: "Design API", labels: ["Planning"] });
+    await h.seedManagedIssue({ iid: 6, title: "Design API", labels: ["To Research"] });
 
     await h.writePrompt("architect", "# Default Architect\nGeneral design guidelines.");
     await h.writePrompt("architect", "# Arch Proj Architect\nUse event-driven architecture.", "arch-proj");
@@ -187,8 +187,8 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
       issueUrl: "https://example.com/issues/6",
       role: "architect",
       level: "senior",
-      fromLabel: "Planning",
-      toLabel: "Planning",
+      fromLabel: "To Research",
+      toLabel: "Researching",
       provider: h.provider,
       runCommand: h.runCommand,
     });

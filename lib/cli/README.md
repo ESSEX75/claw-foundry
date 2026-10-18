@@ -24,8 +24,9 @@ and dry-run validation. `--eject-defaults`, `--reset-defaults`, and
 `--refresh-instructions` select standalone file operations; ordinary setup preserves
 existing files. Doctor remains read-only.
 
-Shared terminal selection parsing and read-only configuration access belong to
-`input`, whose entrypoint is used by sibling adapters. Issue identifiers must be
+Shared terminal selection parsing belongs to `parsing`. Read-only SDK configuration,
+workspace resolution and CLI runtime ports belong to `runtime`. Commands use each
+capability through its entrypoint; neither capability registers terminal commands. Issue identifiers must be
 positive safe decimal integers. Explicit CSV filters reject blank or invalid items;
 only omitted options mean no filter. Application validates workflow filter keys
 against the selected project configuration. SDK configuration failures remain errors
@@ -63,22 +64,31 @@ code may import that constant directly, but must never import the root facade.
 
 | Capability | Responsibility |
 | --- | --- |
-| `input` | Strict ID/selection/mode parsing, read-only SDK configuration and workspace resolution, and administrative input/runtime ports. |
-| `setup` | Setup registration, raw model/options contracts, target/binding/model prompts, terminal session lifecycle and output. |
-| `issues` | Composition and independent archive/delete/reset terminal handlers. |
-| `repair` | Composition and independent issue repair/policy migration handlers. |
-| `doctor` | Read-only diagnostic command and terminal report rendering. |
-| `worker-delivery` | Exact worker-session/delivery recovery command and raw options. |
+| `commands/doctor` | Read-only diagnostic command and terminal report rendering. |
+| `commands/issues` | Issues group composition and archive/delete/reset terminal handlers. |
+| `commands/repair` | Repair group composition and issue repair/policy migration handlers. |
+| `commands/setup` | Setup registration, raw model/options contracts, target/binding/model prompts, terminal session lifecycle and output. |
+| `commands/worker-delivery` | Exact worker-session/delivery recovery command and raw options. |
+| `parsing` | Pure parsing of issue IDs, selections and explicit preview/apply modes. |
+| `runtime` | Read-only SDK configuration, workspace resolution and administrative runtime ports. |
 
-Capability entrypoints explicitly export registration (or shared input operations)
+`commands` is an organizational directory and has no barrel. Each command or command
+group has its own `index.ts` and `register.ts`. Root `register.ts` composes those
+entrypoints. A group's `register.ts` delegates to named modules such as `archive.ts`
+and `delete.ts`; a single command may keep a small action callback with its option
+definition. Separate output and prompt modules stay with their command owner.
+
+Capability entrypoints explicitly export registration, parsing or runtime operations
 for siblings; they do not expose prompt, renderer, option or handler internals.
 Siblings use the target capability's index. Files within one capability import
 local implementation files and never their own or ancestor barrel. The facade does
 not aggregate the internal registration APIs. Architecture checks enforce these
-boundaries and prohibit direct filesystem/state dependencies in CLI adapters.
+boundaries and prohibit direct filesystem/state dependencies in CLI adapters. Parsing
+cannot depend on runtime or command registration; runtime cannot depend on commands.
 
-Production files remain flat inside each capability: setup's eight modules share
+Production files remain flat inside each command capability: setup's eight modules share
 one setup invocation, while its types/constants stay with that owner. Root tests
-exercise composition and outcomes across capabilities; individual parser, prompt
-and model tests remain beside their implementations. Cross-adapter parity imports
+exercise composition, administrative input rejection and outcomes across capabilities.
+Parser and configuration tests stay with parsing/runtime; prompt and model tests
+stay with their command implementations. Cross-adapter parity imports
 the public CLI facade. No nested README or compatibility facade is supported.

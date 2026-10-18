@@ -5,7 +5,7 @@ import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicat
 
 describe("setup architecture boundaries", () => {
   it("rejects state and filesystem imports in all migrated adapters", () => {
-    for (const source of ["lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts", "lib/cli/setup/register.ts", "lib/cli/doctor/command.ts", "lib/cli/issues/archive.ts", "lib/cli/issues/delete.ts", "lib/cli/issues/reset.ts"]) {
+    for (const source of ["lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts", "lib/cli/commands/setup/register.ts", "lib/cli/commands/doctor/register.ts", "lib/cli/commands/issues/archive.ts", "lib/cli/commands/issues/delete.ts", "lib/cli/commands/issues/reset.ts"]) {
       for (const name of [source, source.replaceAll("/", "\\")]) {
         assert.ok(checkApplicationAdapterBoundary(name, "state", "../../state/index.js"));
         for (const specifier of ["node:fs", "node:fs/promises", "fs", "fs/promises"]) {
@@ -50,16 +50,22 @@ it("enforces CLI facade, siblings and ancestor boundaries across Windows and POS
     const path = (value: string) => value.replaceAll("/", separator);
     assert.ok(checkCliApiBoundary(path("index.ts"), path("lib/cli/register.ts")));
     assert.equal(checkCliApiBoundary(path("index.ts"), path("lib/cli/index.ts")), null);
-    assert.ok(checkCliApiBoundary(path("lib/tools/setup/setup.test.ts"), path("lib/cli/setup/register.ts")));
-    assert.ok(checkCliApiBoundary(path("lib/cli/setup/register.ts"), path("lib/cli/index.ts")));
-    assert.ok(checkCliApiBoundary(path("lib/cli/setup/register.ts"), path("lib/cli/setup/index.ts")));
-    assert.ok(checkCliApiBoundary(path("lib/cli/setup/nested/file.ts"), path("lib/cli/setup/index.ts")));
-    assert.ok(checkCliApiBoundary(path("lib/cli/issues/delete.ts"), path("lib/cli/input/parsers.ts")));
-    assert.equal(checkCliApiBoundary(path("lib/cli/issues/delete.ts"), path("lib/cli/input/index.ts")), null);
-    assert.equal(checkCliApiBoundary(path("lib/cli/setup/register.ts"), path("lib/cli/setup/models.ts")), null);
-    assert.equal(checkCliApiBoundary(path("lib/cli/setup/index.ts"), path("lib/cli/setup/register.ts")), null);
-    assert.equal(checkCliApiBoundary(path("lib/cli/register.ts"), path("lib/cli/setup/index.ts")), null);
-    assert.equal(checkCliApiBoundary(path("lib/cli/repair/issue.ts"), path("lib/cli/const.ts")), null);
+    assert.ok(checkCliApiBoundary(path("lib/tools/setup/setup.test.ts"), path("lib/cli/commands/setup/register.ts")));
+    assert.ok(checkCliApiBoundary(path("lib/cli/commands/setup/register.ts"), path("lib/cli/index.ts")));
+    assert.ok(checkCliApiBoundary(path("lib/cli/commands/setup/register.ts"), path("lib/cli/commands/setup/index.ts")));
+    assert.ok(checkCliApiBoundary(path("lib/cli/commands/setup/nested/file.ts"), path("lib/cli/commands/setup/index.ts")));
+    assert.ok(checkCliApiBoundary(path("lib/cli/commands/issues/delete.ts"), path("lib/cli/parsing/parsers.ts")));
+    assert.equal(checkCliApiBoundary(path("lib/cli/commands/issues/delete.ts"), path("lib/cli/parsing/index.ts")), null);
+    assert.equal(checkCliApiBoundary(path("lib/cli/commands/setup/register.ts"), path("lib/cli/commands/setup/models.ts")), null);
+    assert.equal(checkCliApiBoundary(path("lib/cli/commands/setup/index.ts"), path("lib/cli/commands/setup/register.ts")), null);
+    assert.equal(checkCliApiBoundary(path("lib/cli/register.ts"), path("lib/cli/commands/setup/index.ts")), null);
+    assert.equal(checkCliApiBoundary(path("lib/cli/commands/repair/issue.ts"), path("lib/cli/const.ts")), null);
+    assert.ok(checkCliApiBoundary(path("lib/cli/commands/issues/delete.ts"), path("lib/cli/runtime/configuration.ts")));
+    assert.equal(checkCliApiBoundary(path("lib/cli/commands/issues/delete.ts"), path("lib/cli/runtime/index.ts")), null);
+    assert.ok(checkCliApiBoundary(path("lib/cli/parsing/parsers.ts"), path("lib/cli/runtime/index.ts")));
+    assert.ok(checkCliApiBoundary(path("lib/cli/parsing/parsers.ts"), path("lib/cli/commands/issues/index.ts")));
+    assert.ok(checkCliApiBoundary(path("lib/cli/runtime/configuration.ts"), path("lib/cli/commands/setup/index.ts")));
+    assert.equal(checkCliApiBoundary(path("lib/cli/runtime/index.ts"), path("lib/cli/runtime/configuration.ts")), null);
   }
 });
 

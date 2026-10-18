@@ -1,3 +1,0 @@
-/** Exposes doctor command registration to CLI composition. */
-
-export { registerDoctorCommand } from "./command.js";

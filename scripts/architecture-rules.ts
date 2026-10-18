@@ -75,6 +75,13 @@ export function checkCliApiBoundary(source: string, target: string): string | nu
   }
   if (imported === "lib/cli/index.ts") return "CLI must not import its own root facade";
   if (imported === "lib/cli/const.ts") return null;
+  if (importer.startsWith("lib/cli/parsing/")
+    && (imported.startsWith("lib/cli/commands/") || imported.startsWith("lib/cli/runtime/"))) {
+    return "CLI argument parsing must not depend on commands or runtime configuration";
+  }
+  if (importer.startsWith("lib/cli/runtime/") && imported.startsWith("lib/cli/commands/")) {
+    return "CLI runtime configuration must not depend on command adapters";
+  }
   const importerOwner = importer.slice(0, importer.lastIndexOf("/"));
   const importedOwner = imported.slice(0, imported.lastIndexOf("/"));
 

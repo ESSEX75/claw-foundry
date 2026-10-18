@@ -7,7 +7,7 @@ import { Command } from "commander";
 
 import { DEVCLAW_PLUGIN_ID } from "../const.js";
 import { createSetupRuntime, createTestHarness } from "../testing/index.js";
-import { registerCli } from "./register.js";
+import { registerCli } from "./index.js";
 
 describe("CLI registration facade", () => {
   it("registers one namespace and all five roots without reading SDK configuration", () => {

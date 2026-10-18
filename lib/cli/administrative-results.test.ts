@@ -13,7 +13,7 @@ import { renderIssueMetadata } from "../projection/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME, readIssueStateStore } from "../state/index.js";
 import { createEmptyIssueStateStoreForTesting, createSetupRuntime, createTestHarness, replaceIssueStateStoreForTesting } from "../testing/index.js";
 import { DEVCLAW_PLUGIN_ID } from "../const.js";
-import { registerCli } from "./register.js";
+import { registerCli } from "./index.js";
 
 /** Archive collision fixture used to force a recoverable local archival failure. */
 const ARCHIVE_COLLISION_FILE_NAME = "issues.archive.json";

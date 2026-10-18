@@ -5,7 +5,7 @@ import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicat
 
 describe("setup architecture boundaries", () => {
   it("rejects state and filesystem imports in all migrated adapters", () => {
-    for (const source of ["lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts", "lib/cli/commands/setup/register.ts", "lib/cli/commands/doctor/register.ts", "lib/cli/commands/issues/archive.ts", "lib/cli/commands/issues/delete.ts", "lib/cli/commands/issues/reset.ts"]) {
+    for (const source of ["lib/tools/adapters/setup/setup.ts", "lib/tools/adapters/setup/config.ts", "lib/tools/adapters/setup/onboard.ts", "lib/cli/commands/setup/register.ts", "lib/cli/commands/doctor/register.ts", "lib/cli/commands/issues/archive.ts", "lib/cli/commands/issues/delete.ts", "lib/cli/commands/issues/reset.ts"]) {
       for (const name of [source, source.replaceAll("/", "\\")]) {
         assert.ok(checkApplicationAdapterBoundary(name, "state", "../../state/index.js"));
         for (const specifier of ["node:fs", "node:fs/promises", "fs", "fs/promises"]) {
@@ -35,13 +35,20 @@ it("enforces tools root, sibling and ancestor boundaries across Windows and POSI
     const path = (value: string) => value.replaceAll("/", separator);
     assert.ok(checkToolsApiBoundary(path("index.ts"), path("lib/tools/registration/registry.ts")));
     assert.equal(checkToolsApiBoundary(path("index.ts"), path("lib/tools/index.ts")), null);
-    assert.ok(checkToolsApiBoundary(path("lib/tools/setup/setup.ts"), path("lib/tools/index.ts")));
-    assert.ok(checkToolsApiBoundary(path("lib/tools/tasks/lifecycle/task-start.ts"), path("lib/tools/tasks/index.ts")));
-    assert.ok(checkToolsApiBoundary(path("lib/tools/registration/registry.ts"), path("lib/tools/tasks/lifecycle/index.ts")));
-    assert.equal(checkToolsApiBoundary(path("lib/tools/registration/registry.ts"), path("lib/tools/tasks/index.ts")), null);
-    assert.ok(checkToolsApiBoundary(path("lib/tools/channels/channel-link.ts"), path("lib/tools/context/resolution.ts")));
-    assert.equal(checkToolsApiBoundary(path("lib/tools/channels/channel-link.ts"), path("lib/tools/context/index.ts")), null);
-    assert.equal(checkToolsApiBoundary(path("lib/tools/guidance/workflow-guide.ts"), path("lib/tools/guidance/schema.ts")), null);
+    assert.ok(checkToolsApiBoundary(path("lib/tools/adapters/setup/setup.ts"), path("lib/tools/registration/index.ts")));
+    for (const capability of ["context", "validation"]) {
+      const source = path(`lib/tools/${capability}/index.ts`);
+      assert.ok(checkToolsApiBoundary(source, path("lib/tools/adapters/setup/index.ts")));
+      assert.ok(checkToolsApiBoundary(source, path("lib/tools/registration/index.ts")));
+    }
+    assert.ok(checkToolsApiBoundary(path("lib/tools/adapters/setup/setup.ts"), path("lib/tools/adapters/setup/index.ts")));
+    assert.ok(checkToolsApiBoundary(path("lib/tools/adapters/setup/setup.ts"), path("lib/tools/index.ts")));
+    assert.ok(checkToolsApiBoundary(path("lib/tools/adapters/tasks/lifecycle/task-start.ts"), path("lib/tools/adapters/tasks/index.ts")));
+    assert.ok(checkToolsApiBoundary(path("lib/tools/registration/registry.ts"), path("lib/tools/adapters/tasks/lifecycle/index.ts")));
+    assert.equal(checkToolsApiBoundary(path("lib/tools/registration/registry.ts"), path("lib/tools/adapters/tasks/index.ts")), null);
+    assert.ok(checkToolsApiBoundary(path("lib/tools/adapters/channels/channel-link.ts"), path("lib/tools/context/resolution.ts")));
+    assert.equal(checkToolsApiBoundary(path("lib/tools/adapters/channels/channel-link.ts"), path("lib/tools/context/index.ts")), null);
+    assert.equal(checkToolsApiBoundary(path("lib/tools/adapters/guidance/workflow-guide.ts"), path("lib/tools/adapters/guidance/schema.ts")), null);
   }
 });
 
@@ -50,7 +57,7 @@ it("enforces CLI facade, siblings and ancestor boundaries across Windows and POS
     const path = (value: string) => value.replaceAll("/", separator);
     assert.ok(checkCliApiBoundary(path("index.ts"), path("lib/cli/register.ts")));
     assert.equal(checkCliApiBoundary(path("index.ts"), path("lib/cli/index.ts")), null);
-    assert.ok(checkCliApiBoundary(path("lib/tools/setup/setup.test.ts"), path("lib/cli/commands/setup/register.ts")));
+    assert.ok(checkCliApiBoundary(path("lib/tools/adapters/setup/setup.test.ts"), path("lib/cli/commands/setup/register.ts")));
     assert.ok(checkCliApiBoundary(path("lib/cli/commands/setup/register.ts"), path("lib/cli/index.ts")));
     assert.ok(checkCliApiBoundary(path("lib/cli/commands/setup/register.ts"), path("lib/cli/commands/setup/index.ts")));
     assert.ok(checkCliApiBoundary(path("lib/cli/commands/setup/nested/file.ts"), path("lib/cli/commands/setup/index.ts")));
@@ -74,7 +81,7 @@ it("enforces application public, sibling, child and ancestor APIs on Windows and
     const path = (value: string) => value.replaceAll("/", separator);
     const check = (source: string, target: string) => checkApplicationApiBoundary(path(source), path(target));
 
-    assert.ok(check("lib/tools/worker/work-finish.ts", "lib/application/pipeline/completion.ts"));
+    assert.ok(check("lib/tools/adapters/worker/work-finish.ts", "lib/application/pipeline/completion.ts"));
     assert.equal(check("index.ts", "lib/application/index.ts"), null);
     assert.ok(check("lib/application/queue/tick.ts", "lib/application/index.ts"));
     assert.ok(check("lib/application/workers/dispatch/dispatch-task.ts", "lib/application/workers/index.ts"));

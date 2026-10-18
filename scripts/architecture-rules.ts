@@ -2,7 +2,7 @@
 
 /** Tool adapters whose setup effects must pass through shared application commands. */
 const APPLICATION_ADAPTERS = new Set([
-  "lib/tools/setup/setup.ts", "lib/tools/setup/config.ts", "lib/tools/setup/onboard.ts",
+  "lib/tools/adapters/setup/setup.ts", "lib/tools/adapters/setup/config.ts", "lib/tools/adapters/setup/onboard.ts",
 ]);
 
 /** Detect direct persistence dependencies in adapters migrated to shared application commands.
@@ -46,11 +46,19 @@ export function checkToolsApiBoundary(source: string, target: string): string | 
     return imported === "lib/tools/index.ts" ? null : "external callers must use lib/tools/index.ts";
   }
   if (imported === "lib/tools/index.ts") return "tools must not import their own root barrel";
-  if (importer.startsWith("lib/tools/tasks/") && imported === "lib/tools/tasks/index.ts") {
-    return "task adapters must not import their ancestor barrel";
+  if ((importer.startsWith("lib/tools/context/") || importer.startsWith("lib/tools/validation/"))
+    && (imported.startsWith("lib/tools/adapters/") || imported.startsWith("lib/tools/registration/"))) {
+    return "shared tool infrastructure must not depend on adapters or registration";
   }
-  if (!importer.startsWith("lib/tools/tasks/") && imported.startsWith("lib/tools/tasks/")
-    && imported !== "lib/tools/tasks/index.ts") {
+  if (importer.startsWith("lib/tools/adapters/") && imported.startsWith("lib/tools/registration/")) {
+    return "tool adapters must not depend on registration";
+  }
+  const importedDirectory = imported.slice(0, imported.lastIndexOf("/"));
+  if (imported.endsWith("/index.ts") && importer.startsWith(`${importedDirectory}/`)) {
+    return "tool capabilities must not import their own or ancestor barrel";
+  }
+  if (!importer.startsWith("lib/tools/adapters/tasks/") && imported.startsWith("lib/tools/adapters/tasks/")
+    && imported !== "lib/tools/adapters/tasks/index.ts") {
     return "sibling capabilities must use the task adapter entrypoint";
   }
   const importerOwner = importer.slice(0, importer.lastIndexOf("/"));

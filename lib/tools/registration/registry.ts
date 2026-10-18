@@ -7,9 +7,9 @@ import {
   createChannelLinkTool,
   createChannelListTool,
   createChannelUnlinkTool,
-} from "../channels/index.js";
-import { createWorkflowGuideTool, WORKFLOW_GUIDE_TOOL_NAME } from "../guidance/index.js";
-import { createHealthTool, HEALTH_TOOL_NAME } from "../health/index.js";
+} from "../adapters/channels/index.js";
+import { createWorkflowGuideTool, WORKFLOW_GUIDE_TOOL_NAME } from "../adapters/guidance/index.js";
+import { createHealthTool, HEALTH_TOOL_NAME } from "../adapters/health/index.js";
 import {
   createIssueDeleteTool,
   createIssuePolicyMigrationTool,
@@ -17,10 +17,10 @@ import {
   ISSUE_DELETE_TOOL_NAME,
   ISSUE_POLICY_MIGRATE_TOOL_NAME,
   ISSUE_REPAIR_TOOL_NAME,
-} from "../issues/index.js";
-import { createSyncLabelsTool, SYNC_LABELS_TOOL_NAME } from "../labels/index.js";
-import { createProjectRegisterTool, createProjectStatusTool, PROJECT_REGISTER_TOOL_NAME, PROJECT_STATUS_TOOL_NAME } from "../projects/index.js";
-import { CONFIG_TOOL_NAME, createConfigTool, createOnboardTool, createSetupTool, ONBOARD_TOOL_NAME, SETUP_TOOL_NAME } from "../setup/index.js";
+} from "../adapters/issues/index.js";
+import { createSyncLabelsTool, SYNC_LABELS_TOOL_NAME } from "../adapters/labels/index.js";
+import { createProjectRegisterTool, createProjectStatusTool, PROJECT_REGISTER_TOOL_NAME, PROJECT_STATUS_TOOL_NAME } from "../adapters/projects/index.js";
+import { CONFIG_TOOL_NAME, createConfigTool, createOnboardTool, createSetupTool, ONBOARD_TOOL_NAME, SETUP_TOOL_NAME } from "../adapters/setup/index.js";
 import {
   createResearchTaskTool,
   createTaskAttachTool,
@@ -42,8 +42,8 @@ import {
   TASK_SET_LEVEL_TOOL_NAME,
   TASK_START_TOOL_NAME,
   TASKS_STATUS_TOOL_NAME,
-} from "../tasks/index.js";
-import { createWorkFinishTool, WORK_FINISH_TOOL_NAME } from "../worker/index.js";
+} from "../adapters/tasks/index.js";
+import { createWorkFinishTool, WORK_FINISH_TOOL_NAME } from "../adapters/worker/index.js";
 import type { ToolRegistryEntry } from "./types.js";
 
 /** Supported tool registrations, checked against the SDK factory contract without widening results. */

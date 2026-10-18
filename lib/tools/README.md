@@ -53,24 +53,30 @@ Inside tools, use the target capability's entrypoint; task capabilities use thei
 immediate sibling entrypoint, and outside task capabilities use `tasks/index.ts`.
 Never import the tools root or an ancestor task barrel from its own implementation.
 
+Concrete tool capabilities live under `adapters`, an organizational directory with
+no entrypoint. Registration composes their public APIs. Adapters never depend on
+registration; shared context and validation never depend on adapters or registration.
+The root API aggregates the adapter capability entrypoints directly and preserves
+the supported factory, name and registration exports.
+
 | Capability | Owned adapter responsibility |
 | --- | --- |
 | `registration` | Fixed public names and SDK factory composition, with no widened unknown factory result. |
 | `context` | Explicit conversation input and SDK workspace resolution; no project/provider decisions. |
 | `validation` | Shared nonblank text, conversation and safe issue ID schemas, and SDK schema generation. |
-| `setup` | Setup, onboarding and configuration operations through application/setup. |
-| `projects` | Registration and formatting of local project information. |
-| `channels` | Exact endpoint linking, unlinking and listing. |
-| `health` | Manual inspection scope and application/heartbeat result formatting. |
-| `labels` | Label-definition provisioning through application/labels. |
-| `guidance` | Topic protocol/schema, SDK selection, and pure reference content. |
-| `issues` | Explicit repair, policy migration and deletion adapters. |
-| `tasks/creation` | Durable task creation and resumable research requests. |
-| `tasks/lifecycle` | Approval, prepared level, ownership and user-content edits. |
-| `tasks/discussion` | Comment input and application discussion results. |
-| `tasks/queries` | Local-state-first task browsing and dashboard formatting. |
-| `tasks/attachments` | Manual attachment commands through application/tasks. |
-| `worker` | Worker completion boundary and application result formatting. |
+| `adapters/setup` | Setup, onboarding and configuration operations through application/setup. |
+| `adapters/projects` | Registration and formatting of local project information. |
+| `adapters/channels` | Exact endpoint linking, unlinking and listing. |
+| `adapters/health` | Manual inspection scope and application/heartbeat result formatting. |
+| `adapters/labels` | Label-definition provisioning through application/labels. |
+| `adapters/guidance` | Topic protocol/schema, SDK selection, and pure reference content. |
+| `adapters/issues` | Explicit repair, policy migration and deletion adapters. |
+| `adapters/tasks/creation` | Durable task creation and resumable research requests. |
+| `adapters/tasks/lifecycle` | Approval, prepared level, ownership and user-content edits. |
+| `adapters/tasks/discussion` | Comment input and application discussion results. |
+| `adapters/tasks/queries` | Local-state-first task browsing and dashboard formatting. |
+| `adapters/tasks/attachments` | Manual attachment commands through application/tasks. |
+| `adapters/worker` | Worker completion boundary and application result formatting. |
 
 Adapters keep private input schemas beside their execution boundary. Shared schemas
 belong to validation; guidance's topic registry, type and schema stay with guidance.

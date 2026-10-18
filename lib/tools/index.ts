@@ -1,12 +1,12 @@
 /** Public OpenClaw adapter API consumed by plugin registration and external callers. */
 
-export * from "./channels/index.js";
-export * from "./guidance/index.js";
-export * from "./health/index.js";
-export * from "./issues/index.js";
-export * from "./labels/index.js";
-export * from "./projects/index.js";
+export * from "./adapters/channels/index.js";
+export * from "./adapters/guidance/index.js";
+export * from "./adapters/health/index.js";
+export * from "./adapters/issues/index.js";
+export * from "./adapters/labels/index.js";
+export * from "./adapters/projects/index.js";
+export * from "./adapters/setup/index.js";
+export * from "./adapters/tasks/index.js";
+export * from "./adapters/worker/index.js";
 export * from "./registration/index.js";
-export * from "./setup/index.js";
-export * from "./tasks/index.js";
-export * from "./worker/index.js";

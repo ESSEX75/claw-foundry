@@ -7,6 +7,39 @@ import { describe, it } from "node:test";
 import { emptySlot, reconcileSlots, releasedWorkerSlot, sameSlotReservation, slotOwnsWorkerRun, type RoleWorkerState } from "./index.js";
 
 describe("reconcileSlots", () => {
+  it("preserves inactive references and delivery evidence until explicit release", () => {
+    const referenced = { ...emptySlot(), issueId: 42, sessionKey: "reusable" };
+    const unresolved = { ...emptySlot(), delivery: {
+      status: "unknown" as const, recordedAt: "now", reason: "unconfirmed",
+    } };
+
+    for (const slot of [referenced, unresolved]) {
+      const roleWorker: RoleWorkerState = { levels: { junior: [slot, emptySlot()] } };
+
+      assert.equal(reconcileSlots(roleWorker, { junior: 0 }), true);
+      assert.deepEqual(roleWorker.levels.junior, [slot]);
+      assert.equal(reconcileSlots(roleWorker, {}), false);
+      assert.deepEqual(roleWorker.levels.junior, [slot]);
+      roleWorker.levels.junior = [releasedWorkerSlot(slot, slot.issueId)];
+      assert.equal(reconcileSlots(roleWorker, {}), true);
+      assert.deepEqual(roleWorker.levels, {});
+      assert.equal(slot.sessionKey, referenced === slot ? "reusable" : null);
+    }
+  });
+
+  it("reports zero-capacity level creation once and tracks capacity changes", () => {
+    const roleWorker: RoleWorkerState = { levels: {} };
+
+    assert.equal(reconcileSlots(roleWorker, { expert: 0 }), true);
+    assert.deepEqual(roleWorker.levels, { expert: [] });
+    assert.equal(reconcileSlots(roleWorker, { expert: 0 }), false);
+    assert.equal(reconcileSlots(roleWorker, { expert: 2 }), true);
+    assert.equal(roleWorker.levels.expert?.length, 2);
+    assert.equal(reconcileSlots(roleWorker, { expert: 0 }), true);
+    assert.deepEqual(roleWorker.levels, { expert: [] });
+    assert.equal(reconcileSlots(roleWorker, { expert: 0 }), false);
+  });
+
   it("removes an unconfigured level when all of its slots are inactive", () => {
     const roleWorker: RoleWorkerState = {
       levels: { legacy: [emptySlot()] },

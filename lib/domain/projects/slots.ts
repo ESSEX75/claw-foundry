@@ -20,6 +20,16 @@ export function emptySlot(): SlotState {
 }
 
 /**
+ * Check whether capacity can be recycled without discarding unresolved ownership.
+ * Reusable session and display metadata do not reserve capacity.
+ *
+ * @param slot - Reservation snapshot being considered for reuse or removal.
+ */
+export function isWorkerSlotAvailable(slot: SlotState): boolean {
+  return !slot.active && slot.issueId === null && slot.delivery === undefined;
+}
+
+/**
  * Create a blank role-worker state with the configured per-level capacities.
  *
  * @param levelMaxWorkers - Maximum slot count keyed by resolved level identifier.
@@ -61,8 +71,8 @@ export function findFreeSlot(roleWorker: RoleWorkerState, level: string): number
 /**
  * Reconcile a role's levels with the configured per-level maxWorkers.
  * - Adds missing levels, expands short arrays, shrinks idle trailing slots.
- * - Removes unconfigured levels after all of their slots become inactive.
- * Active workers are never removed — they finish naturally.
+ * - Removes unconfigured levels only after every reservation has been released.
+ * Active workers, issue references and unresolved delivery evidence are retained.
  * Mutates roleWorker in place. Returns true if any changes were made.
  *
  * @param roleWorker - Mutable role-owned worker state to reconcile.
@@ -81,6 +91,7 @@ export function reconcileSlots(
 
     if (!roleWorker.levels[level]) {
       roleWorker.levels[level] = [];
+      changed = true;
     }
 
     const slots = roleWorker.levels[level]!;
@@ -93,7 +104,7 @@ export function reconcileSlots(
     while (slots.length > max) {
       const last = slots[slots.length - 1]!;
 
-      if (last.active) break;
+      if (!isWorkerSlotAvailable(last)) break;
       slots.pop();
       changed = true;
     }
@@ -101,7 +112,7 @@ export function reconcileSlots(
 
   for (const [level, slots] of Object.entries(roleWorker.levels)) {
     if (configuredLevels.has(level) || slots === undefined) continue;
-    if (slots.some((slot) => slot.active)) continue;
+    if (slots.some((slot) => !isWorkerSlotAvailable(slot))) continue;
 
     delete roleWorker.levels[level];
     changed = true;

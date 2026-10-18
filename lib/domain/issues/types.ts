@@ -4,8 +4,8 @@
 
 import type { ValueOf } from "../../types.js";
 import type { NotifyBindingRef } from "../notifications/index.js";
-import type { WorkerDeliveryState } from "../workers/index.js";
-import type { ReviewPolicy, TestPolicy } from "../workflow/index.js";
+import type { WorkerDeliveryState, WorkerRunIdentity } from "../workers/index.js";
+import type { ReviewPolicy, TestPolicy, TransitionAction } from "../workflow/index.js";
 import {
   ATTACHMENT_DISPOSITION,
   ISSUE_ARCHIVE_REASON,
@@ -87,25 +87,35 @@ export type IssueProjectionState = {
 };
 
 /** Details about the worker currently active on the issue. */
-export type ActiveIssueWorker = {
-  /** The assigned worker role (e.g. developer, tester). */
-  role: string;
-  /** The assigned worker tier/level (e.g. junior, senior). */
-  level: string;
-  /** Index of the worker slot. */
-  slotIndex: number;
-  /** Unique session key of the active run. */
-  sessionKey: string | null;
-  /** ISO timestamp when work started. */
-  startedAt: string;
+export type ActiveIssueWorker = WorkerRunIdentity & {
   /** Last durable health nudge attempt for this worker run. */
   lastNudgeAt?: string;
   /** Unresolved gateway submission requiring reconciliation before any retry. */
   delivery?: WorkerDeliveryState;
 };
 
+/** Durable result bound to the exact worker run whose transition committed. */
+export type IssueCompletionReceipt = {
+  /** Processed actions, including a successful prefix before a recovered merge conflict. */
+  actions: readonly TransitionAction[];
+  /** Captured run that completed, independent of current slot reservation. */
+  worker: WorkerRunIdentity;
+  /** Role-specific result supplied for that run. */
+  result: string;
+  /** Canonical source state of the committed transition. */
+  fromState: string;
+  /** Canonical destination selected by the committed transition. */
+  toState: string;
+  /** Destination label retained independently of later configuration changes. */
+  toLabel: string;
+  /** Exact request associated with the completion, if present. */
+  prUrl?: string;
+};
+
 /** Main local runtime state for a managed provider issue. */
 export type IssueRuntimeState = IssueProjectionState & {
+  /** Last committed completion, used only to resume the same exact run. */
+  lastCompletion?: IssueCompletionReceipt;
   /** Creation saga that must reach ready before lifecycle consumers may use this issue. */
   creationOperationId?: string;
   /** Slug of the project owning this issue. */

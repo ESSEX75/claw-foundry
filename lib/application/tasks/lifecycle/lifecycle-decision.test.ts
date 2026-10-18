@@ -11,7 +11,8 @@ import {
 } from "../../../domain/index.js";
 import { requireBuiltInRole } from "../../../roles/index.js";
 import type { ResolvedRoleConfig } from "../../../state/index.js";
-import { resolveRoleLevel, resolveStartTaskDecision } from "./lifecycle-decision.js";
+import { resolveStartTaskDecision } from "./lifecycle-decision.js";
+import { resolveRoleLevel } from "../../../roles/index.js";
 
 const baseState: IssueRuntimeState = {
   projectSlug: "devclaw",

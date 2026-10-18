@@ -1,4 +1,4 @@
-/** Exposes the scheduled heartbeat service and its supported defaults. */
+/** Internal service lifecycle API; project maintenance is supplied by composition. */
 
-export { HEARTBEAT_DEFAULTS } from "./defaults.js";
-export { registerHeartbeatService } from "./service.js";
+export { HEARTBEAT_SERVICE } from "./const.js";
+export { createHeartbeatLifecycle } from "./service.js";

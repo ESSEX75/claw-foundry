@@ -17,7 +17,7 @@ This file is a source navigation map for agents and developers. It is not part o
 - Config loading:
   `lib/state/config`
 - Setup and onboarding:
-  `lib/application/setup`, `lib/state/setup`, `lib/tools/admin`
+  `lib/application/setup`, `lib/state/setup`, `lib/tools/setup`
 - CLI behavior:
   `lib/cli`
 - Role and model selection:

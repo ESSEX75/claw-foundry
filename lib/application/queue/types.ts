@@ -1,29 +1,13 @@
 /** Public queue tick options and action summaries. */
 
 import type { RunCommand } from "../../context.js";
-import type { IssueRuntimeState, RoleWorkerState, STATE_TYPE, WorkflowConfig, WorkflowStateConfig } from "../../domain/index.js";
+import type { IssueRuntimeState, RoleWorkerState, WorkflowConfig } from "../../domain/index.js";
 import type { Issue, IssueProvider, ProviderIssueLookupErrorCode } from "../../integrations/index.js";
 import type { ResolvedRoleConfig } from "../../state/index.js";
 import type { ValueOf } from "../../types.js";
 import type { NotificationRuntime } from "../notifications/index.js";
 import type { DispatchResult } from "../workers/index.js";
 import type { QUEUE_PLAN, QUEUE_REASON } from "./const.js";
-
-/** Display metadata retained for a non-terminal workflow state. */
-type QueueStateLabel = {
-  /** Provider-visible state label. */
-  label: string;
-  /** Worker role attached to active or queue states. */
-  role?: string;
-  /** Scheduling priority attached to queue states. */
-  priority?: number;
-};
-
-/** Workflow labels grouped by non-terminal state behavior. */
-export type QueueStateLabelsByType = Record<
-  Exclude<WorkflowStateConfig["type"], typeof STATE_TYPE.TERMINAL>,
-  QueueStateLabel[]
->;
 
 /** Pure inputs for choosing the role level and concrete free slot. */
 export type QueuePickupPlanInput = {
@@ -122,8 +106,8 @@ export type TickAction = {
   level: string;
   /** Session action planned or performed by dispatch. */
   sessionAction: DispatchResult["sessionAction"];
-  /** Human-readable pickup summary. */
-  announcement: string;
+  /** Preview selection performs no dispatch. */
+  dryRun: boolean;
 };
 
 /** Pickups and safely skipped roles from one queue tick. */

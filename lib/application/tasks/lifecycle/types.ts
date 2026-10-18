@@ -3,8 +3,9 @@
 import type { RunCommand } from "../../../context.js";
 import type { IssueProviderId, IssueRuntimeState, Project, WorkflowConfig, WorkflowStateConfig } from "../../../domain/index.js";
 import { STATE_TYPE } from "../../../domain/index.js";
-import type { IssueProvider } from "../../../integrations/index.js";
-import type { ResolvedRoleConfig } from "../../../state/index.js";
+import type { Issue, IssueProvider } from "../../../integrations/index.js";
+import type { ResolvedConfig, ResolvedRoleConfig } from "../../../state/index.js";
+import type { TASK_EVENT } from "./const.js";
 
 /** Ownership-transfer outcome; a refusal preserves the current owner. */
 export type ClaimManagedTaskResult = ClaimAccepted | ClaimRefused;
@@ -95,12 +96,15 @@ export type SetTaskLevelResult = {
   level: string;
   /** Whether the command changed the current assignment or content. */
   changed: boolean;
+  /** Previously prepared level, absent when no assignment existed. */
+  fromLevel: string | null;
+  /** Operator explanation retained verbatim for rendering. */
+  reason?: string;
   /** Resolved project or its display name in command output. */
   project: string;
   /** Provider capability or identifier used for this operation. */
   provider: string;
-  /** Human-readable result for adapter delivery. */
-  announcement: string;
+
 };
 
 /** Explicit approval request for a held managed task. */
@@ -135,8 +139,7 @@ export type StartTaskResult = {
   level: string | null;
   /** Resolved project or its display name in command output. */
   project: string;
-  /** Human-readable result for adapter delivery. */
-  announcement: string;
+
 };
 
 /** Inputs consumed by claimManagedTask after adapter validation. */
@@ -159,22 +162,8 @@ export type ClaimManagedTaskInput = {
   workflow: WorkflowConfig;
   /** Effective role identifiers or resolved role configurations. */
   roles: string[];
-};
-
-/** Inputs consumed by resolveRoleLevel after adapter validation. */
-export type ResolveRoleLevelInput = {
-  /** Optional explicit level overriding automatic selection. */
-  requestedLevel?: string;
-  /** Authoritative local issue record used to make the decision. */
-  runtimeState: IssueRuntimeState;
-  /** Configured worker role responsible for the target queue. */
-  targetRole: string;
-  /** Effective role settings including enabled levels. */
-  roleConfig: ResolvedRoleConfig;
-  /** Provider title used for task context and operator output. */
-  issueTitle: string;
-  /** Provider description used for worker context or level selection. */
-  issueDescription: string;
+  /** Bulk-only guard: recheck current queue state and absence of worker ownership under lock. */
+  queuedOnly?: boolean;
 };
 
 /** Inputs consumed by resolveStartTaskDecision after adapter validation. */
@@ -193,4 +182,62 @@ export type ResolveStartTaskDecisionInput = {
   issueTitle: string;
   /** Provider description used for worker context or level selection. */
   issueDescription: string;
+};
+
+/** One task that was refused or failed, retaining the actionable cause. */
+export type TaskClaimDiagnostic = {
+  /** Provider-local issue identity. */
+  issueId: number;
+  /** Fresh refusal or underlying operation failure. */
+  reason: string;
+};
+
+/** Single or bulk ownership command using already resolved runtime dependencies. */
+export type ClaimManagedTasksInput = Omit<ClaimManagedTaskInput, "issueId" | "queuedOnly"> & {
+  /** Omit to select locally queued records; provider-only issues are never candidates. */
+  issueId?: number;
+};
+
+/** Ownership changes and independent refusal/failure outcomes. */
+export type ClaimManagedTasksResult = {
+  /** False if any attempted operation failed; eligibility refusals remain ordinary skips. */
+  success: boolean;
+  /** Issues whose ownership and label projection completed. */
+  claimed: number[];
+  /** Tasks refused by fresh local eligibility checks. */
+  skipped: TaskClaimDiagnostic[];
+  /** Failed operations, including projection failures after a local ownership commit. */
+  failed: TaskClaimDiagnostic[];
+};
+
+/** Original route and runtime transport shared by the three route-based lifecycle commands. */
+export type TaskLifecycleInput = Pick<StartTaskInput, "workspaceDir" | "channelId" | "issueId" | "runCommand">;
+
+/** Exact immutable target captured before waiting for its issue lock. */
+export type TaskLifecycleTarget = {
+  /** Captured owning project; worker slots are refreshed under the issue lock. */
+  project: Project;
+  /** Complete persisted endpoint whose identity must remain unchanged. */
+  endpoint: Project["channels"][number];
+};
+
+/** Commands that share readiness but retain distinct active-worker rules. */
+export type TaskLifecycleOperation = typeof TASK_EVENT.START | typeof TASK_EVENT.SET_LEVEL | typeof TASK_EVENT.EDIT_BODY;
+
+/** Fresh locked dependencies after routing, readiness and ownership validation. */
+export type TaskLifecycleContext = {
+  /** Same canonical project with fresh worker reservations. */
+  project: Project;
+  /** Provider scoped to that exact project. */
+  provider: IssueProvider;
+  /** Persisted provider identity. */
+  providerType: IssueProviderId;
+  /** Fresh resolved role and workflow configuration. */
+  resolvedConfig: ResolvedConfig;
+  /** Provider content for user edits and level selection only. */
+  issue: Issue;
+  /** Authoritative issue record, never inferred from labels. */
+  runtimeState: IssueRuntimeState;
+  /** Configuration matching the exact stored key and label. */
+  currentState: WorkflowStateConfig;
 };

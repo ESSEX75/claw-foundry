@@ -3,7 +3,7 @@
  */
 
 import type { SlotState, WorkerDeliveryState, WorkflowConfig } from "../../domain/index.js";
-import { countActiveSlots, emptySlot, EXECUTION_MODE, findFreeSlot, findSlotByIssue } from "../../domain/index.js";
+import { emptySlot, findFreeSlot, findSlotByIssue, workerExecutionBlock } from "../../domain/index.js";
 import { updateProjects } from "./repository.js";
 import type { ProjectsData } from "./types.js";
 
@@ -11,6 +11,8 @@ import type { ProjectsData } from "./types.js";
 type ActivateWorkerParams = {
   /** Optional project-wide role exclusivity checked under the registry lock. */
   roleExecution?: WorkflowConfig["roleExecution"];
+  /** Optional cross-project exclusivity checked in the same registry transaction. */
+  projectExecution?: WorkflowConfig["roleExecution"];
   /** Optional configured capacity; rejects out-of-range or excess active reservations. */
   maxWorkers?: number;
   /** Provider-local issue assigned to the worker slot. */
@@ -106,10 +108,9 @@ export async function activateWorker(
 
     const slots = rw.levels[params.level] ?? [];
 
-    if (params.roleExecution === EXECUTION_MODE.SEQUENTIAL
-      && Object.entries(project.workers).some(([otherRole, worker]) => otherRole !== role && countActiveSlots(worker) > 0)) {
-      throw new Error("Sequential: another role has an active reservation.");
-    }
+    const exclusion = workerExecutionBlock(data.projects, projectSlug, role, params.roleExecution, params.projectExecution);
+
+    if (exclusion) throw new Error(exclusion);
 
     if (params.delivery && Object.values(project.workers).some((worker) =>
       Object.values(worker.levels).some((workers) => workers?.some((slot) => slot.active && slot.issueId === params.issueId)))) {

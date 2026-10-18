@@ -19,3 +19,9 @@ export const WORKER_DELIVERY_RESOLUTION = {
   /** The operator verified this worker turn did not start. */
   CONFIRMED_NOT_STARTED: "confirmed-not-started",
 } as const;
+
+/** Whether dispatch creates a session or reuses an existing one. */
+export const WORKER_SESSION_ACTION = {
+  SPAWN: "spawn",
+  SEND: "send",
+} as const;

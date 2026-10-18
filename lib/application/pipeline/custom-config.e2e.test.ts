@@ -18,12 +18,12 @@ import {
   WORKFLOW_EVENT,
 } from "../../domain/index.js";
 import { loadConfig } from "../../state/index.js";
-import { writeIssueRuntimeState } from "../issue-runtime/index.js";
+import { seedIssueRuntimeState } from "../../testing/index.js";
 import { readIssueArchiveStore, readIssueStateStore } from "../../state/index.js";
 import { getProject, getRoleWorker, readProjects } from "../../state/index.js";
 import { createTestHarness, type TestHarness } from "../../testing/index.js";
 import { projectTick } from "../queue/tick.js";
-import { executeCompletion } from "./completion.js";
+import { completeWorkerForTesting } from "../../testing/index.js";
 
 const CUSTOM_ROLE = "security_auditor";
 const CUSTOM_QUEUE = "securityQueue";
@@ -127,12 +127,12 @@ workflow:
     assert.equal(harness.provider.labels.has(CUSTOM_ACTIVE_LABEL), true);
     assert.equal(getLabelColors(customWorkflow).get(CUSTOM_QUEUE_LABEL), "#123456");
 
-    const issue = harness.provider.seedIssue({
+    const issue = await harness.seedManagedIssue({
       iid: 501,
       title: "Audit authentication",
       labels: [CUSTOM_QUEUE_LABEL, `${CUSTOM_ROLE}:${CUSTOM_LEVEL}`, getOwnerLabel("primary")],
     });
-    await writeIssueRuntimeState({
+    await seedIssueRuntimeState({
       workspaceDir: harness.workspaceDir,
       project: harness.project,
       issue,
@@ -184,15 +184,15 @@ workflow:
     };
 
     await assert.rejects(
-      executeCompletion({ ...completionInput, result: "unmapped" }),
+      completeWorkerForTesting({ ...completionInput, result: "unmapped" }),
       /No completion event configured/,
     );
     assert.equal(harness.provider.callsTo("mergePr").length, 0);
     assert.equal(harness.provider.callsTo("addLabels").length, 1);
-    await executeCompletion({ ...completionInput, result: "audited" });
+    await completeWorkerForTesting({ ...completionInput, result: "audited" });
 
     const transitionsAfterCompletion = harness.provider.callsTo("addLabels").length;
-    await executeCompletion({ ...completionInput, result: "audited" });
+    await completeWorkerForTesting({ ...completionInput, result: "audited" });
     assert.equal(harness.provider.callsTo("addLabels").length, transitionsAfterCompletion);
 
     const completedProjects = await readProjects(harness.workspaceDir);

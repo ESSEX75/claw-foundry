@@ -6,7 +6,8 @@ import {
   STATE_TYPE,
   type WorkflowConfig,
 } from "../../../domain/index.js";
-import { isIssueCreationReady, readIssueStateStore } from "../../../state/index.js";
+import type { Issue } from "../../../integrations/index.js";
+import { readIssueStateStore,readReadyIssueCreationIds } from "../../../state/index.js";
 import { ALL_TASK_STATES, DEFAULT_TASK_LIST_LIMIT } from "./const.js";
 import { summarizeLocalIssueStates } from "./projection-summary.js";
 import type { ListManagedTasksInput, ProjectionViewContext, TaskListResult, TaskListStateGroup } from "./types.js";
@@ -27,15 +28,28 @@ export async function listManagedTasks(opts: ListManagedTasksInput): Promise<Tas
   const store = await readIssueStateStore(opts.workspaceDir, opts.projectSlug);
   const projectionCtx: ProjectionViewContext = { states: store.issues, workflow: opts.workflow, roles: opts.roles };
   const localStates: IssueRuntimeState[] = [];
+  const ready = Object.values(store.issues).some(state => state.creationOperationId)
+    ? await readReadyIssueCreationIds(opts.workspaceDir, opts.projectSlug) : new Set<string>();
 
   for (const state of Object.values(store.issues)) {
-    if (await isIssueCreationReady(opts.workspaceDir, opts.projectSlug, state.creationOperationId)) {
+    if ((!state.creationOperationId || ready.has(state.creationOperationId))) {
       localStates.push(state);
     }
   }
 
   const labelsToFetch = resolveTaskListLabels(opts.workflow, opts.stateType, opts.label);
   const searchLower = opts.search?.toLowerCase();
+  const observations = new Map<number, Issue>();
+  const provider = { getIssue: async (issueId: number): Promise<Issue> => {
+    const cached = observations.get(issueId);
+
+    if (cached) return cached;
+    const issue = await opts.provider.getIssue(issueId);
+
+    observations.set(issueId, issue);
+
+    return issue;
+  } };
   const results: TaskListStateGroup[] = [];
 
   for (const entry of labelsToFetch) {
@@ -45,7 +59,7 @@ export async function listManagedTasks(opts: ListManagedTasksInput): Promise<Tas
       const filtered: IssueRuntimeState[] = [];
 
       for (const state of states) {
-        const issue = await opts.provider.getIssue(state.issueId);
+        const issue = await provider.getIssue(state.issueId);
 
         if (issue.title.toLowerCase().includes(searchLower)) {
           filtered.push(state);
@@ -62,7 +76,7 @@ export async function listManagedTasks(opts: ListManagedTasksInput): Promise<Tas
       label: entry.label,
       type: entry.type,
       role: entry.role,
-      issues: await summarizeLocalIssueStates(limited, opts.provider, projectionCtx),
+      issues: await summarizeLocalIssueStates(limited, provider, projectionCtx),
       total,
     });
   }

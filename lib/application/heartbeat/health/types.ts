@@ -17,6 +17,8 @@ export type WorkerHealthInput = {
   project: Project;
   /** Configured worker role. */
   role: string;
+  /** False for disabled or removed roles retained only by persisted reservations. */
+  roleEnabled?: boolean;
   /** Provider used for fresh issue observations. */
   provider: IssueProvider;
   /** Gateway observation for this pass, or null when unavailable. */
@@ -116,4 +118,34 @@ export type HealthPassInput = {
   stallTimeoutMinutes?: number;
   /** Agent receiving remediation nudges. */
   agentId?: string;
+};
+
+/** Manual health scope and integration dependencies; omission explicitly means all registered projects. */
+export type InspectWorkerHealthInput = {
+  /** Workspace containing authoritative issue and reservation state. */
+  workspaceDir: string;
+  /** Optional exact canonical project slug; invalid or unknown values fail before observations. */
+  projectSlug?: string;
+  /** Whether explicitly requested remedies may run. */
+  fix?: boolean;
+  /** Gateway and provider command transport. */
+  runCommand: RunCommand;
+  /** Optional provider composition port; normal adapters use persisted provider selection. */
+  providerForProject?: (project: Project) => Promise<IssueProvider>;
+};
+
+/** Aggregated health observations retain independent successes and explicit inspection failures. */
+export type InspectWorkerHealthResult = {
+  /** False when any inspection or requested remedy failed operationally. */
+  success: boolean;
+  /** Explicit remediation mode actually used. */
+  fix: boolean;
+  /** Number of selected projects attempted, including failed inspections. */
+  projectsScanned: number;
+  /** Observed gateway sessions, without inferring absence from a bounded list. */
+  sessionsQueried: number;
+  /** Whether gateway evidence can prove session absence. */
+  sessionInventoryComplete: boolean;
+  /** Findings from every selected project and retained role. */
+  issues: HealthFix[];
 };

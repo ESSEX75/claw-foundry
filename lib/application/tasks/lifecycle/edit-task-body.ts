@@ -3,13 +3,12 @@
 import { log as auditLog } from "../../../audit.js";
 import { DEFAULT_ROLES, getInitialStateLabel, STATE_TYPE } from "../../../domain/index.js";
 import { composeManagedIssueBody } from "../../../projection/index.js";
-import { isIssueCreationReady, loadConfig, withIssueOrchestrationLock } from "../../../state/index.js";
-import { ISSUE_RUNTIME_KIND } from "../../issue-runtime/const.js";
-import { resolveIssueRuntimeState } from "../../issue-runtime/index.js";
-import { resolveProject, resolveProvider } from "../../projects/index.js";
+import { withIssueOrchestrationLock } from "../../../state/index.js";
+import { resolveProject } from "../../projects/index.js";
 import { EYES_EMOJI } from "../../review/index.js";
 import { TASK_EDIT_PREVIEW_LENGTH, TASK_EVENT } from "./const.js";
-import type { EditTaskBodyInput } from "./types.js";
+import { readTaskLifecycleContext } from "./context.js";
+import type { EditTaskBodyInput,TaskLifecycleTarget } from "./types.js";
 
 /** Before and after user content retained for a bounded audit preview. */
 type ContentChange = {
@@ -23,23 +22,22 @@ type ContentChange = {
  * @param input - Requested content changes and project/provider transport.
  */
 export async function editTaskBody(input: EditTaskBodyInput) {
-  const { project } = await resolveProject(input.workspaceDir, input.channelId);
+  const target = await resolveProject(input.workspaceDir, input.channelId);
 
-  return withIssueOrchestrationLock(input.workspaceDir, project.slug, input.issueId, () => editTaskBodyLocked(input));
+  return withIssueOrchestrationLock(input.workspaceDir, target.project.slug, input.issueId, () => editTaskBodyLocked(input, target));
 }
 
 /** Validate fresh local state before changing provider-visible user content.
  * @param input - Requested content and transport, with the issue lock already held.
+ * @param target - Route and project captured before lock acquisition.
  */
-async function editTaskBodyLocked(input: EditTaskBodyInput) {
+async function editTaskBodyLocked(input: EditTaskBodyInput, target: TaskLifecycleTarget) {
   const {
     workspaceDir,
-    channelId,
     issueId,
     title: newTitle,
     body: newBody,
     reason,
-    runCommand,
   } = input;
   const addComment = input.addComment ?? true;
 
@@ -47,10 +45,8 @@ async function editTaskBodyLocked(input: EditTaskBodyInput) {
     throw new Error("At least one of 'title' or 'body' must be provided.");
   }
 
-  const { project } = await resolveProject(workspaceDir, channelId);
-  const { provider, type: providerType } = await resolveProvider(workspaceDir, project, runCommand);
-
-  const resolvedConfig = await loadConfig(workspaceDir, project.slug);
+  const { project, provider, providerType, resolvedConfig, issue, runtimeState } =
+    await readTaskLifecycleContext(input, target, TASK_EVENT.EDIT_BODY);
   const initialStateLabel = getInitialStateLabel(resolvedConfig.workflow);
   //TODO: The behavior of the tester, reviewer, etc. is hard-coded.
   const architectActiveStates = Object.values(resolvedConfig.workflow.states)
@@ -59,18 +55,6 @@ async function editTaskBodyLocked(input: EditTaskBodyInput) {
   const editableStates = [initialStateLabel, ...architectActiveStates];
   const editableStateSet: ReadonlySet<string> = new Set(editableStates);
 
-  const issue = await provider.getIssue(issueId);
-  const runtimeState = await resolveIssueRuntimeState({ workspaceDir, project, issue, workflow: resolvedConfig.workflow });
-
-  if (runtimeState.kind !== ISSUE_RUNTIME_KIND.MANAGED) {
-    throw new Error(`Issue #${issueId} has no local issue state. Backfill or repair local state before task_edit_body.`);
-  }
-
-  if (!await isIssueCreationReady(workspaceDir, project.slug, runtimeState.state.creationOperationId)) {
-    throw new Error(`Issue #${issueId} creation is not ready.`);
-  }
-
-  if (!runtimeState.stateConfig) throw new Error(`Cannot edit issue #${issueId}: its local workflow state does not match the current configuration.`);
   const currentState = runtimeState.workflowLabel;
 
   if (!currentState || !editableStateSet.has(currentState)) {
@@ -83,7 +67,7 @@ async function editTaskBodyLocked(input: EditTaskBodyInput) {
 
   const desiredBody = composeManagedIssueBody(newBody ?? issue.description, {
     projectSlug: project.slug, issueId,
-  }, runtimeState.state.creationOperationId);
+  }, runtimeState.creationOperationId);
   const changes: Record<string, ContentChange> = {};
 
   if (newTitle !== undefined && newTitle !== issue.title) {
@@ -101,7 +85,6 @@ async function editTaskBodyLocked(input: EditTaskBodyInput) {
       issueUrl: issue.web_url,
       project: project.name,
       changed: false,
-      announcement: `Issue #${issueId} already has the requested content — no changes made.\n🔗 [Issue #${issueId}](${issue.web_url})`,
     };
   }
 
@@ -143,12 +126,6 @@ async function editTaskBodyLocked(input: EditTaskBodyInput) {
     timestamp: new Date().toISOString(),
   });
 
-  const changedFields = Object.keys(changes).join(" and ");
-  let announcement = `✏️ Updated ${changedFields} of #${issueId}: "${updatedIssue.title}"`;
-
-  if (reason) announcement += ` — ${reason}`;
-  announcement += `\n🔗 [Issue #${issueId}](${updatedIssue.web_url})`;
-
   return {
     success: true,
     issueId,
@@ -158,6 +135,6 @@ async function editTaskBodyLocked(input: EditTaskBodyInput) {
     provider: providerType,
     changed: true,
     changes: Object.keys(changes),
-    announcement,
+    reason,
   };
 }

@@ -54,3 +54,11 @@ export const CREATION_PAYLOAD_HASH = "sha256";
 
 /** Caller identity recorded when heartbeat resumes a managed creation operation. */
 export const CREATION_RECONCILIATION_REQUESTER = "heartbeat_creation_reconciliation";
+
+/** Recovery scheduling classes; only runnable work consumes a reconciliation attempt. */
+export const CREATION_RECOVERY_ELIGIBILITY = {
+  READY: "ready",
+  RUNNABLE: "runnable",
+  WAITING: "waiting",
+  MANUAL: "manual",
+} as const;

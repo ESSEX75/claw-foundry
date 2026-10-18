@@ -8,7 +8,7 @@ import { loadInstanceName } from "../../instance.js";
 import { createProvider } from "../../integrations/index.js";
 import { loadConfig } from "../../state/index.js";
 import { readProjects } from "../../state/index.js";
-import { projectTick } from "../queue/tick.js";
+import { projectTick } from "../queue/index.js";
 import { HEARTBEAT_AUDIT_EVENT, HEARTBEAT_PASS, HEARTBEAT_PASS_FAILURE_POLICY } from "./const.js";
 import { performHealthPass } from "./health/index.js";
 import { performIssueArchivePass, performIssueCreationPass, performProjectionIntegrityPass } from "./maintenance-passes.js";

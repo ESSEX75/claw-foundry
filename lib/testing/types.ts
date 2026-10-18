@@ -160,6 +160,8 @@ type GetPrStatusCall = {
   args: {
     /** Provider-local issue identity whose effect or observation is recorded. */
     issueId: number;
+    /** Exact request selected by the caller, when captured. */
+    prUrl?: string;
   };
 };
 
@@ -171,6 +173,8 @@ type MergePrCall = {
   args: {
     /** Provider-local issue identity whose effect or observation is recorded. */
     issueId: number;
+    /** Exact request selected for mutation. */
+    prUrl?: string;
   };
 };
 

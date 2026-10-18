@@ -4,6 +4,7 @@ import type { RunCommand } from "../../context.js";
 import type { Project } from "../../domain/index.js";
 import { createProvider, type ProviderWithType } from "../../integrations/index.js";
 import { loadConfig, type ProjectsData, readProjects } from "../../state/index.js";
+import { matchesProjectRoute } from "./selection.js";
 import type { ProjectContext, ProjectRoute } from "./types.js";
 
 /**
@@ -46,9 +47,7 @@ export async function resolveProject(
  */
 export function findProjectByRoute(data: ProjectsData, route: ProjectRoute, agentId?: string): ProjectContext | null {
   const matches = Object.values(data.projects).filter(project => !agentId || project.agentId === agentId)
-    .flatMap(project => project.channels.filter(endpoint => endpoint.channel === route.channel
-      && endpoint.accountId === route.accountId && endpoint.channelId === route.channelId
-      && endpoint.threadId === route.threadId).map(endpoint => ({ data, project, endpoint })));
+    .flatMap(project => project.channels.filter(endpoint => matchesProjectRoute(endpoint, route)).map(endpoint => ({ data, project, endpoint })));
 
   if (matches.length > 1) throw new Error("Exact route is ambiguous across registered projects.");
 

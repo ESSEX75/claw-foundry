@@ -20,7 +20,7 @@ import {
   withIssueOrchestrationLock
 } from "../../../state/index.js";
 import { loadConfig, readOptionalProjects } from "../../../state/index.js";
-import { hasProjectWorkerSlot } from "../worker-slot.js";
+import { hasProjectWorkerSlot } from "../ownership/index.js";
 import { ARCHIVE_BLOCK_REASON, ARCHIVE_EVENT } from "./const.js";
 import { hashIssueState } from "./identity.js";
 import type { ArchiveIssueInput, ArchiveIssueResult } from "./types.js";

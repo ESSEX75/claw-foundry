@@ -8,8 +8,8 @@
 import {
   countActiveSlots,
   EXECUTION_MODE,
-  getActiveLabel,
   reconcileSlots,
+  WORKFLOW_EVENT,
 } from "../../domain/index.js";
 import { createProvider, isProviderIssueLookupError } from "../../integrations/index.js";
 import { getConfiguredRoleIds, getLevelMaxWorkers, loadConfig } from "../../state/index.js";
@@ -18,7 +18,7 @@ import { getProject, getRoleWorker, readProjects } from "../../state/index.js";
 import { dispatchTaskLocked } from "../workers/index.js";
 import { QUEUE_PLAN, QUEUE_REASON } from "./const.js";
 import { planQueuePickup } from "./plan.js";
-import { findNextIssueForRole } from "./scan.js";
+import { listQueueCandidates, readQueueCandidate } from "./scan.js";
 import type { ProjectTickOptions, ProjectTickResult, QueueClaim, TickAction } from "./types.js";
 
 /**
@@ -85,57 +85,104 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
     }
 
     try {
-      const next = await findNextIssueForRole(provider, role, workflow, instanceName, { workspaceDir, projectSlug });
+      for (const next of await listQueueCandidates(role, workflow, instanceName, { workspaceDir, projectSlug })) {
+        candidateIssueId = next.issueId;
 
-      if (!next) continue;
-      candidateIssueId = next.issue.iid;
+        const claim = await withIssueOrchestrationLock(
+          workspaceDir,
+          projectSlug,
+          next.issueId,
+          async (): Promise<QueueClaim> => {
+            const lockedNext = await readQueueCandidate(
+              provider,
+              role,
+              workflow,
+              instanceName,
+              { workspaceDir, projectSlug },
+              next.issueId,
+            );
 
-      const claim = await withIssueOrchestrationLock(
-        workspaceDir,
-        projectSlug,
-        next.issue.iid,
-        async (): Promise<QueueClaim> => {
-          const lockedNext = await findNextIssueForRole(
-            provider,
-            role,
-            workflow,
-            instanceName,
-            { workspaceDir, projectSlug },
-          );
+            if (!lockedNext || lockedNext.issue.iid !== next.issueId) {
+              return { action: null, reason: `Issue #${next.issueId} is no longer eligible for ${role}` };
+            }
 
-          if (!lockedNext || lockedNext.issue.iid !== next.issue.iid) {
-            return { action: null, reason: `Issue #${next.issue.iid} is no longer the next ${role} candidate` };
-          }
+            const lockedProject = getProject(await readProjects(workspaceDir), projectSlug);
 
-          const lockedProject = getProject(await readProjects(workspaceDir), projectSlug);
+            if (!lockedProject) return { action: null, reason: `Project not found: ${projectSlug}` };
 
-          if (!lockedProject) return { action: null, reason: `Project not found: ${projectSlug}` };
+            if (Object.values(lockedProject.workers).some(worker => Object.values(worker.levels)
+              .some(slots => slots?.some(slot => slot.issueId === next.issueId)))) {
+              return { action: null, code: QUEUE_REASON.RESERVED, reason: "Issue already has a worker reservation" };
+            }
 
-          const lockedRoleWorker = getRoleWorker(lockedProject, role);
+            const lockedRoleWorker = getRoleWorker(lockedProject, role);
 
-          reconcileSlots(lockedRoleWorker, levelMaxWorkers);
+            reconcileSlots(lockedRoleWorker, levelMaxWorkers);
 
-          if (
-            roleExecution === EXECUTION_MODE.SEQUENTIAL
-            && Object.entries(lockedProject.workers).some(([candidate, worker]) => candidate !== role && countActiveSlots(worker) > 0)
-          ) {
-            return { action: null, reason: "Sequential: other role active" };
-          }
+            if (
+              roleExecution === EXECUTION_MODE.SEQUENTIAL
+              && Object.entries(lockedProject.workers).some(([candidate, worker]) => candidate !== role && countActiveSlots(worker) > 0)
+            ) {
+              return { action: null, reason: "Sequential: other role active" };
+            }
 
-          const resolvedRole = resolvedConfig.roles[role];
+            const resolvedRole = resolvedConfig.roles[role];
 
-          if (!resolvedRole) return { action: null, reason: "Role is not configured" };
-          const pickup = planQueuePickup({
-            issue: lockedNext.issue,
-            localState: lockedNext.localState,
-            role,
-            roleConfig: resolvedRole,
-            worker: lockedRoleWorker,
-          });
+            if (!resolvedRole) return { action: null, reason: "Role is not configured" };
+            const pickup = planQueuePickup({
+              issue: lockedNext.issue,
+              localState: lockedNext.localState,
+              role,
+              roleConfig: resolvedRole,
+              worker: lockedRoleWorker,
+            });
 
-          if (pickup.kind === QUEUE_PLAN.BLOCKED) return { action: null, code: pickup.code, reason: pickup.reason };
+            if (pickup.kind === QUEUE_PLAN.BLOCKED) return { action: null, code: pickup.code, reason: pickup.reason };
 
-          if (dryRun) {
+            if (dryRun) {
+              return {
+                action: {
+                  project: project.name,
+                  projectSlug,
+                  issueId: lockedNext.issue.iid,
+                  issueTitle: lockedNext.issue.title,
+                  issueUrl: lockedNext.issue.web_url,
+                  role,
+                  level: pickup.level,
+                  sessionAction: pickup.sessionAction,
+                  dryRun: true,
+                },
+              };
+            }
+
+            if (!runCommand) throw new Error("runCommand is required for queue dispatch.");
+
+            const pickupTarget = workflow.states[lockedNext.localState.workflowState]?.on?.[WORKFLOW_EVENT.PICKUP]?.target;
+            const targetLabel = pickupTarget ? workflow.states[pickupTarget]?.label : undefined;
+
+            if (!targetLabel) throw new Error("Queue state has no configured PICKUP target.");
+            const dispatch = await dispatchTaskLocked({
+              workspaceDir,
+              roleExecution,
+              agentId,
+              project: lockedProject,
+              issueId: lockedNext.issue.iid,
+              issueTitle: lockedNext.issue.title,
+              issueDescription: lockedNext.issue.description ?? "",
+              issueUrl: lockedNext.issue.web_url,
+              role,
+              level: pickup.level,
+              fromLabel: lockedNext.label,
+              toLabel: targetLabel,
+              provider,
+              pluginConfig,
+              sessionKey,
+              runtime,
+              slotIndex: pickup.slotIndex,
+              instanceName,
+              runCommand,
+            });
+
             return {
               action: {
                 project: project.name,
@@ -144,61 +191,23 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
                 issueTitle: lockedNext.issue.title,
                 issueUrl: lockedNext.issue.web_url,
                 role,
-                level: pickup.level,
-                sessionAction: pickup.sessionAction,
-                announcement: `[DRY RUN] Would pick up #${lockedNext.issue.iid}`,
+                level: dispatch.level,
+                sessionAction: dispatch.sessionAction,
+                dryRun: false,
               },
             };
-          }
+          },
+        );
 
-          if (!runCommand) throw new Error("runCommand is required for queue dispatch.");
+        if (!claim.action) {
+          skipped.push({ role, issueId: candidateIssueId, code: claim.code, reason: claim.reason ?? "Issue claim changed" });
+          continue;
+        }
 
-          const targetLabel = getActiveLabel(workflow, role);
-          const dispatch = await dispatchTaskLocked({
-            workspaceDir,
-            roleExecution,
-            agentId,
-            project: lockedProject,
-            issueId: lockedNext.issue.iid,
-            issueTitle: lockedNext.issue.title,
-            issueDescription: lockedNext.issue.description ?? "",
-            issueUrl: lockedNext.issue.web_url,
-            role,
-            level: pickup.level,
-            fromLabel: lockedNext.label,
-            toLabel: targetLabel,
-            provider,
-            pluginConfig,
-            sessionKey,
-            runtime,
-            slotIndex: pickup.slotIndex,
-            instanceName,
-            runCommand,
-          });
-
-          return {
-            action: {
-              project: project.name,
-              projectSlug,
-              issueId: lockedNext.issue.iid,
-              issueTitle: lockedNext.issue.title,
-              issueUrl: lockedNext.issue.web_url,
-              role,
-              level: dispatch.level,
-              sessionAction: dispatch.sessionAction,
-              announcement: dispatch.announcement,
-            },
-          };
-        },
-      );
-
-      if (!claim.action) {
-        skipped.push({ role, issueId: candidateIssueId, code: claim.code, reason: claim.reason ?? "Issue claim changed" });
-        continue;
+        pickups.push(claim.action);
+        pickupCount++;
+        break; // One pickup per role per tick; capacity skips may examine later candidates.
       }
-
-      pickups.push(claim.action);
-      pickupCount++;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 

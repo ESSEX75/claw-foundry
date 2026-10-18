@@ -1,8 +1,5 @@
 /** Stable identifiers owned by pipeline orchestration and its audit trail. */
 
-/** Command used for the best-effort checkout refresh during completion. */
-export const PIPELINE_GIT_PULL_COMMAND = ["git", "pull"] as const;
-
 /** Events written by completion coordination and provider actions. */
 export const PIPELINE_AUDIT = {
   WARNING: "pipeline_warning",

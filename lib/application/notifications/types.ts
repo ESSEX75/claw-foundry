@@ -2,10 +2,10 @@
 
 import type { RunCommand } from "../../context.js";
 import type { NotificationChannel, REVIEW_POLICY,ReviewPolicy } from "../../domain/index.js";
+import type { WorkerSessionAction } from "../../domain/index.js";
 import type { MessageDeliveryOutcome, NotificationChannelRuntime } from "../../integrations/index.js";
 import type { ValueOf } from "../../types.js";
 import type { RouteConfig } from "../setup/index.js";
-import type { WORKER_SESSION_ACTION } from "../workers/const.js";
 import type { NOTIFICATION_BLOCKED, NOTIFICATION_EVENT, NOTIFICATION_MERGE_ACTOR } from "./const.js";
 
 /** Per-event-type toggle. All default to true — set to false to suppress. */
@@ -95,7 +95,7 @@ type WorkerStartEvent = NotificationTitledIssue & {
   /** Worker display name when available. */
   name?: string;
   /** Whether the worker session was created or resumed. */
-  sessionAction: ValueOf<typeof WORKER_SESSION_ACTION>;
+  sessionAction: WorkerSessionAction;
 };
 
 /** Worker completion notification, including optional created tasks. */

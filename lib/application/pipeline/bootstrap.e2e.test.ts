@@ -20,7 +20,7 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
 
   it("should inject project-specific instructions via extraSystemPrompt", async () => {
     h = await createTestHarness({ projectName: "my-app" });
-    h.provider.seedIssue({ iid: 1, title: "Add feature", labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 1, title: "Add feature", labels: ["To Do"] });
 
     // Write both default and project-specific prompts
     await h.writePrompt("developer", "# Default Developer\nGeneric instructions.");
@@ -52,7 +52,7 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
 
   it("should fall back to default instructions when no project override exists", async () => {
     h = await createTestHarness({ projectName: "other-app" });
-    h.provider.seedIssue({ iid: 2, title: "Fix bug", labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 2, title: "Fix bug", labels: ["To Do"] });
 
     // Only write default prompt — no project-specific
     await h.writePrompt("developer", "# Default Developer\nFollow coding standards.");
@@ -81,7 +81,7 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
 
   it("should inject scaffolded default instructions when no overrides exist", async () => {
     h = await createTestHarness({ projectName: "bare-app" });
-    h.provider.seedIssue({ iid: 3, title: "Chore", labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 3, title: "Chore", labels: ["To Do"] });
 
     // Don't write any custom prompts — scaffolds defaults
 
@@ -110,7 +110,7 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
 
   it("should resolve tester instructions independently from developer", async () => {
     h = await createTestHarness({ projectName: "multi-role" });
-    h.provider.seedIssue({ iid: 4, title: "Test thing", labels: ["To Test"] });
+    await h.seedManagedIssue({ iid: 4, title: "Test thing", labels: ["To Test"] });
 
     // Write project-specific for developer, default for tester
     await h.writePrompt("developer", "# Dev for multi-role\nSpecific dev rules.", "multi-role");
@@ -141,7 +141,7 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
 
   it("should handle project names with hyphens correctly", async () => {
     h = await createTestHarness({ projectName: "my-cool-project" });
-    h.provider.seedIssue({ iid: 5, title: "Hyphen test", labels: ["To Do"] });
+    await h.seedManagedIssue({ iid: 5, title: "Hyphen test", labels: ["To Do"] });
 
     await h.writePrompt(
       "developer",
@@ -172,7 +172,7 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
 
   it("should resolve architect instructions with project override", async () => {
     h = await createTestHarness({ projectName: "arch-proj" });
-    h.provider.seedIssue({ iid: 6, title: "Design API", labels: ["Planning"] });
+    await h.seedManagedIssue({ iid: 6, title: "Design API", labels: ["To Research"] });
 
     await h.writePrompt("architect", "# Default Architect\nGeneral design guidelines.");
     await h.writePrompt("architect", "# Arch Proj Architect\nUse event-driven architecture.", "arch-proj");
@@ -187,8 +187,8 @@ describe("E2E bootstrap — extraSystemPrompt injection", () => {
       issueUrl: "https://example.com/issues/6",
       role: "architect",
       level: "senior",
-      fromLabel: "Planning",
-      toLabel: "Planning",
+      fromLabel: "To Research",
+      toLabel: "Researching",
       provider: h.provider,
       runCommand: h.runCommand,
     });

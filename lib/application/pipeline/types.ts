@@ -2,7 +2,7 @@
 
 import type { RunCommand } from "../../context.js";
 import type {
-  ActiveIssueWorker, CompletionRule, IssueRuntimeState, NotificationEndpoint, Project, TransitionAction, WorkflowConfig, WorkflowPolicyRouting,
+  ActiveIssueWorker, CompletionRule, IssueCompletionReceipt, IssueRuntimeState, NotificationEndpoint, Project, TransitionAction, WorkflowConfig, WorkflowPolicyRouting,
 } from "../../domain/index.js";
 import type { Issue, IssueProvider } from "../../integrations/index.js";
 import type { NotificationCreatedTask, NotificationRuntime } from "../notifications/index.js";
@@ -35,22 +35,28 @@ export type CompletionPlan = {
 export type CompletionOutput = {
   /** Provider-visible label change. */
   labelTransition: string;
-  /** Human-readable completion summary. */
-  announcement: string;
+  /** Original worker summary, retained for adapter rendering. */
+  summary?: string;
+  /** Child issue links reported by the completing worker. */
+  createdTasks?: NotificationCreatedTask[];
+  /** Confirmed merge failure selecting the recovery destination. */
+  mergeFailure?: string;
   /** Description or label of the destination state. */
   nextState: string;
   /** URL of the detected or supplied pull request. */
   prUrl?: string;
   /** URL of the completed issue. */
   issueUrl?: string;
-  /** Whether the issue was closed during completion. */
+  /** Final committed issue closure, including previously closed issues. */
   issueClosed?: boolean;
-  /** Whether the issue was reopened during completion. */
+  /** Whether the processed lifecycle actions ended by reopening the issue. */
   issueReopened?: boolean;
 };
 
 /** Arguments for a transition while its caller holds the issue lock. */
 export type CommitTransitionInput = {
+  /** Exact completion identity written with transition, release and notification intents. */
+  completion?: IssueCompletionReceipt;
   /** Workspace containing the authoritative issue record. */
   workspaceDir: string;
   /** Project whose issue is transitioning. */
@@ -77,8 +83,6 @@ export type CommitTransitionInput = {
   routing?: WorkflowPolicyRouting;
   /** Policy-specific provider actions performed only after the state check. */
   beforeCommit?: () => Promise<void>;
-  /** Provider lifecycle actions performed after the visible label transition. */
-  afterLabel?: () => Promise<void>;
   /** Archive terminal state after its durable notification is handled. */
   archiveTerminal?: boolean;
 };
@@ -86,7 +90,7 @@ export type CommitTransitionInput = {
 /** Validated completion command and the capabilities needed to execute it. */
 export type CompletionInput = {
   /** Exact worker observed by finish-work, rechecked before provider effects. */
-  expectedWorker?: ActiveIssueWorker;
+  expectedWorker: ActiveIssueWorker;
   /** Workspace containing authoritative state. */
   workspaceDir: string;
   /** Canonical project identity. */
@@ -113,7 +117,7 @@ export type CompletionInput = {
   pluginConfig?: Record<string, unknown>;
   /** Plugin runtime for direct API access (avoids CLI subprocess timeouts) */
   runtime?: NotificationRuntime;
-  /** Workflow config (defaults to DEFAULT_WORKFLOW) */
+  /** Optional captured workflow; changes to this completion transition in fresh configuration are rejected. */
   workflow?: WorkflowConfig;
   /** Tasks created during this work session (e.g. architect implementation tasks) */
   createdTasks?: NotificationCreatedTask[];
@@ -127,6 +131,8 @@ export type CompletionInput = {
 
 /** Observations from completion provider actions, retained for rendering. */
 export type CompletionActions = {
+  /** Processed prefix retained when merge conflicts after an earlier lifecycle action. */
+  processedActions?: readonly TransitionAction[];
   /** Resolved pull request URL. */
   prUrl?: string;
   /** Whether the provider confirmed a merged PR. */

@@ -4,12 +4,13 @@ import type { RunCommand } from "../../../context.js";
 import { fetchGatewaySessions } from "../../../integrations/index.js";
 import { initializeWorkspaceFiles } from "../../../state/index.js";
 import type { NotificationRuntime } from "../../notifications/index.js";
-import { tick } from "../tick-runner.js";
-import type { HeartbeatTickResult } from "../types.js";
-import type { Agent, HeartbeatConfig, ServiceContext } from "./types.js";
+import type { HeartbeatConfig } from "../configuration/index.js";
+import type { HeartbeatRunInput, HeartbeatTickResult } from "../types.js";
+import type { Agent, ServiceContext } from "./types.js";
 
 /** Process each agent without letting one workspace failure suppress another.
  * @param agents - SDK-resolved agent/workspace pairs.
+ * @param tick - Composition-injected project maintenance coordinator.
  * @param config - Global pickup limit for this service tick.
  * @param pluginConfig - Project and notification policy settings.
  * @param logger - Agent-scoped failure diagnostics.
@@ -18,6 +19,7 @@ import type { Agent, HeartbeatConfig, ServiceContext } from "./types.js";
  */
 export async function processAllAgents(
   agents: Agent[],
+  tick: (input: HeartbeatRunInput) => Promise<HeartbeatTickResult>,
   config: HeartbeatConfig,
   pluginConfig: Record<string, unknown> | undefined,
   logger: ServiceContext["logger"],

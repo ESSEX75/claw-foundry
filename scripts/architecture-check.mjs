@@ -5,7 +5,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { checkApplicationDependencyDirection, checkSetupAdapterBoundary } from "./architecture-rules.ts";
+import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
 
 const root = process.cwd();
 const warnOnly = process.argv.includes("--warn-only");
@@ -112,6 +112,8 @@ async function findBoundaryViolations(files) {
     const content = stripComments(await readFile(file, "utf8"));
     const sourceLayer = layerForFile(file);
     const relativeSource = relative(file);
+    const aggregationViolation = checkApplicationAggregation(relativeSource, content);
+    if (aggregationViolation) violations.push({ file: relativeSource, import: "exports", rule: aggregationViolation });
 
     openClawToolContextImportCache.set(
       file,
@@ -171,8 +173,17 @@ function checkImportBoundary({ sourceFile, sourceLayer, targetFile, targetLayer,
   const directionViolation = checkApplicationDependencyDirection(sourceLayer, targetLayer);
   if (directionViolation) return directionViolation;
 
-  const adapterViolation = checkSetupAdapterBoundary(relative(sourceFile), targetLayer, specifier);
+  const adapterViolation = checkApplicationAdapterBoundary(relative(sourceFile), targetLayer, specifier);
   if (adapterViolation) return adapterViolation;
+
+  const cliViolation = checkCliApiBoundary(relative(sourceFile), targetRelative);
+  if (cliViolation) return cliViolation;
+
+  const applicationViolation = checkApplicationApiBoundary(relative(sourceFile), targetRelative);
+  if (applicationViolation) return applicationViolation;
+
+  const toolsViolation = checkToolsApiBoundary(relative(sourceFile), targetRelative);
+  if (toolsViolation) return toolsViolation;
 
   if (isLegacyRootImport(sourceFile, targetFile, specifier)) {
     return "legacy root package imports are forbidden after migration";
@@ -210,10 +221,6 @@ function checkImportBoundary({ sourceFile, sourceLayer, targetFile, targetLayer,
   if (sourceLayer === "application") {
     if (specifier === "openclaw/plugin-sdk/core" && importsOpenClawToolContext(sourceFile)) {
       return "application must not import OpenClaw tool context";
-    }
-
-    if (targetLayer === "cli" && targetRelative.split(path.sep).join("/").startsWith("lib/cli/commands/")) {
-      return "application must not import CLI command adapters";
     }
 
     if (targetRelative === "lib/context.ts" && importsOpenClawToolContext(sourceFile)) {

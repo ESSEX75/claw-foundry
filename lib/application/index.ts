@@ -4,6 +4,7 @@ export * from "./doctor/index.js";
 export * from "./heartbeat/index.js";
 export * from "./issue-runtime/index.js";
 export * from "./issues/index.js";
+export * from "./labels/index.js";
 export * from "./notifications/index.js";
 export * from "./pipeline/index.js";
 export * from "./projection/index.js";

@@ -1,11 +1,8 @@
-/** Exposes supported worker commands to callers. */
+/** Aggregates supported dispatch, completion and recovery APIs with worker-owned bootstrap/session policy. */
 
 export { loadWorkerBootstrapInstructions, resolveWorkerBootstrapIdentity } from "./bootstrap.js";
-export type { FinishWorkInput, FinishWorkResult } from "./completion/index.js";
-export { finishWork } from "./completion/index.js";
-export type { ResolveWorkerDeliveryInput, ResolveWorkerDeliveryResult } from "./delivery-recovery/index.js";
-export { reconcileUncertainDispatch, resolveWorkerDelivery } from "./delivery-recovery/index.js";
-export type { DispatchOpts, DispatchResult } from "./dispatch/index.js";
-export { dispatchTask, dispatchTaskLocked } from "./dispatch/index.js";
+export * from "./completion/index.js";
+export * from "./delivery-recovery/index.js";
+export * from "./dispatch/index.js";
 export { shouldClearSession } from "./session-budget.js";
 export type { WorkerBootstrapIdentity } from "./types.js";

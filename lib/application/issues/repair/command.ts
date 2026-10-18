@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 
 import { ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
 import { withIssueOrchestrationLock } from "../../../state/index.js";
-import { hasProjectWorkerSlot } from "../worker-slot.js";
+import { hasProjectWorkerSlot } from "../ownership/index.js";
 import { applyLocalSourceRepair, applyProviderSourceRepair, readRateLimit, setRepairIntegrity } from "./apply.js";
 import { auditRepair } from "./audit.js";
 import { REPAIR_EVENT, REPAIR_MODE, REPAIR_STATUS, REPAIR_WARNING } from "./const.js";

@@ -1,18 +1,9 @@
 /** Retains submitted summary context until acceptance, exact completion or explicit operator evidence confirms delivery. */
 
-import type { ActiveIssueWorker } from "../../domain/index.js";
+import { type ActiveIssueWorker, sameWorkerRun } from "../../domain/index.js";
 import { updateIssueRuntimeRecord } from "../../state/index.js";
 import { buildReviewSummaryReceipts, mergeReviewSummaryReceipts } from "./summary-receipts.js";
 import type { PrFeedback, ReviewIssueContext } from "./types.js";
-
-/** Compare the complete captured worker frame instead of a reusable session key alone.
- * @param actual - Worker from the current local snapshot.
- * @param expected - Worker selected for the original turn or completion.
- */
-function sameWorker(actual: ActiveIssueWorker | null, expected: ActiveIssueWorker): boolean {
-  return actual !== null && actual.role === expected.role && actual.level === expected.level && actual.slotIndex === expected.slotIndex
-    && actual.sessionKey === expected.sessionKey && actual.startedAt === expected.startedAt;
-}
 
 /** Persist submitted fingerprints without acknowledging them; clear stale pending context for summary-free turns.
  * @param context - Exact issue-store owner.
@@ -26,7 +17,7 @@ export async function stageReviewSummaryDelivery(context: ReviewIssueContext, is
   const receipts = buildReviewSummaryReceipts(feedback);
 
   await updateIssueRuntimeRecord(context.workspaceDir, context.projectSlug, issueId, previous => {
-    if (!previous || !sameWorker(previous.activeWorker, worker)
+    if (!previous || !sameWorkerRun(previous.activeWorker, worker)
       || (previous.activeWorker?.delivery && previous.activeWorker.delivery.operationId !== operationId)) {
       throw new Error("Worker changed before summary context could be retained.");
     }
@@ -48,7 +39,7 @@ export async function confirmReviewSummaryDelivery(context: ReviewIssueContext, 
     const pending = previous?.pendingReviewSummaryDelivery;
 
     if (!previous) throw new Error("Cannot confirm summary delivery for an uninitialized issue.");
-    if (!pending || pending.operationId !== operationId || !sameWorker(previous.activeWorker, pending.worker)
+    if (!pending || pending.operationId !== operationId || !sameWorkerRun(previous.activeWorker, pending.worker)
       || (previous.activeWorker?.delivery && previous.activeWorker.delivery.operationId !== operationId)) return previous;
 
     return { ...previous, processedReviewSummaries: mergeReviewSummaryReceipts(previous.processedReviewSummaries ?? [], pending.receipts),

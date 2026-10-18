@@ -3,24 +3,24 @@
 import type { Command } from "commander";
 
 import { DEVCLAW_PLUGIN_ID } from "../const.js";
-import type { PluginContext } from "../context.js";
-import { registerDoctorCommand } from "./commands/doctor-command.js";
-import { registerIssuesArchiveCommand } from "./commands/issues-archive-command.js";
-import { registerRepairIssueCommand } from "./commands/repair-issue-command.js";
-import { registerSetupCommand } from "./commands/setup-command.js";
-import { registerWorkerDeliveryCommand } from "./commands/worker-delivery-command.js";
+import { registerDoctorCommand } from "./commands/doctor/index.js";
+import { registerIssuesCommands } from "./commands/issues/index.js";
+import { registerRepairCommands } from "./commands/repair/index.js";
+import { registerSetupCommand } from "./commands/setup/index.js";
+import { registerWorkerDeliveryCommand } from "./commands/worker-delivery/index.js";
+import type { CliContext } from "./types.js";
 
 /** Register the plugin command group and its supported operations.
  * @param program - SDK-owned command parser.
  * @param ctx - Shared runtime dependencies supplied to command adapters.
  */
-export function registerCli(program: Command, ctx: PluginContext): void {
+export function registerCli(program: Command, ctx: CliContext): void {
   const devclaw = program
     .command(DEVCLAW_PLUGIN_ID)
     .description("DevClaw development pipeline tools");
 
-  registerRepairIssueCommand(devclaw, ctx);
-  registerIssuesArchiveCommand(devclaw, ctx);
+  registerRepairCommands(devclaw, ctx);
+  registerIssuesCommands(devclaw, ctx);
   registerSetupCommand(devclaw, ctx);
   registerDoctorCommand(devclaw, ctx);
   registerWorkerDeliveryCommand(devclaw, ctx);

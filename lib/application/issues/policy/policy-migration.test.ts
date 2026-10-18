@@ -54,6 +54,15 @@ describe("migrateIssuePolicies", () => {
       const result = await migrateIssuePolicies({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug, reviewPolicy: "agent", dryRun: true, runCommand: h.runCommand });
       assert.deepEqual(result.changed, []);
       assert.equal(result.skipped[0]?.reason, "closed");
+      const selected = await migrateIssuePolicies({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug,
+        reviewPolicy: "agent", workflowStates: ["finished"], includeClosed: true, dryRun: true, runCommand: h.runCommand });
+      assert.equal(selected.changed.length, 1);
+      const before = await readIssueStateStore(h.workspaceDir, h.project.slug);
+
+      await assert.rejects(migrateIssuePolicies({ workspaceDir: h.workspaceDir, projectSlug: h.project.slug,
+        reviewPolicy: "agent", workflowStates: ["finished", "typo"], runCommand: h.runCommand }), /Unknown configured workflow state "typo"/);
+      assert.deepEqual(await readIssueStateStore(h.workspaceDir, h.project.slug), before);
+      assert.equal(h.provider.calls.length, 0);
     } finally { await h.cleanup(); }
   });
   it("keeps dry-run local and provider state unchanged", async () => {

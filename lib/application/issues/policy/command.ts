@@ -8,7 +8,7 @@ import { type IssueRuntimeState, type Project, STATE_TYPE, type WorkflowConfig }
 import { createProvider, type IssueProvider } from "../../../integrations/index.js";
 import { loadConfig, readIssueStateStore, readProjects, updateIssueStateStore, withIssueOrchestrationLock } from "../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
-import { hasProjectWorkerSlot } from "../worker-slot.js";
+import { hasProjectWorkerSlot } from "../ownership/index.js";
 import { POLICY_EVENT, POLICY_SKIP_REASON } from "./const.js";
 import type { IssuePolicyMigrationChange, IssuePolicyMigrationResult, MigrationOptions, PolicyChangePlan } from "./types.js";
 
@@ -19,6 +19,11 @@ export async function migrateIssuePolicies(opts: MigrationOptions): Promise<Issu
   if (!opts.reviewPolicy && !opts.testPolicy) throw new Error("Policy migration requires reviewPolicy and/or testPolicy.");
   const project = await requireProject(opts.workspaceDir, opts.projectSlug);
   const config = await loadConfig(opts.workspaceDir, project.slug);
+
+  for (const state of opts.workflowStates ?? []) {
+    if (!Object.hasOwn(config.workflow.states, state)) throw new Error(`Unknown configured workflow state "${state}".`);
+  }
+
   const snapshot = await readIssueStateStore(opts.workspaceDir, project.slug);
   const selectedIds = opts.issueIds ? new Set(opts.issueIds.map(String)) : null;
   const selectedStates = opts.workflowStates ? new Set(opts.workflowStates) : null;

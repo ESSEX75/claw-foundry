@@ -28,6 +28,10 @@ local ownership views can represent an unconfirmed worker turn.
 
 ## Boundary Rules
 
+Projects own pure available-slot selection and sequential execution exclusions. Both
+preview planning and locked state reservation use these rules; slot references requiring
+reconciliation are never recycled merely because their active flag is false.
+
 - Do not import from `lib/application`, `lib/state`, `lib/integrations`,
   `lib/tools`, or `lib/cli`.
 - Do not perform IO.
@@ -67,3 +71,17 @@ Issue semantics own non-formal review-summary receipts and pending submitted con
 bound to an exact worker frame. These describe delivery evidence, never review resolution
 or provider-label authority. Application decides when external acceptance, completion
 or explicit operator evidence may confirm that pending context.
+
+Worker semantics expose exact run identity comparison (including start time); projects
+own the pure transformation of a verified released slot. Application owns the evidence
+authorizing release, and state owns conditional persistence.
+
+Issue semantics own completion receipts bound to the exact worker run and result. They describe a committed transition and cannot authorize another run.
+
+Workflow owns pure ordered lifecycle metadata resolution. Application supplies timestamps
+and successfully processed actions; provider observations never determine local closedAt.
+Completion receipts retain that processed sequence for accurate same-run replay.
+
+Workers also own the shared session-action registry and its derived type, used by dispatch and notifications without application implementation imports.
+
+Project slot semantics expose exact run and reservation comparisons alongside the shared released-slot transformation. Callers retain active, delivery-token and release authorization policy.

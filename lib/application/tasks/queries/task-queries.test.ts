@@ -5,8 +5,10 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { DEFAULT_WORKFLOW, ISSUE_PROVIDER, NOTIFICATION_CHANNEL } from "../../../domain/index.js";
-import { TestProvider } from "../../../testing/test-provider.js";
-import { createManagedTaskIssue, getManagedTaskStatus, listManagedTasks } from "../index.js";
+import { TestProvider } from "../../../testing/index.js";
+import { createManagedTaskIssue } from "../creation/index.js";
+import { getManagedTaskStatus } from "./get-task-status.js";
+import { listManagedTasks } from "./list-tasks.js";
 
 describe("task query use cases", () => {
   it("lists initialized managed issues from local state", async () => {

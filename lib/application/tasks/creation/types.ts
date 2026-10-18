@@ -46,8 +46,6 @@ export type CreatedManagedTask = {
   recovery?: CreationRecovery;
   /** Shared identifier for creation audit events. */
   auditCorrelationId: string;
-  /** Caller-facing status text appended to the announcement. */
-  announcementSuffix: string;
 };
 
 /** Input required to start or idempotently resume one managed issue creation. */
@@ -94,7 +92,7 @@ type CreationReconciliationContext = Pick<
 
 /** Bounds the amount of unfinished creation work inspected in one pass. */
 type CreationReconciliationLimit = {
-  /** Maximum number of unfinished operations inspected in this pass. */
+  /** Maximum number of runnable operations attempted in this pass. */
   maxItems: number;
 };
 
@@ -107,8 +105,10 @@ export type ReconcileManagedTaskCreationsResult = {
   ready: number[];
   /** Operation IDs still pending automatic recovery. */
   pending: string[];
-  /** Operation IDs requiring manual repair. */
+  /** Operation IDs requiring manual repair or an explicit correction of a permanent failure. */
   manual: string[];
+  /** Snapshot operation IDs waiting for automatic retry backoff, without consuming attempt budget. */
+  waiting: string[];
 };
 
 /** Recovery guidance for an unfinished creation operation. */
@@ -117,6 +117,4 @@ type CreationRecovery = {
   automatic: boolean;
   /** Earliest provider retry time. */
   nextAttemptAt?: string;
-  /** Operator guidance when a provider issue exists. */
-  repairHint?: string;
 };

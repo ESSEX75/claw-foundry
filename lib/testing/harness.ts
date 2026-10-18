@@ -13,7 +13,7 @@ import path from "node:path";
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 
-import { loadWorkerBootstrapInstructions, resolveWorkerBootstrapIdentity } from "../application/index.js";
+import { initializeIssueRuntimeState, loadWorkerBootstrapInstructions, resolveWorkerBootstrapIdentity } from "../application/index.js";
 import type { RunCommand } from "../context.js";
 import {
   DEFAULT_WORKFLOW,
@@ -21,11 +21,13 @@ import {
   NOTIFICATION_CHANNEL,
   type Project,
   type RoleWorkerState,
+  STATE_TYPE,
   type WorkflowConfig,
   type WorkflowLabel,
 } from "../domain/index.js";
-import { registerBootstrapHook } from "../integrations/index.js";
-import { DATA_DIR, type ProjectsData, readProjects } from "../state/index.js";
+import { type Issue, registerBootstrapHook } from "../integrations/index.js";
+import { DATA_DIR, loadConfig, type ProjectsData, readIssueStateStore, readProjects } from "../state/index.js";
+import { bindWorkerForTesting } from "./state-fixtures.js";
 import { TestProvider } from "./test-provider.js";
 
 /** Filename used by the test harness for the projects-registry fixture. */
@@ -183,6 +185,8 @@ export type TestHarness = {
   provider: TestProvider;
   /** Command interceptor — captures all runCommand calls. */
   commands: CommandInterceptor;
+  /** Explicitly seed provider content and managed runtime; existing runtime remains authoritative. */
+  seedManagedIssue(input: Partial<Issue> & { iid: number }): Promise<Issue>;
   /** Mock runCommand function for passing to functions that require it. */
   runCommand: RunCommand;
   /** The project channel ID used for test data. */
@@ -230,6 +234,8 @@ export type HarnessOptions = {
     sessionKey?: string | null;
     startTime?: string | null;
     previousLabel?: WorkflowLabel | null;
+    /** Last explicitly released issue, retained for session reuse scenarios. */
+    lastIssueId?: number | null;
   }>;
   /** Additional projects to seed. */
   extraProjects?: Record<string, Project>;
@@ -288,6 +294,7 @@ export async function createTestHarness(opts?: HarnessOptions): Promise<TestHarn
         sessionKey: overrides.sessionKey ?? null,
         startTime: overrides.startTime ?? null,
         previousLabel: overrides.previousLabel ?? null,
+        lastIssueId: overrides.lastIssueId,
       }];
       defaultWorkers[role] = rw;
     }
@@ -328,6 +335,31 @@ export async function createTestHarness(opts?: HarnessOptions): Promise<TestHarn
   return {
     workspaceDir,
     provider,
+    /** Seed both snapshots explicitly; provider-only tests keep using provider.seedIssue.
+     * @param input - Provider content and stable issue identity for the fixture.
+     */
+    async seedManagedIssue(input) {
+      const issue = provider.seedIssue(input);
+      const previous = (await readIssueStateStore(workspaceDir, project.slug)).issues[String(issue.iid)];
+
+      if (!previous) {
+        const config = await loadConfig(workspaceDir, project.slug);
+        const frame = Object.entries(project.workers).flatMap(([role, worker]) => Object.entries(worker.levels).flatMap(([level, slots]) =>
+          (slots ?? []).flatMap((slot, slotIndex) => slot.active && slot.issueId === issue.iid ? [{ role, level, slotIndex,
+            sessionKey: slot.sessionKey, startedAt: slot.startTime ?? "" }] : [])))[0];
+
+        await initializeIssueRuntimeState({ workspaceDir, project, issue, providerType: project.provider, workflow: opts?.workflow ?? config.workflow,
+          initializationRoles: config.roles, reviewPolicy: config.workflow.reviewPolicy, testPolicy: config.workflow.testPolicy,
+          notifyTarget: { channel: NOTIFICATION_CHANNEL.TELEGRAM, name: "primary" }, activeWorker: frame ?? null });
+        const initialized = (await readIssueStateStore(workspaceDir, project.slug)).issues[String(issue.iid)];
+
+        if (config.workflow.states[initialized.workflowState]?.type === STATE_TYPE.ACTIVE && !initialized.activeWorker) {
+          await bindWorkerForTesting(workspaceDir, project.slug, issue.iid);
+        }
+      }
+
+      return issue;
+    },
     commands: interceptor,
     runCommand: handler,
     channelId,

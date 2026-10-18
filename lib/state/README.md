@@ -85,6 +85,8 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 - Worker activation checks optional configured capacity and cross-role sequential
   exclusivity inside the same registry transaction that reserves the slot. Lingering
   active roles also block exclusivity, even if disabled in the current configuration.
+- Optional cross-project sequential execution is checked in the same registry transaction
+  as reservation; concurrent dispatches cannot both claim different projects.
 - Project queries and mutations accept only the canonical project slug; notification routing is resolved before entering state.
 - Canonical slugs use strict lowercase kebab-case and must match their registry key; display names never address files or registry entries.
 - The registry accepts only its current schema and performs no legacy field or identifier normalization.
@@ -101,6 +103,10 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 - Only `loadConfig` and resolved runtime selectors are public outside state; parsing details remain internal.
 
 ## Setup Files
+
+Project override scaffolding validates the slug and exclusively creates documentation;
+existing regular files are preserved. Non-file collisions and write failures propagate
+so application can report a committed registration with pending scaffolding.
 
 - Template loading is explicit and asynchronous; import-time filesystem reads are forbidden.
 - Initialization is create-only, while system instruction refresh and default reset are explicit capabilities.
@@ -134,3 +140,16 @@ this strict optional read, so symlinked or alternate path spellings share identi
 and survives slot release and runtime replacement. Only the same decision may be
 marked complete; a different submission may replace only a completed record.
 Corrupt or unreadable recovery evidence is an error, never an empty store.
+
+Active records may retain completion receipts bound to the exact worker run, result and committed destination. Application supplies these atomically with transition intents; persistence never infers completion from project slots or provider labels.
+
+Completion receipts validate their processed workflow action sequence. This preserves
+the lifecycle outcome of a recovered merge conflict independently of later configuration.
+
+Creation operations optionally retain a reconciliation-attempt count, distinct from
+provider submission attempts, so application scheduling can rotate retries durably.
+Creation readiness query APIs produce per-invocation snapshots only; callers must
+not reuse them to authorize a later mutation. Strict locked readiness reads remain available.
+
+SDK-owned OpenClaw agent directories are provisioned by integrations/agents. State
+continues to own only DevClaw workspace scaffolding, instructions and model YAML writes.

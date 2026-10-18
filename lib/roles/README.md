@@ -31,3 +31,6 @@ Tests stay beside implementation; constants and types stay with their capability
 The root entrypoint preserves the external roles API. Contracts live only in this README.
 
 Run `npm run check` and relevant role/configuration tests after changing this package.
+
+Selection also owns explicit/prepared assignment validation against the resolved enabled role.
+Queue and task lifecycle share this pure policy without depending on each other.

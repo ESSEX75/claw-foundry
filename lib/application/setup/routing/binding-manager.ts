@@ -6,8 +6,8 @@ import { CONFIG_RELOAD_MODE } from "../const.js";
 import type { SetupRuntime } from "../types.js";
 import { ROUTE_PEER_KIND } from "./const.js";
 import { isDirectDestination, matchesExactDestination } from "./route-matching.js";
-import { validateExactRoute } from "./route-validation.js";
-import type { RouteConfig } from "./types.js";
+import { inspectExactRoute } from "./route-validation.js";
+import type { RouteConfig, RouteDiagnostic } from "./types.js";
 
 /** Validate and apply a binding against the fresh writable configuration snapshot.
  * @param runtime - SDK configuration mutation transport.
@@ -43,14 +43,29 @@ export async function ensureChannelBinding(runtime: SetupRuntime, channel: strin
  * @param peerId - Exact destination peer.
  */
 export function planChannelBinding(config: RouteConfig, channel: string, agentId: string, accountId: string, peerId: string): void {
-  const binding = buildBinding(channel, agentId, accountId, peerId);
   const existing = (config.bindings ?? []).filter(entry => matchesExactDestination(entry, channel, accountId, peerId));
   const occupied = existing.find(entry => entry.agentId !== agentId);
 
   if (occupied) throw new Error(`${channel}/${accountId}/${peerId} is already bound to agent "${occupied.agentId}"`);
-  const bindings = existing.length ? config.bindings : [binding, ...(config.bindings ?? [])];
+  const diagnostics = inspectPlannedChannelBinding(config, channel, agentId, accountId, peerId);
 
-  validateExactRoute({ ...config, bindings }, agentId, channel, accountId.trim(), peerId.trim());
+  if (diagnostics.length > 0) throw new Error(diagnostics.map(diagnostic => `[${diagnostic.code}] ${diagnostic.message}`).join("\n"));
+}
+
+/** Inspect the same proposed exact binding used by planning without mutating the snapshot.
+ * Expected route refusals remain diagnostics so discovery can omit ineligible candidates.
+ * @param config - Current or proposed agent configuration.
+ * @param channel - Destination transport.
+ * @param agentId - Exact route owner.
+ * @param accountId - Explicit configured account identifier.
+ * @param peerId - Exact group, chat, or topic identifier.
+ */
+export function inspectPlannedChannelBinding(config: RouteConfig, channel: string, agentId: string, accountId: string, peerId: string): RouteDiagnostic[] {
+  const binding = buildBinding(channel, agentId, accountId, peerId);
+  const existing = (config.bindings ?? []).some(entry => matchesExactDestination(entry, channel, accountId, peerId));
+  const bindings = existing ? config.bindings : [binding, ...(config.bindings ?? [])];
+
+  return inspectExactRoute({ ...config, bindings }, agentId, channel, accountId.trim(), peerId.trim());
 }
 
 /** Construct an exact, normalized destination after checking required fields.

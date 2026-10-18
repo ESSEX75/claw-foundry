@@ -87,12 +87,15 @@ reviews-to-reactions applies to GitLab. Lower wire/API owners never depend on th
 
 | Capability | Responsibility |
 | --- | --- |
-| `agents` | Active SDK registry and SDK workspace resolution, including implicit defaults. |
+| `agents` | Active SDK registry, SDK resource resolution, explicit agent registration and directory provisioning. |
 | `sessions` | Complete inventory, metrics, canonical keys, confirmed model patch/deletion and one worker submission. |
 | `hooks` | SDK registration, mutable bootstrap resources and complete normalized attachment routes. |
 | `media` | Ordered path/MIME pairing and SDK MIME detection; no local persistence. |
 | `notifications` | One outbound submission with accepted/rejected/unknown outcomes. |
 | `scopes` | Optional CLI transport/evidence; application selects permissions and approval policy. |
+
+The agents API exposes its canonical `ConfiguredAgent` result type for read-only
+consumers, retaining inferred caller metadata without duplicating identity DTOs.
 
 - Session absence requires every advertised store to be read/validated; bounded recent lists never prove absence.
 - Unknown/stale token metrics remain unknown. Usage is fresh used tokens/capacity; sessions never prove local ownership.
@@ -113,3 +116,10 @@ Reusable cross-adapter scenarios and CLI fixtures belong to `lib/testing`; each 
 registers those scenarios from its own capability tests.
 Run architecture/logic review, `npm run arch:check:strict`, `npm run check`, `npm run build`,
 `npm run test` and `git diff --check` before committing; verify the bundle's ESM import.
+
+Agent provisioning owns OpenClaw resource layout and SDK-aware state-root resolution.
+Registration uses one fresh SDK config transaction with caller-selected reload policy,
+rejects existing identities and performs no filesystem effects. Directory provisioning
+is explicit, idempotent and never removes an agent after partial failure. Existing-agent
+setup resumes explicitly configured directory plans; implicit SDK resources remain host-managed.
+DevClaw workspace scaffolding and model YAML persistence remain state-owned.

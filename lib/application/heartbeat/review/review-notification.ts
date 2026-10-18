@@ -2,7 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { notify } from "../../notifications/index.js";
-import { resolveIssueNotificationEndpoint } from "../../notifications/resolve-endpoint.js";
+import { resolveIssueNotificationEndpoint } from "../../notifications/index.js";
 import { HEARTBEAT_AUDIT_EVENT } from "../const.js";
 import type { ReviewNotificationInput } from "./types.js";
 

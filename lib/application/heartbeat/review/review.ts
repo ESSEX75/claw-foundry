@@ -8,22 +8,24 @@
 
 import { log as auditLog } from "../../../audit.js";
 import {
-  ACTION,
+  REVIEW_CHECK,
   REVIEW_POLICY,
   REVIEW_ROUTING_FIELD,
+  type TransitionAction,
   WORKFLOW_EVENT,
 } from "../../../domain/index.js";
 import { PR_STATE } from "../../../integrations/index.js";
-import { planWorkflowEvent } from "../../pipeline/plan.js";
+import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../../pipeline/index.js";
+import { planWorkflowEvent } from "../../pipeline/index.js";
 import { observePrStatusWithReceipts } from "../../review/index.js";
-import { getHeartbeatCandidates } from "../local-candidates.js";
-import { transitionHeartbeatIssue } from "../transition-state.js";
+import { getHeartbeatCandidates } from "../issue-coordination/index.js";
+import { transitionHeartbeatIssue } from "../issue-coordination/index.js";
 import {
-  DEFAULT_REVIEW_GIT_PULL_TIMEOUT_MS, REVIEW_AUDIT_EVENT, REVIEW_GIT_PULL_COMMAND, REVIEW_OUTCOME,
+  DEFAULT_REVIEW_GIT_PULL_TIMEOUT_MS, REVIEW_AUDIT_EVENT, REVIEW_OUTCOME,
   REVIEW_TRANSITION_OWNER, REVIEW_TRANSITION_REASON,
 } from "./const.js";
 import { classifyReviewOutcome } from "./review-outcome.js";
-import type { ReviewPassInput } from "./types.js";
+import type { ReviewEffectsCapture, ReviewPassInput } from "./types.js";
 
 /**
  * Scan review-type states and transition issues whose PR check condition is met.
@@ -31,7 +33,6 @@ import type { ReviewPassInput } from "./types.js";
  * @param opts - Project workflow, provider, and callbacks invoked after committed transitions.
  */
 export async function reviewPass(opts: ReviewPassInput): Promise<number> {
-  const rc = opts.runCommand;
   const { workspaceDir, projectName, project, workflow, provider, repoPath,
     gitPullTimeoutMs = DEFAULT_REVIEW_GIT_PULL_TIMEOUT_MS, baseBranch, onMerge, onFeedback, onPrClosed } = opts;
   let transitions = 0;
@@ -56,7 +57,7 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
       const syncTransitionState = async (
         targetKey: string,
         targetLabel: string,
-        closedAt?: string | null,
+        actions: readonly TransitionAction[] = [],
         beforeCommit?: () => Promise<void>,
       ): Promise<boolean> => {
         return transitionHeartbeatIssue({
@@ -68,9 +69,14 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
           fromLabel: state.label,
           workflowState: targetKey,
           workflowLabel: targetLabel,
-          closedAt,
+          actions,
           owner: REVIEW_TRANSITION_OWNER.REVIEW,
-          beforeCommit,
+          beforeCommit: beforeCommit ?? (async () => {
+            const result = await executeTransitionEffects({ provider, issueId: issue.iid, actions, prUrl: status.url,
+              runCommand: opts.runCommand, repoPath, gitPullMs: gitPullTimeoutMs });
+
+            if (result.merge?.kind === MERGE_EFFECT_OUTCOME.CONFLICT) throw new Error(`Unresolved merge conflict: ${result.prUrl}`);
+          }),
           routing: { field: REVIEW_ROUTING_FIELD, value: REVIEW_POLICY.HUMAN },
         });
       };
@@ -108,7 +114,7 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
           const targetState = workflow.states[targetKey];
 
           if (targetState) {
-            if (!await syncTransitionState(targetKey, targetState.label)) continue;
+            if (!await syncTransitionState(targetKey, targetState.label, changesTransition.actions)) continue;
             await auditLog(workspaceDir, REVIEW_AUDIT_EVENT.TRANSITION, {
               project: projectName, issueId: issue.iid,
               from: state.label, to: targetState.label,
@@ -132,7 +138,7 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
           const targetState = workflow.states[targetKey];
 
           if (targetState) {
-            if (!await syncTransitionState(targetKey, targetState.label)) continue;
+            if (!await syncTransitionState(targetKey, targetState.label, conflictTransition.actions)) continue;
             await auditLog(workspaceDir, REVIEW_AUDIT_EVENT.TRANSITION, {
               project: projectName, issueId: issue.iid,
               from: state.label, to: targetState.label,
@@ -160,15 +166,15 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
             if (!await syncTransitionState(
               targetKey,
               targetState.label,
-              closedActions?.includes(ACTION.CLOSE_ISSUE) ? new Date().toISOString() : undefined,
+              closedActions,
               async () => {
-                for (const action of closedActions ?? []) {
-                  if (action === ACTION.CLOSE_ISSUE) {
-                    await provider.closeIssue(issue.iid);
-                  } else if (action === ACTION.REOPEN_ISSUE) {
-                    await provider.reopenIssue(issue.iid);
-                  }
-                }
+                const fresh = await provider.getPrStatus(issue.iid, status.url ?? undefined);
+
+                if (fresh.url !== status.url || fresh.state !== PR_STATE.CLOSED) throw new Error("Selected PR is no longer closed.");
+                const result = await executeTransitionEffects({ provider, issueId: issue.iid, actions: closedActions, prUrl: status.url,
+                  runCommand: opts.runCommand, repoPath, gitPullMs: gitPullTimeoutMs });
+
+                if (result.merge?.kind === MERGE_EFFECT_OUTCOME.CONFLICT) throw new Error(`Unresolved merge conflict: ${result.prUrl}`);
               },
             )) continue;
             await auditLog(workspaceDir, REVIEW_AUDIT_EVENT.TRANSITION, {
@@ -199,33 +205,28 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
       if (!targetState) continue;
 
       let mergeFailure: unknown;
-      let merged = false;
+      const effects: ReviewEffectsCapture = {};
       let transitioned: boolean;
 
       try {
-        transitioned = await syncTransitionState(targetKey, targetState.label, undefined, async () => {
-          for (const action of actions) {
-            switch (action) {
-              case ACTION.MERGE_PR:
-                if (status.state !== PR_STATE.MERGED) {
-                  try { await provider.mergePr(issue.iid); }
-                  catch (error) { mergeFailure = error; throw error; }
-                }
+        transitioned = await syncTransitionState(targetKey, targetState.label, actions, async () => {
+          const fresh = await provider.getPrStatus(issue.iid, status.url ?? undefined);
 
-                merged = true;
-                break;
-              case ACTION.GIT_PULL:
-                try { await rc([...REVIEW_GIT_PULL_COMMAND], { timeoutMs: gitPullTimeoutMs, cwd: repoPath }); }
-                catch { /* best effort */ }
+          if (fresh.url !== status.url) throw new Error("Selected PR changed before review transition.");
+          if (!fresh.url && baseBranch && await provider.isCommitOnBaseBranch(issue.iid, baseBranch)) fresh.state = PR_STATE.MERGED;
+          if (!state.check || classifyReviewOutcome(fresh, state.check, true, true).kind !== REVIEW_OUTCOME.APPROVED) {
+            throw new Error("PR no longer satisfies the configured review gate.");
+          }
 
-                break;
-              case ACTION.CLOSE_ISSUE:
-                await provider.closeIssue(issue.iid);
-                break;
-              case ACTION.REOPEN_ISSUE:
-                await provider.reopenIssue(issue.iid);
-                break;
-            }
+          effects.result = await executeTransitionEffects({
+            provider, issueId: issue.iid, actions, prUrl: status.url,
+            allowMissingPr: !fresh.url && fresh.state === PR_STATE.MERGED,
+            allowedMergeStates: state.check === REVIEW_CHECK.PR_MERGED ? [PR_STATE.MERGED] : [PR_STATE.APPROVED, PR_STATE.MERGED],
+            runCommand: opts.runCommand, repoPath, gitPullMs: gitPullTimeoutMs,
+          });
+          if (effects.result.merge?.kind === MERGE_EFFECT_OUTCOME.CONFLICT) {
+            mergeFailure = new Error(`Confirmed merge conflict: ${effects.result.prUrl}`);
+            throw mergeFailure;
           }
         });
       } catch (error) {
@@ -236,7 +237,13 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
         });
         const failed = planWorkflowEvent(workflow, state.label, WORKFLOW_EVENT.MERGE_FAILED);
 
-        if (failed && await syncTransitionState(failed.toState, failed.toLabel)) {
+        if (failed && await syncTransitionState(failed.toState, failed.toLabel,
+          [...(effects.result?.processedActions ?? []), ...failed.actions], async () => {
+            const result = await executeTransitionEffects({ provider, issueId: issue.iid, actions: failed.actions,
+              prUrl: effects.result?.prUrl, runCommand: opts.runCommand, repoPath, gitPullMs: gitPullTimeoutMs });
+
+            if (result.merge?.kind === MERGE_EFFECT_OUTCOME.CONFLICT) throw new Error(`Unresolved recovery merge conflict: ${result.prUrl}`);
+          })) {
           await auditLog(workspaceDir, REVIEW_AUDIT_EVENT.TRANSITION, {
             project: projectName, issueId: issue.iid, from: state.label,
             to: failed.toLabel, reason: REVIEW_TRANSITION_REASON.MERGE_FAILED,
@@ -248,7 +255,7 @@ export async function reviewPass(opts: ReviewPassInput): Promise<number> {
       }
 
       if (!transitioned) continue;
-      if (merged) onMerge?.(issue.iid, status.url, status.title, status.sourceBranch);
+      if (effects.result?.merge?.kind === MERGE_EFFECT_OUTCOME.MERGED) onMerge?.(issue.iid, status.url, status.title, status.sourceBranch);
 
       await auditLog(workspaceDir, REVIEW_AUDIT_EVENT.TRANSITION, {
         project: projectName,

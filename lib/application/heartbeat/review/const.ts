@@ -26,9 +26,6 @@ export const REVIEW_TRANSITION_REASON = {
   MERGE_FAILED: "merge_failed",
 } as const;
 
-/** Command used for the optional repository refresh after a merged PR. */
-export const REVIEW_GIT_PULL_COMMAND = ["git", "pull"] as const;
-
 /** Default timeout when review callers do not supply a git-pull budget. */
 export const DEFAULT_REVIEW_GIT_PULL_TIMEOUT_MS = 30_000;
 

@@ -151,14 +151,14 @@ export type TaskIssueProjectionView = {
   unexpectedManagedLabels: string[];
   /** Provider labels outside DevClaw ownership. */
   unmanagedLabels: string[];
-  /** Suggested explicit repair command when projection is inconsistent. */
-  repairHint: string | null;
+  /** Whether local integrity or observed label differences require explicit repair. */
+  needsRepair: boolean;
   /** Unconfirmed worker delivery requiring inspection before another dispatch. */
   workerDelivery?: WorkerDeliveryState;
   /** Terminal notification evidence, including blocked and unknown reasons. */
   pipelineNotification?: NonNullable<IssueRuntimeState["pipelineNotification"]>;
-  /** Operator guidance for a delivery that cannot be resolved from gateway evidence. */
-  deliveryHint?: string;
+  /** Exact worker session associated with unresolved delivery evidence. */
+  workerSessionKey?: string | null;
 };
 
 /** Provider issue identity enriched with local-state diagnostics. */

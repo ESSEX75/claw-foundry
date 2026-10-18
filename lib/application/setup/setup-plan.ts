@@ -1,16 +1,16 @@
 /** Resolves setup targets, route validation, and model changes without side effects. */
 
-import { findConfiguredAgent } from "../../integrations/index.js";
-import { loadConfig } from "../../state/index.js";
-import { getAgentId, getAgentWorkspacePath, resolveWorkspacePath } from "./agents/index.js";
+import { findConfiguredAgent, resolveNewAgentResources } from "../../integrations/index.js";
+import { getAgentId, resolveWorkspacePath } from "./agents/index.js";
 import { SETUP_OPERATION, UNKNOWN_AGENT_ID } from "./const.js";
+import { resolveSetupModels } from "./model-configuration.js";
 import { planChannelBinding } from "./routing/index.js";
-import type { ModelConfig, SetupOpts, SetupResult } from "./types.js";
+import type { SetupOpts, SetupResult } from "./types.js";
 
 /** Resolve a validated setup plan; performs reads only and never invokes command transport.
  * @param opts - Explicit target and requested operation.
  */
-export async function planSetup(opts: SetupOpts): Promise<SetupResult> {
+export async function planSetup(opts: Omit<SetupOpts, "runCommand">): Promise<SetupResult> {
   const fileOperations = [opts.ejectDefaults, opts.resetDefaults, opts.refreshInstructions].filter(Boolean).length;
 
   if (fileOperations > 1) throw new Error("Choose only one defaults or instruction operation.");
@@ -21,7 +21,7 @@ export async function planSetup(opts: SetupOpts): Promise<SetupResult> {
 
   const agentCreated = Boolean(opts.newAgentName);
   const agentId = opts.newAgentName ? getAgentId(opts.newAgentName) : opts.agentId ?? UNKNOWN_AGENT_ID;
-  const workspacePath = opts.newAgentName ? getAgentWorkspacePath(agentId)
+  const workspacePath = opts.newAgentName ? (await resolveNewAgentResources(agentId)).workspacePath
     : opts.workspacePath ?? (opts.agentId ? await resolveWorkspacePath(opts.runtime, opts.agentId) : undefined);
 
   if (!workspacePath) throw new Error("Setup requires either newAgentName, agentId, or workspacePath");
@@ -51,7 +51,7 @@ export async function planSetup(opts: SetupOpts): Promise<SetupResult> {
   }
 
   // File recovery must remain available even when the existing workflow is invalid.
-  const models = fileOperations ? {} : await resolveModels(workspacePath, opts.models);
+  const models = fileOperations ? {} : await resolveSetupModels(workspacePath, opts.models);
   const plannedChanges = fileOperations
     ? [opts.resetDefaults ? "Reset packaged defaults with backups" : opts.refreshInstructions ? "Refresh system instructions with backups" : "Create missing packaged defaults"]
     : [
@@ -71,31 +71,4 @@ export async function planSetup(opts: SetupOpts): Promise<SetupResult> {
   };
 
   return result;
-}
-
-/** Resolve custom and built-in levels and reject overrides outside the configured value set.
- * @param workspacePath - Workspace containing the authoritative model configuration.
- * @param overrides - Only explicitly requested model assignments.
- */
-async function resolveModels(workspacePath: string, overrides: SetupOpts["models"]): Promise<ModelConfig> {
-  const resolved = await loadConfig(workspacePath);
-  const models: ModelConfig = {};
-
-  for (const [role, config] of Object.entries(resolved.roles)) {
-    models[role] = Object.fromEntries(Object.entries(config.levels).map(([level, definition]) => [level, definition.model]));
-  }
-
-  for (const [role, levels] of Object.entries(overrides ?? {})) {
-    for (const [level, model] of Object.entries(levels)) {
-      if (!Object.hasOwn(resolved.roles, role) || !Object.hasOwn(resolved.roles[role].levels, level)) {
-        throw new Error(`Unknown configured model level: ${role}.${level}`);
-      }
-
-      if (!resolved.roles[role].enabled) throw new Error(`Disabled configured role: ${role}`);
-      if (!model?.trim()) throw new Error(`Empty model for ${role}.${level}`);
-      models[role][level] = model;
-    }
-  }
-
-  return models;
 }

@@ -6,6 +6,7 @@
  * - createTestHarness: Scaffolds temp workspace + mock runCommand
  */
 
+export { completeWorkerForTesting } from "./completion-fixture.js";
 export {
   type BootstrapResult,
   type CapturedCommand,
@@ -20,9 +21,11 @@ export { registerIssueIdentityTests } from "./provider-identity-scenarios.js";
 export { createPullRequestFixture, createPullRequestTransport, registerPullRequestSelectionTests } from "./provider-request-scenarios.js";
 export { createSetupRuntime } from "./setup-runtime.js";
 export {
+  bindWorkerForTesting,
   createEmptyIssueStateStoreForTesting,
   replaceIssueArchiveStoreForTesting,
   replaceIssueStateStoreForTesting,
+  seedIssueRuntimeState,
 } from "./state-fixtures.js";
 export { TestProvider } from "./test-provider.js";
 export type { ProviderCall } from "./types.js";

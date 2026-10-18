@@ -11,15 +11,5 @@ export { readIssueStateStore, updateIssueStateStore } from "./active/index.js";
 export type { IssueArchiveStore } from "./archive/index.js";
 export { applyArchiveRetention, archiveIssueState, readIssueArchiveStore, resetIssueStores, updateIssueArchiveStore } from "./archive/index.js";
 export { PIPELINE_NOTIFICATION_ATTEMPT_LEASE_MS } from "./const.js";
-export type {
-  IssueCreationFailure,
-  IssueCreationOperation,
-} from "./creation/index.js";
-export {
-  isIssueCreationReady,
-  newIssueCreationIdentity,
-  readIssueCreationStore,
-  updateIssueCreationStore,
-  withIssueCreationLock,
-} from "./creation/index.js";
+export * from "./creation/index.js";
 export { withIssueOrchestrationLock } from "./orchestration/index.js";

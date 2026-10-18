@@ -1,7 +1,7 @@
 /** Coordinates read-only worker diagnosis and optional remedies across configured roles. */
 
 import { getConfiguredRoleIds } from "../../../state/index.js";
-import { HEALTH_ISSUE_SEVERITY, HEALTH_ISSUE_TYPE } from "./const.js";
+import { healthInspectionFailure } from "./inspection-failure.js";
 import type { HealthFix, HealthPassInput } from "./types.js";
 import { checkWorkerHealth } from "./worker-slot-health.js";
 
@@ -27,27 +27,20 @@ export async function performHealthPass(input: HealthPassInput): Promise<HealthF
   const collect = async (role: string, run: () => Promise<HealthFix[]>): Promise<void> => {
     try { findings.push(...await run()); }
     catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-
-      findings.push({
-        issue: {
-          type: HEALTH_ISSUE_TYPE.INSPECTION_FAILED,
-          severity: HEALTH_ISSUE_SEVERITY.CRITICAL,
-          project: project.name, projectSlug, role, message,
-        },
-        fixed: false,
-        error: message,
-      });
+      findings.push(healthInspectionFailure(project, role, error));
     }
   };
 
-  for (const role of getConfiguredRoleIds(resolvedConfig)) {
+  const roles = new Set([...getConfiguredRoleIds(resolvedConfig, true), ...Object.keys(project.workers)]);
+
+  for (const role of roles) {
     // Check worker health (session liveness, label consistency, etc)
     await collect(role, () => checkWorkerHealth({
       workspaceDir,
       projectSlug,
       project,
       role,
+      roleEnabled: resolvedConfig.roles[role]?.enabled === true,
       sessions,
       autoFix,
       provider,

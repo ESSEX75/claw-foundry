@@ -1,6 +1,6 @@
 /** Interprets provider labels only for a previously absent runtime record. */
 
-import { findStateKeyByLabel, getStateLabels, type IssueRuntimeState, REVIEW_POLICY, ROUTING_LABELS, TEST_POLICY } from "../../domain/index.js";
+import { findStateKeyByLabel, getStateLabels, type IssueRuntimeState, resolveReviewRouting, resolveTestRouting, REVIEW_POLICY, TEST_POLICY } from "../../domain/index.js";
 import { updateIssueRuntimeRecord } from "../../state/index.js";
 import { buildInitialIssueRuntimeState } from "./creation.js";
 import type { IssueStateInitializeInput } from "./types.js";
@@ -25,15 +25,8 @@ function initializeRuntimeFromProjection(
   }
 
   const assignment = assignments[0];
-  const reviewPolicies = [
-    ...(labels.has(ROUTING_LABELS.REVIEW_HUMAN) ? [REVIEW_POLICY.HUMAN] : []),
-    ...(labels.has(ROUTING_LABELS.REVIEW_AGENT) ? [REVIEW_POLICY.AGENT] : []),
-    ...(labels.has(ROUTING_LABELS.REVIEW_SKIP) ? [REVIEW_POLICY.SKIP] : []),
-  ];
-  const testPolicies = [
-    ...(labels.has(ROUTING_LABELS.TEST_AGENT) ? [TEST_POLICY.AGENT] : []),
-    ...(labels.has(ROUTING_LABELS.TEST_SKIP) ? [TEST_POLICY.SKIP] : []),
-  ];
+  const reviewPolicies = Object.values(REVIEW_POLICY).filter(policy => labels.has(resolveReviewRouting(policy)));
+  const testPolicies = Object.values(TEST_POLICY).filter(policy => labels.has(resolveTestRouting(policy)));
 
   if ((input.reviewPolicy === undefined && reviewPolicies.length > 1)
     || (input.testPolicy === undefined && testPolicies.length > 1)) {

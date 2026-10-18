@@ -24,6 +24,9 @@ by candidate selection and transition rechecks.
 Workflow owns policy-label prefixes shared by projection rendering, repair parsing,
 and application label effects. Issue semantics own the diagnostic used to preserve
 a non-OK integrity status when its original diagnostic owner is unknown.
+Review/test routing builders share exhaustive domain mappings with catalog rendering
+and explicit projection import. Test-phase inspection means any queue or active state
+of the built-in tester, independently of policy; custom role names imply no QA capability.
 
 Worker slot and active issue records share a durable delivery marker so both
 local ownership views can represent an unconfirmed worker turn.

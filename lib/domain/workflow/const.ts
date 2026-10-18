@@ -2,6 +2,8 @@
  * Defines canonical built-in workflow identifiers and provider-visible metadata.
  */
 
+import type { ValueOf } from "../../types.js";
+
 /** Known internal workflow state keys used across the pipeline. */
 export const WORKFLOW_STATE_KEYS = {
   /** Initial state where requirements are being formulated. */
@@ -255,3 +257,29 @@ export const REVIEW_ROUTING_FIELD = "reviewPolicy";
 
 /** Saved test-policy field used for local workflow selection and rechecks. */
 export const TEST_ROUTING_FIELD = "testPolicy";
+
+/** Provider-label catalog for every supported workflow routing policy. */
+export const STEP_ROUTING_LABELS = Object.values(ROUTING_LABELS);
+
+/** Exhaustive review-policy projection shared by rendering and explicit import. */
+export const REVIEW_ROUTING_LABELS: Readonly<Record<ValueOf<typeof REVIEW_POLICY>, ValueOf<typeof ROUTING_LABELS>>> = {
+  [REVIEW_POLICY.HUMAN]: ROUTING_LABELS.REVIEW_HUMAN,
+  [REVIEW_POLICY.AGENT]: ROUTING_LABELS.REVIEW_AGENT,
+  [REVIEW_POLICY.SKIP]: ROUTING_LABELS.REVIEW_SKIP,
+};
+
+/** Exhaustive test-policy projection shared by rendering and explicit import. */
+export const TEST_ROUTING_LABELS: Readonly<Record<ValueOf<typeof TEST_POLICY>, ValueOf<typeof ROUTING_LABELS>>> = {
+  [TEST_POLICY.SKIP]: ROUTING_LABELS.TEST_SKIP,
+  [TEST_POLICY.AGENT]: ROUTING_LABELS.TEST_AGENT,
+};
+
+/** Incoming events identifying a configured feedback destination. */
+export const FEEDBACK_EVENTS: ReadonlySet<ValueOf<typeof WORKFLOW_EVENT>> = new Set([
+  WORKFLOW_EVENT.CHANGES_REQUESTED,
+  WORKFLOW_EVENT.MERGE_CONFLICT,
+  WORKFLOW_EVENT.MERGE_FAILED,
+  WORKFLOW_EVENT.REJECT,
+  WORKFLOW_EVENT.FAIL,
+  WORKFLOW_EVENT.PR_CLOSED,
+]);

@@ -11,7 +11,7 @@ import { z } from "zod";
 
 import { getIssueArchiveStatus, resolveProject } from "../../../application/index.js";
 import type { PluginContext } from "../../../context.js";
-import { DEFAULT_ROLES, EXECUTION_MODE, REVIEW_POLICY, STATE_TYPE } from "../../../domain/index.js";
+import { EXECUTION_MODE, hasTestPhase, REVIEW_POLICY } from "../../../domain/index.js";
 import { loadInstanceName } from "../../../instance.js";
 import { getLevelMaxWorkers, loadConfig } from "../../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../../context/index.js";
@@ -83,13 +83,10 @@ export function createProjectStatusTool(ctx: PluginContext): OpenClawPluginToolF
         workers[role] = { levelMaxWorkers, activeSlots, levels };
       }
 
-      const hasTestPhase = Object.values(workflow.states).some(
-        (s) => s.role === DEFAULT_ROLES.TESTER && (s.type === STATE_TYPE.QUEUE || s.type === STATE_TYPE.ACTIVE),
-      );
       const workflowSummary = {
         reviewPolicy: workflow.reviewPolicy ?? REVIEW_POLICY.HUMAN,
         roleExecution: workflow.roleExecution ?? EXECUTION_MODE.PARALLEL,
-        testPhase: hasTestPhase,
+        testPhase: hasTestPhase(workflow),
         stateFlow: Object.entries(workflow.states)
           .map(([, s]) => s.label)
           .join(" → "),

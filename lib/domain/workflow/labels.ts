@@ -5,22 +5,13 @@
 import {
   DEFAULT_ROLE_LABEL_COLOR,
   DEFAULT_ROLES,
-  REVIEW_POLICY,
+  REVIEW_ROUTING_LABELS,
   ROLE_LABEL_COLORS,
-  ROUTING_LABELS,
   STEP_ROUTING_COLOR,
+  STEP_ROUTING_LABELS,
+  TEST_ROUTING_LABELS,
 } from "./const.js";
-import type { LabelDefinition, ReviewPolicy, RoleDefinition, RoutingLabel } from "./types.js";
-
-/** Known step routing labels (created on the provider during project registration). */
-const STEP_ROUTING_LABELS: readonly RoutingLabel[] = Object.values(ROUTING_LABELS);
-
-/** Exhaustive provider-label mapping for supported review policies. */
-const REVIEW_ROUTING_LABELS: Readonly<Record<ReviewPolicy, RoutingLabel>> = {
-  [REVIEW_POLICY.HUMAN]: ROUTING_LABELS.REVIEW_HUMAN,
-  [REVIEW_POLICY.AGENT]: ROUTING_LABELS.REVIEW_AGENT,
-  [REVIEW_POLICY.SKIP]: ROUTING_LABELS.REVIEW_SKIP,
-};
+import type { LabelDefinition, ReviewPolicy, RoleDefinition, RoutingLabel, TestPolicy } from "./types.js";
 
 /**
  * Determine the review routing label for an issue from its resolved policy.
@@ -29,6 +20,13 @@ const REVIEW_ROUTING_LABELS: Readonly<Record<ReviewPolicy, RoutingLabel>> = {
  */
 export function resolveReviewRouting(policy: ReviewPolicy): RoutingLabel {
   return REVIEW_ROUTING_LABELS[policy];
+}
+
+/** Resolve the provider-facing label for a saved test policy.
+ * @param policy - Validated test policy selected for the issue.
+ */
+export function resolveTestRouting(policy: TestPolicy): RoutingLabel {
+  return TEST_ROUTING_LABELS[policy];
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   getActiveLabel,
   getCompletionRule,
   getRevertLabel,
+  hasTestPhase,
   STATE_TYPE,
   WORKFLOW_EVENT,
   WORKFLOW_STATE_COLORS,
@@ -25,6 +26,23 @@ import {
   type WorkflowLabel,
   type WorkflowStateKey,
 } from "./index.js";
+
+describe("built-in test phase", () => {
+  it("recognizes tester queues and active states without inferring custom QA roles", () => {
+    for (const type of [STATE_TYPE.QUEUE, STATE_TYPE.ACTIVE]) {
+      const workflow: WorkflowConfig = { initial: "qa", states: {
+        qa: { type, role: "tester", label: "QA", color: "#111111" },
+      } };
+
+      assert.equal(hasTestPhase(workflow), true);
+      workflow.states.qa = { type, role: "security", label: "QA", color: "#111111" };
+      assert.equal(hasTestPhase(workflow), false);
+    }
+    assert.equal(hasTestPhase({ initial: "hold", states: {
+      hold: { type: STATE_TYPE.HOLD, label: "Hold", color: "#111111" },
+    } }), false);
+  });
+});
 
 describe("getRevertLabel", () => {
   it("matches an object-form PICKUP transition target", () => {

@@ -2,9 +2,9 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { REVIEW_POLICY, STATE_TYPE } from "./const.js";
+import { REVIEW_POLICY, STATE_TYPE, TEST_POLICY } from "./const.js";
 import { DEFAULT_WORKFLOW } from "./defaults.js";
-import { resolveReviewRouting } from "./labels.js";
+import { resolveReviewRouting, resolveTestRouting } from "./labels.js";
 import { getInitialStateLabel } from "./queries.js";
 import type { WorkflowConfig } from "./types.js";
 
@@ -13,6 +13,8 @@ describe("workflow routing labels", () => {
     assert.equal(resolveReviewRouting(REVIEW_POLICY.HUMAN), "review:human");
     assert.equal(resolveReviewRouting(REVIEW_POLICY.AGENT), "review:agent");
     assert.equal(resolveReviewRouting(REVIEW_POLICY.SKIP), "review:skip");
+    assert.equal(resolveTestRouting(TEST_POLICY.SKIP), "test:skip");
+    assert.equal(resolveTestRouting(TEST_POLICY.AGENT), "test:agent");
   });
   it("selects configured initial labels for built-in and custom hold states", () => {
     const custom: WorkflowConfig = { initial: "backlog", states: {

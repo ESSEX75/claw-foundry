@@ -39,6 +39,7 @@ export {
   getRoleLabels,
   getStepRoutingLabels,
   resolveReviewRouting,
+  resolveTestRouting,
 } from "./labels.js";
 export { resolveIssueClosedAt } from "./lifecycle.js";
 export {

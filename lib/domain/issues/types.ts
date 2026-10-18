@@ -9,8 +9,6 @@ import type { ReviewPolicy, TestPolicy, TransitionAction } from "../workflow/ind
 import {
   ATTACHMENT_DISPOSITION,
   ISSUE_ARCHIVE_REASON,
-  ISSUE_CREATION_ERROR,
-  ISSUE_CREATION_STATUS,
   ISSUE_INTEGRITY_STATUS,
   ISSUE_PROVIDER,
   PIPELINE_NOTIFICATION_STATUS,
@@ -27,12 +25,6 @@ export type IssueArchiveReason = ValueOf<typeof ISSUE_ARCHIVE_REASON>;
 
 /** Retention state of files associated with an archived issue. */
 export type AttachmentDisposition = ValueOf<typeof ATTACHMENT_DISPOSITION>;
-
-/** Durable managed-issue creation stage. */
-export type IssueCreationStatus = ValueOf<typeof ISSUE_CREATION_STATUS>;
-
-/** Stable managed-issue creation failure code. */
-export type IssueCreationErrorCode = ValueOf<typeof ISSUE_CREATION_ERROR>;
 
 /** Consecutive provider-missing confirmations retained between heartbeat ticks. */
 export type ProviderMissingState = {

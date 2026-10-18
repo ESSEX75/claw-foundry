@@ -1,7 +1,7 @@
 /** Classifies persisted creation recovery eligibility without consuming the mutation budget. */
 
-import { ISSUE_CREATION_STATUS } from "../../../domain/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
+import { ISSUE_CREATION_STATUS } from "../../../state/index.js";
 import type { ValueOf } from "../../../types.js";
 import { CREATION_RECOVERY_ELIGIBILITY } from "./const.js";
 

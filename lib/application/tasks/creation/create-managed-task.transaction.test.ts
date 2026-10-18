@@ -8,12 +8,10 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { DEFAULT_WORKFLOW, ISSUE_CREATION_STATUS, ISSUE_PROVIDER, NOTIFICATION_CHANNEL } from "../../../domain/index.js";
+import { DEFAULT_WORKFLOW, ISSUE_PROVIDER, NOTIFICATION_CHANNEL } from "../../../domain/index.js";
 import { PROVIDER_OPERATION_ERROR, createProvider, type CreateIssueInput, type Issue, ProviderOperationError } from "../../../integrations/index.js";
 import { extractIssueCreationMarker, extractIssueMetadata, renderIssueCreationMarker, renderIssueMetadata } from "../../../projection/index.js";
-
-
-import { readIssueCreationStore, readIssueStateStore, updateIssueCreationStore } from "../../../state/index.js";
+import { ISSUE_CREATION_STATUS, readIssueCreationStore, readIssueStateStore, updateIssueCreationStore } from "../../../state/index.js";
 import { TestProvider } from "../../../testing/test-provider.js";
 import { seedIssueRuntimeState } from "../../../testing/index.js";
 import { findNextIssueForRole } from "../../queue/scan.js";

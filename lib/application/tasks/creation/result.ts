@@ -2,8 +2,8 @@
  * Converts durable creation state into the command's stable caller result.
  */
 
-import { ISSUE_CREATION_STATUS } from "../../../domain/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
+import { ISSUE_CREATION_STATUS } from "../../../state/index.js";
 import { CREATION_RESULT_INTEGRITY, CREATION_RESULT_STATUS } from "./const.js";
 import type { CreatedManagedTask } from "./types.js";
 

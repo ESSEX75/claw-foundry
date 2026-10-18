@@ -4,14 +4,8 @@
 
 import { z } from "zod";
 
-import {
-  ISSUE_CREATION_ERROR,
-  ISSUE_CREATION_STATUS,
-  ISSUE_PROVIDER,
-  NOTIFICATION_CHANNEL,
-  REVIEW_POLICY,
-  TEST_POLICY,
-} from "../../../domain/index.js";
+import { ISSUE_PROVIDER, NOTIFICATION_CHANNEL, REVIEW_POLICY, TEST_POLICY } from "../../../domain/index.js";
+import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "./const.js";
 import type { IssueCreationStore } from "./types.js";
 
 /** Strict schema for the immutable input captured by a creation operation. */

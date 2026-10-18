@@ -2,9 +2,8 @@
  * Persists creation checkpoints and validates durable status transitions.
  */
 
-import { ISSUE_CREATION_STATUS, type IssueCreationStatus } from "../../../domain/index.js";
-import type { IssueCreationFailure, IssueCreationOperation } from "../../../state/index.js";
-import { updateIssueCreationStore } from "../../../state/index.js";
+import type { IssueCreationFailure, IssueCreationOperation, IssueCreationStatus } from "../../../state/index.js";
+import { ISSUE_CREATION_STATUS, updateIssueCreationStore } from "../../../state/index.js";
 import { creationAudit } from "./audit.js";
 import { CREATION_EVENT } from "./const.js";
 import type { CreateManagedTaskInput } from "./types.js";

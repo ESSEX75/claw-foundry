@@ -10,6 +10,8 @@ CLI state.
 Domain may define the semantic issue and project records used by persistence,
 but store envelopes and resumable operation records belong to
 `lib/state`.
+Creation-operation stages and failure identifiers belong to `state/issues/creation`
+alongside their persisted operation contract; they are not issue workflow states.
 
 Package ownership is explicit: `notifications` owns messaging endpoints and
 notification routing labels, `issues` owns provider IDs and issue ownership,

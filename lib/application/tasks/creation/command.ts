@@ -4,10 +4,10 @@
 
 import { createHash } from "node:crypto";
 
-import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, REVIEW_POLICY, STATE_TYPE, TEST_POLICY, type WorkflowConfig } from "../../../domain/index.js";
+import { REVIEW_POLICY, STATE_TYPE, TEST_POLICY, type WorkflowConfig } from "../../../domain/index.js";
 import { expectedManagedLabels, stripManagedIssueBody } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
-import { newIssueCreationIdentity, updateIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
+import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, newIssueCreationIdentity, updateIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
 import { buildInitialIssueRuntimeState } from "../../issue-runtime/index.js";
 import { creationAudit } from "./audit.js";
 import { CREATION_EVENT, CREATION_PAYLOAD_HASH, CREATION_STEPS } from "./const.js";

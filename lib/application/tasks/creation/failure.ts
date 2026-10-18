@@ -2,9 +2,9 @@
  * Classifies provider create failures without guessing ambiguous mutation outcomes.
  */
 
-import { ISSUE_CREATION_ERROR } from "../../../domain/index.js";
 import { isProviderOperationError, PROVIDER_OPERATION_ERROR } from "../../../integrations/index.js";
 import type { IssueCreationFailure } from "../../../state/index.js";
+import { ISSUE_CREATION_ERROR } from "../../../state/index.js";
 
 /**
  * Map a provider mutation failure to a durable recovery decision.

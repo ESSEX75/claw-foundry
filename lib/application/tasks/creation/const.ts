@@ -1,6 +1,7 @@
 /** Names of durable checkpoints in the managed-task creation saga. */
 
-import { ISSUE_CREATION_STATUS, ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
+import { ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
+import { ISSUE_CREATION_STATUS } from "../../../state/index.js";
 
 /** Durable checkpoints persisted in each creation operation. */
 export const CREATION_STEPS = {

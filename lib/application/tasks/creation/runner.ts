@@ -2,9 +2,10 @@
  * Advances a durable creation operation through provider and local-state phases.
  */
 
-import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
+import { ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
 import { composeIssueCreationBody } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
+import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../state/index.js";
 import { initializeIssueRuntimeState } from "../../issue-runtime/index.js";
 import { creationAudit } from "./audit.js";
 import { CREATION_EVENT, CREATION_RECOVERY_ELIGIBILITY, CREATION_REQUEST_BUDGET, CREATION_RETRY_DELAY_MS, CREATION_STEPS } from "./const.js";

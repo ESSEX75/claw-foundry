@@ -5,8 +5,8 @@ import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import { it } from "node:test";
 
-import { DEFAULT_WORKFLOW, ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../domain/index.js";
-import { readIssueCreationStore, updateIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
+import { DEFAULT_WORKFLOW } from "../../../domain/index.js";
+import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, readIssueCreationStore, updateIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
 import { createTestHarness, type TestHarness } from "../../../testing/index.js";
 import { createManagedTaskIssue } from "./command.js";
 import { reconcileManagedTaskCreations } from "./reconcile.js";

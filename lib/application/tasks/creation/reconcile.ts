@@ -2,8 +2,7 @@
  * Resumes bounded unfinished creation operations during heartbeat passes.
  */
 
-import { ISSUE_CREATION_STATUS } from "../../../domain/index.js";
-import { readIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
+import { ISSUE_CREATION_STATUS, readIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
 import { creationAudit } from "./audit.js";
 import { CREATION_EVENT, CREATION_RECONCILIATION_REQUESTER, CREATION_RECOVERY_ELIGIBILITY, CREATION_RESULT_STATUS } from "./const.js";
 import { creationRecoveryEligibility } from "./eligibility.js";

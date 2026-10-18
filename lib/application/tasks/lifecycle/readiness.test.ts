@@ -1,9 +1,9 @@
 /** Ensures prepared runtime records remain unavailable until their creation operation is ready. */
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { DEFAULT_WORKFLOW, ISSUE_CREATION_STATUS, ISSUE_PROVIDER } from "../../../domain/index.js";
+import { DEFAULT_WORKFLOW, ISSUE_PROVIDER } from "../../../domain/index.js";
 import { GitHubProvider } from "../../../integrations/index.js";
-import { readIssueStateStore, updateIssueCreationStore } from "../../../state/index.js";
+import { ISSUE_CREATION_STATUS, readIssueStateStore, updateIssueCreationStore } from "../../../state/index.js";
 import { createTestHarness } from "../../../testing/index.js";
 import { createManagedTaskIssue } from "../creation/index.js";
 import { claimManagedTask } from "./claim-task.js";

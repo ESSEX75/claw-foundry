@@ -7,11 +7,11 @@ import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { ISSUE_CREATION_STATUS } from "../../../domain/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { isErrnoException, LOCK_FILE_SUFFIX, withFileLock, writeJsonAtomic } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/schema.js";
 import { CREATION_LOCKS_DIRECTORY_NAME, ISSUE_CREATION_LOCK_OPTIONS, ISSUE_CREATIONS_FILE_NAME } from "../const.js";
+import { ISSUE_CREATION_STATUS } from "./const.js";
 import { parseIssueCreationStore } from "./schema.js";
 import type { IssueCreationStore, IssueCreationUpdate } from "./types.js";
 

@@ -32,6 +32,9 @@ contracts exposed to other layers only through `lib/state/index.ts`.
 - `issues.archive.json` contains archived records and deletion tombstones only.
 - `issue-creations.json` contains resumable creation operations and idempotency
   keys; these records are not active runtime state.
+- `issues/creation` owns the operation-stage and failure-code registries and their
+  derived types, exposed through the state API. These identifiers do not determine
+  the workflow state of an initialized issue.
 - `issues/active`, `issues/archive`, and `issues/creation` are separate internal repositories with their own types and strict schemas.
 - `issues/persistence` owns the project lock shared by active/archive transactions; neither repository owns the other's synchronization policy.
 - Issue-store reads have no write side effects; only locked updates and explicit state-owned transactions initialize or replace durable stores.

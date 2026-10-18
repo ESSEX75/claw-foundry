@@ -1,12 +1,8 @@
 /** Builds read-only task views from authoritative local state and provider observations. */
 
-import { ISSUE_CREATION_STATUS, STATE_TYPE, type WorkflowConfig } from "../../../domain/index.js";
+import { STATE_TYPE, type WorkflowConfig } from "../../../domain/index.js";
 import type { IssueReader } from "../../../integrations/index.js";
-import {
-  getReadyIssueCreationIds,
-  readIssueCreationStore,
-  readIssueStateStore
-} from "../../../state/index.js";
+import { getReadyIssueCreationIds, ISSUE_CREATION_STATUS, readIssueCreationStore, readIssueStateStore } from "../../../state/index.js";
 import { summarizeLocalIssueStates } from "./projection-summary.js";
 import type { GetManagedTaskStatusInput, ProjectionViewContext, TaskStatusResult } from "./types.js";
 

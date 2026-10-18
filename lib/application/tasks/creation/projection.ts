@@ -2,7 +2,7 @@
  * Applies and verifies the provider-visible projection of a created issue.
  */
 
-import { getStateLabels, ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../domain/index.js";
+import { getStateLabels } from "../../../domain/index.js";
 import {
   composeManagedIssueBody,
   diffIssueProjection,
@@ -12,6 +12,7 @@ import {
   stripManagedIssueBody,
 } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
+import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../state/index.js";
 import { buildInitialIssueRuntimeState } from "../../issue-runtime/index.js";
 import { applyManagedLabelDiff } from "../../projection/index.js";
 import { CREATION_STEPS } from "./const.js";

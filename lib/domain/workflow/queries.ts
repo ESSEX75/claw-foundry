@@ -42,13 +42,14 @@ export function getStateLabels<
 }
 
 /**
- * Find the current workflow state label on an issue.
- * Pure utility — no provider dependency.
+ * Inspect projected labels for diagnostics or explicit import preparation.
+ * Returns the first match in configuration order, even when labels conflict.
+ * This observation never authorizes a managed workflow transition or ownership.
  *
  * @param labels - Provider-visible issue labels to inspect.
  * @param workflow - Workflow defining recognized state labels.
  */
-export function getCurrentStateLabel<
+export function getProjectedStateLabel<
   TRoleId extends string,
   TStateKey extends string,
   TLabel extends string,

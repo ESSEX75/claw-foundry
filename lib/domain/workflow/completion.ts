@@ -3,7 +3,7 @@
  */
 
 import { DEFAULT_RESULT_EMOJI, RESULT_EMOJI } from "./const.js";
-import { isCompletionResult } from "./guards.js";
+import { isBuiltInCompletionResult } from "./guards.js";
 import { resolveCompletionTransition } from "./transitions.js";
 import { type CompletionRule, type WorkflowDefinition, type WorkflowEvent } from "./types.js";
 
@@ -56,7 +56,7 @@ export function getNextStateDescription<
  * @param result - Completion result identifier to present.
  */
 export function getCompletionEmoji(result: string): string {
-  return isCompletionResult(result)
+  return isBuiltInCompletionResult(result)
     ? RESULT_EMOJI[result]
     : DEFAULT_RESULT_EMOJI;
 }

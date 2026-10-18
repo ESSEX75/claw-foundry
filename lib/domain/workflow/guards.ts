@@ -14,10 +14,11 @@ import type { CompletionResult, LevelId, ReviewPolicy, RoleId, TestPolicy, Workf
 
 /**
  * Check whether a value matches a built-in completion result.
+ * Configured custom results must be checked against the resolved role's event map.
  *
  * @param value - Untrusted value to validate.
  */
-export function isCompletionResult(value: unknown): value is CompletionResult {
+export function isBuiltInCompletionResult(value: unknown): value is CompletionResult {
   return typeof value === "string"
     && Object.values(COMPLETION_RESULT).some((result) => result === value);
 }

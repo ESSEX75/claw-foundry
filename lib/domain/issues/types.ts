@@ -124,7 +124,7 @@ export type IssueRuntimeState = IssueProjectionState & {
   assignedRole: string | null;
   /** Worker level currently assigned for the selected role. */
   assignedLevel: string | null;
-  /** User name of the currently assigned human owner. */
+  /** DevClaw instance identity owning this issue; independent of provider assignees. */
   owner: string | null;
   /** Override review policy for this issue. */
   reviewPolicy: ReviewPolicy | null;

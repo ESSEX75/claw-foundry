@@ -1,6 +1,6 @@
 /** Resolves local issue truth; provider labels describe only uninitialized issues. */
 
-import { findStateByLabel, findStateKeyByLabel, getCurrentStateLabel } from "../../domain/index.js";
+import { findStateByLabel, findStateKeyByLabel, getProjectedStateLabel } from "../../domain/index.js";
 import { readIssueStateStore } from "../../state/index.js";
 import { ISSUE_RUNTIME_KIND } from "./const.js";
 import type { IssueRuntimeResolution, IssueRuntimeResolveInput } from "./types.js";
@@ -25,7 +25,7 @@ export async function resolveIssueRuntimeState(opts: IssueRuntimeResolveInput): 
     };
   }
 
-  const workflowLabel = getCurrentStateLabel(opts.issue.labels, opts.workflow);
+  const workflowLabel = getProjectedStateLabel(opts.issue.labels, opts.workflow);
 
   return {
     kind: ISSUE_RUNTIME_KIND.UNINITIALIZED,

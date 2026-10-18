@@ -1,6 +1,6 @@
 /** Read-only worker diagnosis; no audit, session submission, or state mutation occurs here. */
 
-import { DEFAULT_WORKFLOW, getActiveLabel, getCurrentStateLabel, getRevertLabel, hasWorkflowStates, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
+import { DEFAULT_WORKFLOW, getActiveLabel, getProjectedStateLabel, getRevertLabel, hasWorkflowStates, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import { isSessionAlive } from "../../../integrations/index.js";
 import { getRoleWorker, readIssueStateStore } from "../../../state/index.js";
 import { GRACE_PERIOD_MS, HEALTH_ACTION, HEALTH_ISSUE_SEVERITY, HEALTH_ISSUE_TYPE, STALL_CONTEXT_THRESHOLD } from "./const.js";
@@ -57,7 +57,7 @@ export async function diagnoseWorkerHealth(input: WorkerHealthInput): Promise<He
 
       if (!expectedLabel || !queueLabel) continue;
       const issue = slot.issueId ? await fetchIssue(provider, slot.issueId) : null;
-      const providerLabel = issue ? getCurrentStateLabel(issue.labels, workflow) : null;
+      const providerLabel = issue ? getProjectedStateLabel(issue.labels, workflow) : null;
       // Provider label edits do not become authoritative workflow transitions.
       const currentLabel = local?.workflowLabel;
       const session = slot.sessionKey ? sessions?.sessions.get(slot.sessionKey) : undefined;

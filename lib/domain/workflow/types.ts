@@ -21,16 +21,16 @@ import {
   WORKFLOW_STATE_LABELS,
 } from "./const.js";
 
-/** Internal system key for a workflow state (e.g. "planning", "todo"). */
+/** Built-in workflow state key; validated custom keys belong to WorkflowConfig. */
 export type WorkflowStateKey = ValueOf<typeof WORKFLOW_STATE_KEYS>;
 
-/** Display label for a workflow state, often mirrored on the provider (e.g. "To Do"). */
+/** Built-in workflow display label; resolved runtime workflows may define custom labels. */
 export type WorkflowLabel = ValueOf<typeof WORKFLOW_STATE_LABELS>;
 
-/** Unique identifier for a role (e.g. "developer", "tester"). */
+/** Built-in role identifier; runtime role membership comes from resolved configuration. */
 export type RoleId = ValueOf<typeof DEFAULT_ROLES>;
 
-/** Unique identifier for a worker capability level (e.g. "junior", "senior"). */
+/** Built-in capability level; runtime level membership comes from its resolved role. */
 export type LevelId = ValueOf<typeof DEFAULT_LEVELS>;
 
 /** Union type for execution mode (parallel or sequential). */

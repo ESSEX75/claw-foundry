@@ -1,11 +1,19 @@
 /** Characterizes pure completion and review planning before provider effects. */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { DEFAULT_WORKFLOW, WORKFLOW_EVENT } from "../../domain/index.js";
+import { DEFAULT_WORKFLOW, isBuiltInCompletionResult, WORKFLOW_EVENT } from "../../domain/index.js";
 import { getAllRoleIds, getBuiltInRole } from "../../roles/index.js";
 import { planCompletion, planMergeFailure, planWorkflowEvent } from "./plan.js";
 
 describe("workflow transition plans", () => {
+  it("accepts configured custom results independently of the built-in result set", () => {
+    assert.equal(isBuiltInCompletionResult("researched"), false);
+    const plan = planCompletion(DEFAULT_WORKFLOW, "architect", "researched", { researched: WORKFLOW_EVENT.COMPLETE });
+
+    assert.equal(plan.transition.toState, "done");
+    assert.equal(plan.rule.from, "Researching");
+    assert.throws(() => planCompletion(DEFAULT_WORKFLOW, "architect", "unconfigured", { researched: WORKFLOW_EVENT.COMPLETE }));
+  });
   it("plans every built-in role result through the configured workflow", () => {
     for (const roleId of getAllRoleIds()) {
       const role = getBuiltInRole(roleId);

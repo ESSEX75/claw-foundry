@@ -27,9 +27,9 @@ export {
 } from "./const.js";
 export { DEFAULT_WORKFLOW } from "./defaults.js";
 export {
+  isBuiltInCompletionResult,
   isBuiltInLevelId,
   isBuiltInRoleId,
-  isCompletionResult,
   isReviewPolicy,
   isTestPolicy,
   isWorkflowEvent,
@@ -48,9 +48,9 @@ export {
   findStateKeyByLabel,
   getActiveLabel,
   getAllQueueLabels,
-  getCurrentStateLabel,
   getInitialStateLabel,
   getLabelColors,
+  getProjectedStateLabel,
   getQueueLabels,
   getRevertLabel,
   getStateLabels,

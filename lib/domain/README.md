@@ -63,6 +63,8 @@ outside `lib/domain`.
 - Keep YAML parsing, Zod boundary schemas, persistence, migrations, locks, provider calls, audit logging, and runtime orchestration outside this layer.
 - Derive closed domain value unions from their canonical constant registries through `ValueOf`.
 - Keep narrow built-in identifiers distinct from extensible identifiers validated from resolved runtime configuration.
+- Built-in completion guards do not validate configured custom results. Projected-label
+  inspection returns a diagnostic first match, never authoritative managed state.
 
 Issue semantics own terminal-notification states: pending, attempting, delivered, blocked,
 retryable, and unknown. Attempt timestamps identify the owned send, while persisted

@@ -11,6 +11,7 @@ import {
   findStateKeyByLabel,
   getActiveLabel,
   getCompletionRule,
+  getProjectedStateLabel,
   getRevertLabel,
   hasTestPhase,
   STATE_TYPE,
@@ -41,6 +42,13 @@ describe("built-in test phase", () => {
     assert.equal(hasTestPhase({ initial: "hold", states: {
       hold: { type: STATE_TYPE.HOLD, label: "Hold", color: "#111111" },
     } }), false);
+  });
+});
+
+describe("projected workflow labels", () => {
+  it("reports the first configured match without treating conflicting observations as local truth", () => {
+    assert.equal(getProjectedStateLabel(["Doing", "To Do"], DEFAULT_WORKFLOW), "To Do");
+    assert.equal(getProjectedStateLabel(["unmanaged"], DEFAULT_WORKFLOW), null);
   });
 });
 

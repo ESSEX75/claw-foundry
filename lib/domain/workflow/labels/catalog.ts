@@ -1,33 +1,11 @@
 /**
- * Builds provider-visible workflow labels from validated domain configuration.
+ * Builds role/level and policy label catalogs from validated domain configuration.
  */
 
-import {
-  DEFAULT_ROLE_LABEL_COLOR,
-  DEFAULT_ROLES,
-  REVIEW_ROUTING_LABELS,
-  ROLE_LABEL_COLORS,
-  STEP_ROUTING_COLOR,
-  STEP_ROUTING_LABELS,
-  TEST_ROUTING_LABELS,
-} from "./const.js";
-import type { LabelDefinition, ReviewPolicy, RoleDefinition, RoutingLabel, TestPolicy } from "./types.js";
-
-/**
- * Determine the review routing label for an issue from its resolved policy.
- *
- * @param policy - Validated review policy selected for the issue.
- */
-export function resolveReviewRouting(policy: ReviewPolicy): RoutingLabel {
-  return REVIEW_ROUTING_LABELS[policy];
-}
-
-/** Resolve the provider-facing label for a saved test policy.
- * @param policy - Validated test policy selected for the issue.
- */
-export function resolveTestRouting(policy: TestPolicy): RoutingLabel {
-  return TEST_ROUTING_LABELS[policy];
-}
+import type { RoleDefinition } from "../../roles/index.js";
+import { DEFAULT_ROLES } from "../../roles/index.js";
+import { DEFAULT_ROLE_LABEL_COLOR, ROLE_LABEL_COLORS, STEP_ROUTING_COLOR, STEP_ROUTING_LABELS } from "./const.js";
+import type { LabelDefinition } from "./types.js";
 
 /**
  * Generate all role:level label definitions from resolved config roles.

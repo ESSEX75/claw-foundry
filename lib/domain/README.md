@@ -16,7 +16,42 @@ alongside their persisted operation contract; they are not issue workflow states
 Package ownership is explicit: `notifications` owns messaging endpoints and
 notification routing labels, `issues` owns provider IDs and issue ownership,
 `projects` owns project and worker-slot structures, `workers` owns shared worker
-delivery status, and `workflow` owns state machine semantics and workflow routing.
+delivery status, `roles` owns shared role/level identifiers and contracts, and
+`workflow` owns state machine semantics and workflow routing.
+
+## Responsibilities and internal APIs
+
+The root contains only this contract and the aggregate public entrypoint. The
+small `issues`, `projects`, `workers` and `notifications` packages remain flat:
+their records, constants and focused operations share one semantic owner.
+
+`domain/roles` defines built-in role/level identifiers, membership guards and shared
+role/level contracts. It has no workflow dependency. The separate `lib/roles`
+package continues to own built-in definitions, complexity, level selection and
+model resolution; domain never imports it.
+
+Workflow separates these responsibilities:
+
+- Root `const.ts`, `types.ts` and `guards.ts` own graph/event/action/result contracts.
+  `defaults.ts`, `queries.ts`, `transitions.ts`, `completion.ts` and `lifecycle.ts`
+  form the cohesive graph API. `presentation.ts` privately owns completion emoji
+  tables and exposes only the presentation function.
+- `workflow/routing` owns saved policies, local field selectors, routing protocol
+  identifiers, membership guards and policy-to-label builders. It does not depend
+  on the graph or the label catalog.
+- `workflow/labels` owns catalog entry types, colors and catalog generation. It
+  consumes the roles and routing APIs. Private color tables stay outside its API;
+  application-facing fallback/step colors remain supported exports.
+
+Each child API is explicit; workflow aggregates routing and labels with `export *`.
+Sibling capabilities import their owner's entrypoint, never the ancestor workflow
+barrel. Root workflow implementations may consume child APIs directly. Role
+contracts are exported by `domain/roles`, not re-exported by workflow.
+
+Tests stay beside their owner. Initial-state tests belong to the graph; policy
+label tests belong to routing; catalog tests belong to labels. Shared records and
+private tables are not exported solely to shorten test imports. Workflow state
+colors remain internal to the root graph's defaults and tests.
 
 Workflow owns saved policy selectors and their local issue-field identifiers shared
 by candidate selection and transition rechecks.

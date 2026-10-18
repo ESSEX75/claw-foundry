@@ -65,7 +65,7 @@ export type PendingReviewSummaryDelivery = {
   /** Immutable submission identity selected before the gateway turn. */
   operationId: string;
   /** Exact worker frame that owns this context, independent of reusable session identity alone. */
-  worker: Pick<ActiveIssueWorker, "role" | "level" | "slotIndex" | "sessionKey" | "startedAt">;
+  worker: WorkerRunIdentity;
   /** Full summary fingerprints included in that submission, never presumed delivered while pending. */
   receipts: ReviewSummaryReceipt[];
 };

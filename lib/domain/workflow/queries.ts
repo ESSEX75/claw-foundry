@@ -2,7 +2,8 @@
  * workflow/queries.ts — Pure query functions over workflow configuration.
  */
 
-import { DEFAULT_ROLES, FEEDBACK_EVENTS, STATE_TYPE, WORKFLOW_EVENT } from "./const.js";
+import { DEFAULT_ROLES } from "../roles/index.js";
+import { FEEDBACK_EVENTS, STATE_TYPE, WORKFLOW_EVENT } from "./const.js";
 import { isWorkflowEvent } from "./guards.js";
 import { type StateDefinition, type WorkflowDefinition } from "./types.js";
 

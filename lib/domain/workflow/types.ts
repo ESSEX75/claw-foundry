@@ -1,25 +1,20 @@
 /**
- * workflow/types.ts — Domain types for workflow statecharts, transitions, and role definitions.
+ * workflow/types.ts — Domain types for workflow statecharts and resolved transitions.
  */
 
 import type { ValueOf } from "../../types.js";
+import type { RoleId } from "../roles/index.js";
 import {
   ACTION,
   COMPLETION_RESULT,
-  DEFAULT_LEVELS,
-  DEFAULT_ROLES,
   EXECUTION_MODE,
   REVIEW_CHECK,
-  REVIEW_POLICY,
-  REVIEW_ROUTING_FIELD,
-  ROUTING_LABELS,
   STATE_TYPE,
-  TEST_POLICY,
-  TEST_ROUTING_FIELD,
   WORKFLOW_EVENT,
   WORKFLOW_STATE_KEYS,
   WORKFLOW_STATE_LABELS,
 } from "./const.js";
+import type { ReviewPolicy, TestPolicy } from "./routing/index.js";
 
 /** Built-in workflow state key; validated custom keys belong to WorkflowConfig. */
 export type WorkflowStateKey = ValueOf<typeof WORKFLOW_STATE_KEYS>;
@@ -27,20 +22,8 @@ export type WorkflowStateKey = ValueOf<typeof WORKFLOW_STATE_KEYS>;
 /** Built-in workflow display label; resolved runtime workflows may define custom labels. */
 export type WorkflowLabel = ValueOf<typeof WORKFLOW_STATE_LABELS>;
 
-/** Built-in role identifier; runtime role membership comes from resolved configuration. */
-export type RoleId = ValueOf<typeof DEFAULT_ROLES>;
-
-/** Built-in capability level; runtime level membership comes from its resolved role. */
-export type LevelId = ValueOf<typeof DEFAULT_LEVELS>;
-
 /** Union type for execution mode (parallel or sequential). */
 export type ExecutionMode = ValueOf<typeof EXECUTION_MODE>;
-
-/** Union type for review policy (human, agent, or skip). */
-export type ReviewPolicy = ValueOf<typeof REVIEW_POLICY>;
-
-/** Union type for test policy (skip or agent). */
-export type TestPolicy = ValueOf<typeof TEST_POLICY>;
 
 /** Union type for workflow transition events (e.g. PICKUP, COMPLETE). */
 export type WorkflowEvent = ValueOf<typeof WORKFLOW_EVENT>;
@@ -56,9 +39,6 @@ export type TransitionAction = ValueOf<typeof ACTION>;
 
 /** Union of possible PR review check types. */
 export type ReviewCheckType = ValueOf<typeof REVIEW_CHECK>;
-
-/** Union of possible routing label strings (e.g. review:human, test:agent). */
-export type RoutingLabel = ValueOf<typeof ROUTING_LABELS>;
 
 /** Configuration for a workflow event transition. */
 export type TransitionTarget<TStateKey extends string> = {
@@ -212,50 +192,3 @@ export type CompletionRule<TLabel extends string = WorkflowLabel> = {
   /** Actions to execute upon completing transition. */
   actions: TransitionAction[];
 };
-
-/** Provider-visible label definition generated from workflow semantics. */
-export type LabelDefinition = {
-  /** Exact label name presented by the issue provider. */
-  name: string;
-  /** Hex color assigned when the label is created. */
-  color: string;
-};
-
-/** Complete role-level definition before runtime concurrency defaults are resolved. */
-export type RoleLevelDefinition = {
-  /** Relative capability rank; larger values represent more capable workers. */
-  readonly rank: number;
-  /** Model identifier assigned to the level. */
-  readonly model: string;
-  /** Optional concurrency override; the workflow-wide limit applies when omitted. */
-  readonly maxWorkers?: number;
-  /** Optional emoji used when announcing work at this level. */
-  readonly emoji?: string;
-};
-
-/** Definition of a role including its active levels. */
-export type RoleDefinition<TLevelId extends string = LevelId> = {
-  /** Active level definitions keyed by identifier. */
-  levels: Readonly<Record<TLevelId, RoleLevelDefinition>>;
-  /** Whether the role is enabled in the workflow pipeline. */
-  enabled?: boolean;
-};
-
-/** Selects a saved review policy for workflow eligibility or a transition recheck. */
-type ReviewPolicyRouting = {
-  /** Local issue field holding the saved review policy. */
-  field: typeof REVIEW_ROUTING_FIELD;
-  /** Expected review policy. */
-  value: ReviewPolicy;
-};
-
-/** Selects a saved test policy for workflow eligibility or a transition recheck. */
-type TestPolicyRouting = {
-  /** Local issue field holding the saved test policy. */
-  field: typeof TEST_ROUTING_FIELD;
-  /** Expected test policy. */
-  value: TestPolicy;
-};
-
-/** Saved policy selector pairing each local field with its allowed policy values. */
-export type WorkflowPolicyRouting = ReviewPolicyRouting | TestPolicyRouting;

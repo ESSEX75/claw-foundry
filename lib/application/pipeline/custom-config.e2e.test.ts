@@ -6,7 +6,6 @@ import { afterEach, describe, it } from "node:test";
 import { ensureWorkflowLabels } from "../projection/index.js";
 import {
   DEFAULT_WORKFLOW,
-  DEFAULT_RESULT_EMOJI,
   getCompletionEmoji,
   getLabelColors,
   getOwnerLabel,
@@ -120,7 +119,7 @@ workflow:
     assert.equal(roleLabels.some((label) => label.name === `${CUSTOM_ROLE}:${CUSTOM_LEVEL}`), true);
     assert.equal(roleLabels.some((label) => label.name === "review:human"), false);
     assert.equal(getStepRoutingLabels().some((label) => label.name === "review:human"), true);
-    assert.equal(getCompletionEmoji("audited"), DEFAULT_RESULT_EMOJI);
+    assert.equal(getCompletionEmoji("audited"), "\u{1f4cb}");
 
     await ensureWorkflowLabels(harness.provider, harness.workflow);
     assert.equal(harness.provider.labels.has(CUSTOM_QUEUE_LABEL), true);

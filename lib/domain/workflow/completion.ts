@@ -2,8 +2,6 @@
  * workflow/completion.ts — Completion rules derived from workflow transitions.
  */
 
-import { DEFAULT_RESULT_EMOJI, RESULT_EMOJI } from "./const.js";
-import { isBuiltInCompletionResult } from "./guards.js";
 import { resolveCompletionTransition } from "./transitions.js";
 import { type CompletionRule, type WorkflowDefinition, type WorkflowEvent } from "./types.js";
 
@@ -47,16 +45,4 @@ export function getNextStateDescription<
   event: WorkflowEvent,
 ): string {
   return resolveCompletionTransition(workflow, role, event)?.description ?? "";
-}
-
-/**
- * Get the configured emoji for a built-in completion result.
- * Unknown results use the stable default emoji.
- *
- * @param result - Completion result identifier to present.
- */
-export function getCompletionEmoji(result: string): string {
-  return isBuiltInCompletionResult(result)
-    ? RESULT_EMOJI[result]
-    : DEFAULT_RESULT_EMOJI;
 }

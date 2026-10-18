@@ -4,8 +4,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { DEFAULT_ROLES, type RoleDefinition, type RoleId } from "../roles/index.js";
 import {
-  DEFAULT_ROLES,
   DEFAULT_WORKFLOW,
   detectRoleFromLabel,
   findStateKeyByLabel,
@@ -16,17 +16,15 @@ import {
   hasTestPhase,
   STATE_TYPE,
   WORKFLOW_EVENT,
-  WORKFLOW_STATE_COLORS,
   WORKFLOW_STATE_KEYS,
   WORKFLOW_STATE_LABELS,
-  type RoleDefinition,
-  type RoleId,
   type BuiltInWorkflowConfig,
   type WorkflowDefinition,
   type WorkflowConfig,
   type WorkflowLabel,
   type WorkflowStateKey,
 } from "./index.js";
+import { WORKFLOW_STATE_COLORS } from "./const.js";
 
 describe("built-in test phase", () => {
   it("recognizes tester queues and active states without inferring custom QA roles", () => {

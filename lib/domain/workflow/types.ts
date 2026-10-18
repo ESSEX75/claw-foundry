@@ -187,6 +187,22 @@ export type WorkflowConfig = WorkflowDefinition<string, string, string>;
 /** State configuration belonging to a validated runtime workflow. */
 export type WorkflowStateConfig = StateDefinition<string, string, string>;
 
+/** Configured workflow edge resolved to canonical identities and display metadata. */
+export type WorkflowTransition<TStateKey extends string, TLabel extends string> = {
+  /** Canonical source state key. */
+  fromState: TStateKey;
+  /** Configured source display label. */
+  fromLabel: TLabel;
+  /** Canonical destination state key. */
+  toState: TStateKey;
+  /** Configured destination display label. */
+  toLabel: TLabel;
+  /** Destination description, falling back to its label. */
+  description: string;
+  /** Independent action sequence selected by the configured edge. */
+  actions: TransitionAction[];
+};
+
 /** Rule mapping a specific completion scenario to the next state and actions. */
 export type CompletionRule<TLabel extends string = WorkflowLabel> = {
   /** Source workflow label. */

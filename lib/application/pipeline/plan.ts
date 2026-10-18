@@ -4,10 +4,10 @@ import {
   type CompletionEventMap,
   type CompletionRule,
   DEFAULT_WORKFLOW,
-  findStateByLabel,
   findStateKeyByLabel,
   getCompletionRule,
-  getNextStateDescription,
+  resolveCompletionTransition,
+  resolveWorkflowTransition,
   WORKFLOW_EVENT,
   type WorkflowConfig,
   type WorkflowEvent,
@@ -20,15 +20,10 @@ import type { CompletionPlan, TransitionPlan } from "./types.js";
  * @param event - Event to resolve from the current state.
  */
 export function planWorkflowEvent(workflow: WorkflowConfig, fromLabel: string, event: WorkflowEvent): TransitionPlan | null {
-  const state = findStateByLabel(workflow, fromLabel);
-  const target = state?.on?.[event];
+  const source = findStateKeyByLabel(workflow, fromLabel);
+  const transition = source === null ? null : resolveWorkflowTransition(workflow, source, event);
 
-  if (!target) return null;
-  const next = workflow.states[target.target];
-
-  if (!next) return null;
-
-  return { from: fromLabel, toState: target.target, toLabel: next.label, actions: target.actions ?? [] };
+  return transition ? { from: transition.fromLabel, toState: transition.toState, toLabel: transition.toLabel, actions: transition.actions } : null;
 }
 
 /** Validate a role result and resolve its complete transition before effects.
@@ -41,18 +36,15 @@ export function planCompletion(workflow: WorkflowConfig, role: string, result: s
   const event = completion[result];
 
   if (!event) throw new Error(`No completion event configured for ${role}:${result}`);
-  const rule = getCompletionRule(workflow, role, event);
+  const resolved = resolveCompletionTransition(workflow, role, event);
 
-  if (!rule) throw new Error(`No completion rule for ${role}:${result}`);
-  const toState = findStateKeyByLabel(workflow, rule.to);
-
-  if (!toState) throw new Error(`No target state for ${role}:${result}`);
+  if (!resolved) throw new Error(`No completion rule for ${role}:${result}`);
 
   return {
     event,
-    rule,
-    transition: { from: rule.from, toState, toLabel: rule.to, actions: rule.actions },
-    nextState: getNextStateDescription(workflow, role, event),
+    rule: { from: resolved.fromLabel, to: resolved.toLabel, actions: resolved.actions },
+    transition: { from: resolved.fromLabel, toState: resolved.toState, toLabel: resolved.toLabel, actions: resolved.actions },
+    nextState: resolved.description,
   };
 }
 

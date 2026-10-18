@@ -4,7 +4,7 @@
 
 import { DEFAULT_RESULT_EMOJI, RESULT_EMOJI } from "./const.js";
 import { isCompletionResult } from "./guards.js";
-import { findStateByLabel, findStateKeyByLabel, getActiveLabel } from "./queries.js";
+import { resolveCompletionTransition } from "./transitions.js";
 import { type CompletionRule, type WorkflowDefinition, type WorkflowEvent } from "./types.js";
 
 /**
@@ -24,33 +24,9 @@ export function getCompletionRule<
   role: TRoleId,
   event: WorkflowEvent,
 ): CompletionRule<TLabel> | null {
-  let activeLabel: TLabel;
+  const transition = resolveCompletionTransition(workflow, role, event);
 
-  try {
-    activeLabel = getActiveLabel(workflow, role);
-  } catch { return null; }
-
-  const activeKey = findStateKeyByLabel(workflow, activeLabel);
-
-  if (!activeKey) return null;
-
-  const activeState = workflow.states[activeKey];
-
-  if (!activeState.on) return null;
-
-  const transition = activeState.on[event];
-
-  if (!transition) return null;
-
-  const targetState = workflow.states[transition.target];
-
-  if (!targetState) return null;
-
-  return {
-    from: activeLabel,
-    to: targetState.label,
-    actions: transition.actions ?? [],
-  };
+  return transition ? { from: transition.fromLabel, to: transition.toLabel, actions: transition.actions } : null;
 }
 
 /**
@@ -70,15 +46,7 @@ export function getNextStateDescription<
   role: TRoleId,
   event: WorkflowEvent,
 ): string {
-  const rule = getCompletionRule(workflow, role, event);
-
-  if (!rule) return "";
-
-  const targetState = findStateByLabel(workflow, rule.to);
-
-  if (!targetState) return "";
-
-  return targetState.description ?? targetState.label;
+  return resolveCompletionTransition(workflow, role, event)?.description ?? "";
 }
 
 /**

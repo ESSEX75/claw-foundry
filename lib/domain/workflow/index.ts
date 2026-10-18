@@ -59,6 +59,7 @@ export {
   isFeedbackState,
   producesReviewableWork,
 } from "./queries.js";
+export { resolveCompletionTransition, resolveWorkflowTransition } from "./transitions.js";
 export type {
   BuiltInWorkflowConfig,
   CompletionEventMap,
@@ -84,4 +85,5 @@ export type {
   WorkflowPolicyRouting,
   WorkflowStateConfig,
   WorkflowStateKey,
+  WorkflowTransition,
 } from "./types.js";

@@ -207,6 +207,8 @@ Heartbeat also resumes terminal archive-first duplicates before provider project
 can change the exact source snapshot. Failed snapshot verification stops that pass.
 
 `pipeline/effects` owns ordered merge, lifecycle, detection and optional checkout effects.
+Pipeline planning delegates graph-edge resolution to domain/workflow; command errors,
+worker ownership checks and execution of the selected transition remain application-owned.
 Completion and heartbeat use this supported API while retaining policy and notification
 ownership. Merge observes the captured exact PR, submits once per attempt and reads back
 that same PR after an ambiguous response. Only confirmed merge/conflict selects a workflow

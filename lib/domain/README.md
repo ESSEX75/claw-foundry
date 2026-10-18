@@ -85,6 +85,9 @@ Issue semantics own completion receipts bound to the exact worker run and result
 Workflow owns pure ordered lifecycle metadata resolution. Application supplies timestamps
 and successfully processed actions; provider observations never determine local closedAt.
 Completion receipts retain that processed sequence for accurate same-run replay.
+Workflow also resolves configured edges by canonical source key and event, retaining
+destination keys, labels and descriptions. Application owns result validation,
+transition authorization, provider effects and persistence of the selected edge.
 
 Workers also own the shared session-action registry and its derived type, used by dispatch and notifications without application implementation imports.
 

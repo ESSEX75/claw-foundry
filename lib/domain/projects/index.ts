@@ -5,7 +5,6 @@ export {
   countActiveSlots,
   emptyRoleWorkerState,
   emptySlot,
-  findFreeSlot,
   findSlotByIssue,
   reconcileSlots,
   releasedWorkerSlot,

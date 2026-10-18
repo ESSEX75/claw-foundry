@@ -31,6 +31,8 @@ local ownership views can represent an unconfirmed worker turn.
 Projects own pure available-slot selection and sequential execution exclusions. Both
 preview planning and locked state reservation use these rules; slot references requiring
 reconciliation are never recycled merely because their active flag is false.
+Inactive slots retaining delivery evidence are likewise unavailable until explicitly
+released. Reconciliation retains these reservations even outside configured capacity.
 
 - Do not import from `lib/application`, `lib/state`, `lib/integrations`,
   `lib/tools`, or `lib/cli`.

@@ -1,7 +1,7 @@
 /** Selects reservable capacity and execution exclusions from project reservation snapshots. */
 
 import { EXECUTION_MODE, type ExecutionMode } from "../workflow/index.js";
-import { countActiveSlots } from "./slots.js";
+import { countActiveSlots, isWorkerSlotAvailable } from "./slots.js";
 import type { Project, RoleWorkerState } from "./types.js";
 
 /** Select a free index within configured capacity, excluding unreconciled issue references.
@@ -16,7 +16,7 @@ export function findAvailableWorkerSlot(worker: RoleWorkerState, level: string, 
   for (let index = 0; index < capacity; index++) {
     const slot = slots[index];
 
-    if (!slot || (!slot.active && slot.issueId === null)) return index;
+    if (!slot || isWorkerSlotAvailable(slot)) return index;
   }
 
   return null;

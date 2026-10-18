@@ -85,6 +85,9 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 - Worker activation checks optional configured capacity and cross-role sequential
   exclusivity inside the same registry transaction that reserves the slot. Lingering
   active roles also block exclusivity, even if disabled in the current configuration.
+- Automatic reservation uses the same domain capacity selector as preview planning;
+  unresolved issue references and delivery evidence cannot be overwritten. Explicit
+  release uses the shared domain transformation after validating the selected owner.
 - Optional cross-project sequential execution is checked in the same registry transaction
   as reservation; concurrent dispatches cannot both claim different projects.
 - Project queries and mutations accept only the canonical project slug; notification routing is resolved before entering state.

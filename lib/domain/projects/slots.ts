@@ -52,23 +52,6 @@ export function emptyRoleWorkerState(
 }
 
 /**
- * Return the lowest-index inactive slot within a specific level, or null if full.
- *
- * @param roleWorker - Role-owned worker slots to inspect.
- * @param level - Resolved level identifier whose slots should be searched.
- */
-export function findFreeSlot(roleWorker: RoleWorkerState, level: string): number | null {
-  const slots = roleWorker.levels[level];
-
-  if (!slots) return null;
-  for (let i = 0; i < slots.length; i++) {
-    if (!slots[i]!.active) return i;
-  }
-
-  return null;
-}
-
-/**
  * Reconcile a role's levels with the configured per-level maxWorkers.
  * - Adds missing levels, expands short arrays, shrinks idle trailing slots.
  * - Removes unconfigured levels only after every reservation has been released.

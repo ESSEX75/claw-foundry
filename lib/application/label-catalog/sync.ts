@@ -1,6 +1,7 @@
 /** Resolves persisted project providers and synchronizes independent label catalogs. */
 
 import { log as auditLog } from "../../audit.js";
+import { getErrorMessage } from "../../errors/index.js";
 import { createProvider } from "../../integrations/index.js";
 import { loadConfig, readProjects } from "../../state/index.js";
 import { provisionLabelCatalog } from "./catalog.js";
@@ -32,7 +33,7 @@ export async function syncProjectLabels(input: SyncProjectLabelsInput): Promise<
       synced.push({ project: slug, ...catalog });
     } catch (error) {
       synced.push({ project: slug, stateLabels: [], roleLabels: [], routingLabels: [],
-        error: error instanceof Error ? error.message : String(error) });
+        error: getErrorMessage(error) });
     }
   }
 
@@ -41,7 +42,7 @@ export async function syncProjectLabels(input: SyncProjectLabelsInput): Promise<
   try {
     await auditLog(input.workspaceDir, SYNC_LABELS_EVENT, { projects: slugs, errors: synced.filter(result => result.error !== undefined).length });
   } catch (error) {
-    auditError = error instanceof Error ? error.message : String(error);
+    auditError = getErrorMessage(error);
   }
 
   return { success: synced.every(result => result.error === undefined), synced,

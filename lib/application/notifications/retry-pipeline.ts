@@ -3,6 +3,7 @@
 import { log as auditLog } from "../../audit.js";
 import type { RunCommand } from "../../context.js";
 import { ISSUE_INTEGRITY_STATUS, PIPELINE_NOTIFICATION_STATUS, type Project } from "../../domain/index.js";
+import { getErrorMessage } from "../../errors/index.js";
 import type { IssueReader } from "../../integrations/index.js";
 import { MESSAGE_DELIVERY_STATUS } from "../../integrations/index.js";
 import { PIPELINE_NOTIFICATION_ATTEMPT_LEASE_MS, readIssueStateStore, reservePipelineNotification } from "../../state/index.js";
@@ -81,7 +82,7 @@ export async function retryPendingPipelineNotifications(
     } catch (error) {
       // An unexpected orchestration exception is not proof that transport did not run.
       outcome = { status: deliveryStarted ? MESSAGE_DELIVERY_STATUS.UNKNOWN : NOTIFICATION_BLOCKED, delivered: false,
-        reason: error instanceof Error ? error.message : String(error) };
+        reason: getErrorMessage(error) };
     }
 
     try {
@@ -91,7 +92,7 @@ export async function retryPendingPipelineNotifications(
     } catch (error) {
       await auditLog(workspaceDir, NOTIFICATION_AUDIT.RETRY_FAILED, {
         projectSlug: project.slug, issueId: state.issueId, eventKey,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       }).catch(() => {});
     }
   }

@@ -9,8 +9,8 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { DEFAULT_ROLES, REVIEW_POLICY, REVIEW_ROUTING_FIELD, ROUTING_LABELS, STATE_TYPE, WORKFLOW_EVENT } from "../../../domain/index.js";
-import { executeTransitionEffects } from "../effects/index.js";
-import { MERGE_EFFECT_OUTCOME } from "../effects/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
+import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../effects/index.js";
 import { planWorkflowEvent } from "../planning/index.js";
 import { executeAutomaticTransition } from "../transitions/index.js";
 import { DEFAULT_REVIEW_GIT_PULL_TIMEOUT_MS, REVIEW_AUDIT_EVENT, REVIEW_TRANSITION_OWNER } from "./const.js";
@@ -78,7 +78,7 @@ export async function reviewSkipPass(opts: ReviewSkipPassInput): Promise<number>
         if (mergeFailure === undefined) throw error;
         await auditLog(workspaceDir, REVIEW_AUDIT_EVENT.SKIP_MERGE_FAILED, {
           project: projectName, issueId: issue.iid, from: state.label,
-          error: error instanceof Error ? error.message : String(error),
+          error: getErrorMessage(error),
         });
         const failed = planWorkflowEvent(workflow, state.label, WORKFLOW_EVENT.MERGE_FAILED);
 

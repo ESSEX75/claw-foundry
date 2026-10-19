@@ -2,8 +2,6 @@
  * Builds deterministic repair plans and validates explicit provider-source imports.
  */
 
-import { createHash } from "node:crypto";
-
 import {
   findStateKeyByLabel,
   getStateLabels,
@@ -19,11 +17,11 @@ import {
   type ReviewPolicy,
   type TestPolicy,
 } from "../../../domain/index.js";
+import { sha256Hex } from "../../../hashing/index.js";
 import { diffIssueProjection, expectedManagedLabels, extractIssueMetadata, metadataMatches } from "../../../projection/index.js";
 import type { ResolvedRoleConfig } from "../../../state/index.js";
 import { countManagedLabelMutationRequests } from "../../issue-projection/index.js";
-import { REPAIR_ACTION, REPAIR_LOCAL_FIELDS, REPAIR_METADATA_ACTION, REPAIR_MODE, REPAIR_PLAN_HASH_ALGORITHM, REPAIR_STATUS, REPAIR_WARNING } from "./const.js";
-import { ISSUE_REPAIR_ERROR, ISSUE_REPAIR_SOURCE } from "./const.js";
+import { ISSUE_REPAIR_ERROR, ISSUE_REPAIR_SOURCE,REPAIR_ACTION, REPAIR_LOCAL_FIELDS, REPAIR_METADATA_ACTION, REPAIR_MODE, REPAIR_STATUS, REPAIR_WARNING } from "./const.js";
 import { repairFailure } from "./failure.js";
 import type { IssueRepairLocalChange, IssueRepairResult, RepairContext, RepairManagedIssueInput } from "./types.js";
 
@@ -93,7 +91,7 @@ export function buildRepairPlan(input: RepairManagedIssueInput, context: RepairC
     plannedActions,
     warnings: context.provider.getRateLimitStatus ? [] : [{ code: REPAIR_WARNING.STATUS_UNAVAILABLE, message: "Provider does not expose a quota precheck." }],
     estimatedProviderRequests,
-    planToken: createHash(REPAIR_PLAN_HASH_ALGORITHM).update(tokenPayload).digest("hex"),
+    planToken: sha256Hex(tokenPayload),
   };
 }
 

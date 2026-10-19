@@ -1,7 +1,7 @@
 /** Enumerates configured group/topic candidates using the same exact-route policy as binding planning. */
 
+import { TOPIC_PEER_SEPARATOR } from "../../../integrations/index.js";
 import type { RouteConfig } from "../../project-routing/index.js";
-import { TOPIC_PEER_SEPARATOR } from "../../project-routing/index.js";
 import { inspectPlannedChannelBinding } from "./binding-manager.js";
 import { ROUTING_INVENTORY_WILDCARD, SETUP_NOTIFICATION_CHANNELS } from "./const.js";
 import { isRoutingSettingsRecord } from "./guards.js";

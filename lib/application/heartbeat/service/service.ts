@@ -1,7 +1,7 @@
 /** Owns one timer lifecycle and serializes composition-injected heartbeat ticks. */
 
-import { resolveHeartbeatConfig } from "../configuration/index.js";
-import { MILLISECONDS_PER_SECOND } from "../configuration/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
+import { MILLISECONDS_PER_SECOND,resolveHeartbeatConfig } from "../configuration/index.js";
 import { discoverAgents } from "./agent-discovery.js";
 import { logTickResult, processAllAgents } from "./agent-runner.js";
 import { HEARTBEAT_SERVICE } from "./const.js";
@@ -73,7 +73,7 @@ export function createHeartbeatLifecycle(pluginCtx: HeartbeatServiceDependencies
 
             logTickResult(result, svcCtx.logger);
           } catch (error) {
-            svcCtx.logger.error(`work_heartbeat tick failed: ${error instanceof Error ? error.message : String(error)}`);
+            svcCtx.logger.error(`work_heartbeat tick failed: ${getErrorMessage(error)}`);
           }
         })();
 

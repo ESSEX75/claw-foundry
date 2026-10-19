@@ -4,6 +4,7 @@
 
 import fs from "node:fs/promises";
 
+import { getErrorMessage,hasErrorCode } from "../../errors/index.js";
 import { FILESYSTEM_ERROR_CODE, LOCK_FILE_SUFFIX, STATE_TEXT_ENCODING, withFileLock, writeJsonAtomic } from "../persistence/index.js";
 import { PROJECTS_LOCK_OPTIONS } from "./const.js";
 import { projectsPath } from "./paths.js";
@@ -21,7 +22,7 @@ export async function readProjects(workspaceDir: string): Promise<ProjectsData> 
   try {
     return parseProjectsData(JSON.parse(await fs.readFile(filePath, STATE_TEXT_ENCODING)));
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = getErrorMessage(error);
 
     throw new Error(`Cannot read projects registry ${filePath}: ${message}`, { cause: error });
   }
@@ -38,7 +39,7 @@ export async function readOptionalProjects(workspaceDir: string): Promise<Projec
   } catch (error) {
     const cause = error instanceof Error ? error.cause : undefined;
 
-    if (cause instanceof Error && "code" in cause && cause.code === FILESYSTEM_ERROR_CODE.NOT_FOUND) return undefined;
+    if (hasErrorCode(cause, FILESYSTEM_ERROR_CODE.NOT_FOUND)) return undefined;
     throw error;
   }
 }

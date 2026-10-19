@@ -7,6 +7,7 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname,join } from "node:path";
 
+import { hasErrorCode } from "./errors/index.js";
 import { DATA_DIR } from "./state/index.js";
 
 const MAX_LOG_LINES = 50;
@@ -28,7 +29,7 @@ export async function log(
     await truncateIfNeeded(filePath);
   } catch (err: unknown) {
     // If directory doesn't exist, create it and retry
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+    if (hasErrorCode(err, "ENOENT")) {
       await mkdir(dirname(filePath), { recursive: true });
       await appendFile(filePath, entry + "\n");
     }

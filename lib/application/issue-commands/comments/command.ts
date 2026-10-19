@@ -1,6 +1,7 @@
 /** Owns configured comment attribution, provider publication and best-effort acknowledgement. */
 
 import { log as auditLog } from "../../../audit.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { getFallbackEmoji } from "../../../roles/index.js";
 import { isConfiguredRoleId, loadConfig } from "../../../state/index.js";
 import { resolveProject, resolveProvider } from "../../projects/index.js";
@@ -46,7 +47,7 @@ export async function commentOnTask(input: CommentOnTaskInput) {
       provider: providerType,
     });
   } catch (error) {
-    auditError = error instanceof Error ? error.message : String(error);
+    auditError = getErrorMessage(error);
   }
 
   return {

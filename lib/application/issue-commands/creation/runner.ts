@@ -3,6 +3,7 @@
  */
 
 import { ISSUE_INTEGRITY_STATUS } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { composeIssueCreationBody } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../state/index.js";
@@ -110,7 +111,7 @@ export async function runCreationOperation(
     } catch (error) {
       current = await failOperation(opts, current, ISSUE_CREATION_STATUS.MANUAL_REPAIR_REQUIRED, {
         code: ISSUE_CREATION_ERROR.PROVIDER_CREATE_UNKNOWN,
-        message: error instanceof Error ? error.message : String(error),
+        message: getErrorMessage(error),
         retryable: false,
       });
 
@@ -134,7 +135,7 @@ export async function runCreationOperation(
         ? error.failure
         : {
           code: ISSUE_CREATION_ERROR.PROJECTION_APPLY_FAILED,
-          message: error instanceof Error ? error.message : String(error),
+          message: getErrorMessage(error),
           retryable: true,
         };
 
@@ -171,7 +172,7 @@ export async function runCreationOperation(
     } catch (error) {
       current = await failOperation(opts, current, ISSUE_CREATION_STATUS.PROJECTION_VERIFIED, {
         code: ISSUE_CREATION_ERROR.LOCAL_COMMIT_FAILED,
-        message: error instanceof Error ? error.message : String(error),
+        message: getErrorMessage(error),
         retryable: true,
       });
 
@@ -185,7 +186,7 @@ export async function runCreationOperation(
     } catch (error) {
       current = await failOperation(opts, current, ISSUE_CREATION_STATUS.PROJECTION_VERIFIED, {
         code: ISSUE_CREATION_ERROR.LOCAL_COMMIT_FAILED,
-        message: error instanceof Error ? error.message : String(error),
+        message: getErrorMessage(error),
         retryable: true,
       });
 

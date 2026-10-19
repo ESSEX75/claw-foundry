@@ -2,6 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, STATE_TYPE } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { isProviderIssueLookupError, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../integrations/index.js";
 import { extractIssueMetadata, metadataMatches } from "../../../projection/index.js";
 import { isIssueCreationReady, readIssueStateStore, withIssueOrchestrationLock } from "../../../state/index.js";
@@ -93,7 +94,7 @@ export async function projectionIntegrityPass(opts: ProjectionIntegrityInput): P
         }
 
         result.errors++;
-        const message = err instanceof Error ? err.message : String(err);
+        const message = getErrorMessage(err);
         const errors = [`${HEARTBEAT_PROJECTION_ERROR.FETCH_PREFIX}${message}`];
 
         result.events.push({ issueId: state.issueId, action: PROJECTION_INTEGRITY_ACTION.PROVIDER_FETCH_ERROR, errors });

@@ -1,9 +1,10 @@
 /** Resolves incoming media only against complete project notification identities. */
 
+import type { AttachmentMessageRoute } from "../../integrations/index.js";
 import { readOptionalProjects } from "../../state/index.js";
 import { findProjectByRoute } from "../projects/index.js";
 import { MAX_ATTACHMENT_ISSUE_ID } from "./const.js";
-import type { AttachmentMessageRoute, AttachmentProjectContext, AttachmentWorkspace } from "./types.js";
+import type { AttachmentProjectContext, AttachmentWorkspace } from "./types.js";
 
 /** Extract unique bounded issue references from message text.
  * @param text - Incoming SDK message text.

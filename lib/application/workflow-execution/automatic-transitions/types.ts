@@ -16,15 +16,15 @@ export type ReviewEffectsCapture = {
   result?: TransitionEffectsResult;
 };
 
-/** Project and provider context shared by the review heartbeat passes. */
-type ReviewProjectInput = {
+/** Project and provider context shared by automatic workflow passes. */
+type AutomaticTransitionProjectInput = {
   /** Workspace containing authoritative issue runtime state. */
   workspaceDir: string;
-  /** Project name recorded in review audit entries. */
+  /** Project name recorded in automatic-transition audit entries. */
   projectName: string;
   /** Project identity and provider routing used by transitions. */
   project: Pick<Project, "slug" | "channels" | "provider">;
-  /** Resolved workflow that selects review queue states and transitions. */
+  /** Resolved workflow selecting candidate states and configured transitions. */
   workflow: WorkflowConfig;
   /** Provider used for current observations and configured actions. */
   provider: IssueProvider;
@@ -41,7 +41,7 @@ type ReviewFeedbackReason =
   | typeof REVIEW_TRANSITION_REASON.MERGE_CONFLICT;
 
 /** Review pass inputs and callbacks invoked only after committed transitions. */
-export type ReviewPassInput = ReviewProjectInput & {
+export type ReviewPassInput = AutomaticTransitionProjectInput & {
   /** Checkout used for optional git refresh after merge. */
   repoPath: string;
   /** Optional git pull timeout; a local default applies when absent. */
@@ -62,7 +62,7 @@ export type ReviewPassInput = ReviewProjectInput & {
 };
 
 /** Inputs for the saved review-skip policy pass. */
-export type ReviewSkipPassInput = ReviewProjectInput & {
+export type ReviewSkipPassInput = AutomaticTransitionProjectInput & {
   /** Checkout used for optional git refresh after merge. */
   repoPath: string;
   /** Optional git pull timeout; a local default applies when absent. */
@@ -109,18 +109,7 @@ type ReviewMergeFailedOutcome = {
 export type ReviewOutcome = ReviewObservationOutcome | ReviewMergeFailedOutcome;
 
 /** Context for transitioning locally managed issues that skip the test queue. */
-export type TestSkipPassInput = {
-  /** Workspace containing authoritative issue runtime state. */
-  workspaceDir: string;
-  /** Project name recorded in test-skip audit entries. */
-  projectName: string;
-  /** Project identity and provider routing used by transitions. */
-  project: Pick<Project, "slug" | "channels" | "provider">;
-  /** Resolved workflow that selects test queue states and transitions. */
-  workflow: WorkflowConfig;
-  /** Provider used for current observations and configured actions. */
-  provider: IssueProvider;
-};
+export type TestSkipPassInput = AutomaticTransitionProjectInput;
 
 /** Selects managed issue candidates from local state and fetches their provider context. */
 export type AutomaticTransitionCandidateInput = {

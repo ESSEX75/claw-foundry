@@ -1,6 +1,7 @@
 /** Marks only delivered comment context as noticed using its provider-owned reaction namespace. */
 
 import { log as auditLog } from "../../audit.js";
+import { getErrorMessage } from "../../errors/index.js";
 import { type IssueComment, PR_COMMENT_KIND } from "../../integrations/index.js";
 import { COMMENT_MARKING_ERROR, COMMENT_MARKING_STEP, EYES_EMOJI } from "./const.js";
 import type { AcknowledgementProvider, PrFeedback } from "./types.js";
@@ -55,6 +56,6 @@ export async function acknowledgeComments(
 async function recordFailure(workspaceDir: string | undefined, issueId: number, commentId: number, step: string, error: unknown): Promise<void> {
   if (!workspaceDir) return;
   await auditLog(workspaceDir, COMMENT_MARKING_ERROR, {
-    step, issue: issueId, commentId, error: error instanceof Error ? error.message : String(error),
+    step, issue: issueId, commentId, error: getErrorMessage(error),
   }).catch(() => {});
 }

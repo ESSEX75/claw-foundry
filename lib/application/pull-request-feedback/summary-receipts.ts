@@ -1,19 +1,16 @@
 /** Filters and persists delivered review-summary evidence in the authoritative local issue record. */
 
-import { createHash } from "node:crypto";
-
 import type { ReviewSummaryReceipt } from "../../domain/index.js";
+import { sha256Hex } from "../../hashing/index.js";
 import { PR_COMMENT_KIND, PR_STATE, PROVIDER_REVIEW_STATE, type PrStatus } from "../../integrations/index.js";
 import { readIssueStateStore, updateIssueRuntimeRecord } from "../../state/index.js";
-import { REVIEW_SUMMARY_HASH_ALGORITHM } from "./const.js";
 import type { FeedbackProvider, PrFeedback, ReviewIssueContext } from "./types.js";
 
 /** Hash exactly the summary content supplied to the worker, keeping edited observations actionable.
  * @param comment - Full provider summary retained in selected worker context.
  */
 function summaryFingerprint(comment: PrFeedback["comments"][number]): string {
-  return createHash(REVIEW_SUMMARY_HASH_ALGORITHM)
-    .update(JSON.stringify([comment.author, comment.body, comment.state, comment.path ?? null, comment.line ?? null])).digest("hex");
+  return sha256Hex(JSON.stringify([comment.author, comment.body, comment.state, comment.path ?? null, comment.line ?? null]));
 }
 
 /** Capture only full summaries included in selected worker context.

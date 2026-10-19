@@ -21,11 +21,3 @@ export async function auditDispatch(workspaceDir: string, opts: AuditDispatchOpt
     issue: opts.issueId, role: opts.role, level: opts.level, model: opts.model,
   });
 }
-
-/**
- * Format an unknown dispatch failure for audit diagnostics.
- * @param error - Failure caught from a provider, state, or gateway operation.
- */
-export function dispatchErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}

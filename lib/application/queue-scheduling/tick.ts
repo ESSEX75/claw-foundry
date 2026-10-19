@@ -6,10 +6,9 @@
  */
 
 import { countActiveSlots, EXECUTION_MODE, reconcileSlots, resolveQueuePickup } from "../../domain/index.js";
+import { getErrorMessage } from "../../errors/index.js";
 import { createProvider, isProviderIssueLookupError } from "../../integrations/index.js";
-import { getConfiguredRoleIds, getLevelMaxWorkers, loadConfig } from "../../state/index.js";
-import { withIssueOrchestrationLock } from "../../state/index.js";
-import { getProject, getRoleWorker, readProjects } from "../../state/index.js";
+import { getConfiguredRoleIds, getLevelMaxWorkers, getProject, getRoleWorker, loadConfig, readProjects,withIssueOrchestrationLock } from "../../state/index.js";
 import { dispatchTaskLocked } from "../workers/index.js";
 import { QUEUE_PLAN, QUEUE_REASON } from "./const.js";
 import { planQueuePickup } from "./plan.js";
@@ -203,7 +202,7 @@ export async function projectTick(opts: ProjectTickOptions): Promise<ProjectTick
         break; // One pickup per role per tick; capacity skips may examine later candidates.
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
 
       skipped.push({
         role, issueId: candidateIssueId, code: isProviderIssueLookupError(error) ? error.code : QUEUE_REASON.DISPATCH_FAILED,

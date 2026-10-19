@@ -14,7 +14,3 @@ export const ATTACHMENT_MESSAGE_HOOK = "message_received";
 
 /** Agent identity is accepted only from an explicitly scoped canonical session key. */
 export const ATTACHMENT_AGENT_SESSION = /^agent:([^:]+):/;
-
-//TODO: Remove topics
-/** Telegram topic qualifier accepted in canonical conversation ids. */
-export const ATTACHMENT_TOPIC_SEPARATOR = ":topic:";

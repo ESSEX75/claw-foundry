@@ -2,6 +2,7 @@
  * Classifies provider create failures without guessing ambiguous mutation outcomes.
  */
 
+import { getErrorMessage } from "../../../errors/index.js";
 import { isProviderOperationError, PROVIDER_OPERATION_ERROR } from "../../../integrations/index.js";
 import type { IssueCreationFailure } from "../../../state/index.js";
 import { ISSUE_CREATION_ERROR } from "../../../state/index.js";
@@ -27,7 +28,7 @@ export function creationFailureFromProvider(error: unknown): IssueCreationFailur
 
   return {
     code: ISSUE_CREATION_ERROR.PROVIDER_CREATE_UNKNOWN,
-    message: error instanceof Error ? error.message : String(error),
+    message: getErrorMessage(error),
     retryable: false,
   };
 }

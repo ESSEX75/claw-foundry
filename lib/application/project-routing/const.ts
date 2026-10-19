@@ -19,6 +19,3 @@ export const ROUTE_PEER_KIND = {
   GROUP: "group",
   CHANNEL: "channel",
 } as const;
-
-/** OpenClaw topic qualifier inside a group peer identifier. */
-export const TOPIC_PEER_SEPARATOR = ":topic:";

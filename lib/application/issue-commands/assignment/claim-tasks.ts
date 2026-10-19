@@ -1,6 +1,7 @@
 /** Selects local bulk ownership candidates and retains independent task failures. */
 
 import { STATE_TYPE } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { readIssueStateStore } from "../../../state/index.js";
 import { claimManagedTask } from "./claim-task.js";
 import type { ClaimManagedTasksInput, ClaimManagedTasksResult } from "./types.js";
@@ -25,7 +26,7 @@ export async function claimManagedTasks(input: ClaimManagedTasksInput): Promise<
       if (claim.claimed) result.claimed.push(issueId);
       else result.skipped.push({ issueId, reason: claim.reason });
     } catch (error) {
-      result.failed.push({ issueId, reason: error instanceof Error ? error.message : String(error) });
+      result.failed.push({ issueId, reason: getErrorMessage(error) });
       result.success = false;
     }
   }

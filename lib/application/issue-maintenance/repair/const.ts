@@ -79,6 +79,3 @@ export const REPAIR_WARNING = {
   PRECHECK_UNAVAILABLE: "RATE_LIMIT_PRECHECK_UNAVAILABLE",
   STATUS_UNAVAILABLE: "RATE_LIMIT_STATUS_UNAVAILABLE",
 } as const;
-
-/** Digest algorithm binding repair plans to their exact snapshots. */
-export const REPAIR_PLAN_HASH_ALGORITHM = "sha256";

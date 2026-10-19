@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 
 import YAML from "yaml";
 
-import { isErrnoException } from "../persistence/index.js";
+import { getErrorMessage,hasErrorCode } from "../../errors/index.js";
 
 /**
  * Read and parse one optional YAML configuration file while preserving its value as unknown.
@@ -18,8 +18,8 @@ export async function readYamlFile(filePath: string): Promise<unknown | null> {
 
     return parsed ?? null;
   } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return null;
-    const message = error instanceof Error ? error.message : String(error);
+    if (hasErrorCode(error, "ENOENT")) return null;
+    const message = getErrorMessage(error);
 
     throw new Error(`Cannot read YAML config ${filePath}: ${message}`, { cause: error });
   }

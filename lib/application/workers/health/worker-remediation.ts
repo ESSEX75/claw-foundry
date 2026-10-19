@@ -2,6 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { DEFAULT_WORKFLOW, findStateKeyByLabel, getActiveLabel, getRevertLabel, releasedWorkerSlot, sameSlotReservation } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { AGENT_TURN_STATUS, submitAgentTurn } from "../../../integrations/index.js";
 import {
   getProject,
@@ -14,11 +15,9 @@ import {
   withIssueOrchestrationLock,
 } from "../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../../issue-projection/index.js";
-import { releaseTransitionWorkerLocked } from "../../workflow-execution/index.js";
-import { commitWorkflowTransitionLocked } from "../../workflow-execution/index.js";
+import { commitWorkflowTransitionLocked,releaseTransitionWorkerLocked } from "../../workflow-execution/index.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
-import { WORKER_HEALTH_AUDIT, WORKER_HEALTH_OWNER } from "./const.js";
-import { HEALTH_ACTION, NUDGE_COMMAND_TIMEOUT_MS, NUDGE_MESSAGE, NUDGE_RETRY_INTERVAL_MS } from "./const.js";
+import { HEALTH_ACTION, NUDGE_COMMAND_TIMEOUT_MS, NUDGE_MESSAGE, NUDGE_RETRY_INTERVAL_MS,WORKER_HEALTH_AUDIT, WORKER_HEALTH_OWNER } from "./const.js";
 import type { HealthFix, WorkerHealthInput } from "./types.js";
 import { diagnoseWorkerHealth } from "./worker-diagnosis.js";
 
@@ -141,7 +140,7 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
     await auditLog(workspaceDir, WORKER_HEALTH_AUDIT.REMEDIATED, {
       projectSlug, role, level, slotIndex, issueId, finding: fresh.issue.type, action: fresh.plannedAction,
     }).catch((error: unknown) => {
-      fresh.error = `Remediation completed but audit failed: ${error instanceof Error ? error.message : String(error)}`;
+      fresh.error = `Remediation completed but audit failed: ${getErrorMessage(error)}`;
     });
 
     return fresh;
@@ -150,6 +149,6 @@ export async function remediateWorkerHealth(input: WorkerHealthInput, finding: H
   try {
     return issueId ? await withIssueOrchestrationLock(workspaceDir, projectSlug, issueId, apply) : await apply();
   } catch (error) {
-    return { ...finding, error: error instanceof Error ? error.message : String(error), labelRevertFailed: finding.plannedAction === HEALTH_ACTION.REQUEUE };
+    return { ...finding, error: getErrorMessage(error), labelRevertFailed: finding.plannedAction === HEALTH_ACTION.REQUEUE };
   }
 }

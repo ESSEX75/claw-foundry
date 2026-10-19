@@ -1,9 +1,9 @@
 /** Removes only validated flat attachment directories while holding the shared issue attachment lock. */
 
-import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 
-import { ATTACHMENT_HASH_ALGORITHM, ATTACHMENTS_INDEX } from "../const.js";
+import { sha256Hex } from "../../../hashing/index.js";
+import { ATTACHMENTS_INDEX } from "../const.js";
 import { withAttachmentLock } from "../lock.js";
 import { attachmentFilePath, inspectAttachmentDirectory, inspectAttachmentFile } from "../paths.js";
 import type { AttachmentPurgeCheckpoint, AttachmentPurgeManifestEntry } from "./types.js";
@@ -31,7 +31,7 @@ export async function purgeIssueAttachments(
       await inspectAttachmentFile(filePath);
       const content = await fs.readFile(filePath);
 
-      manifest.push({ filename, size: content.length, sha256: createHash(ATTACHMENT_HASH_ALGORITHM).update(content).digest("hex") });
+      manifest.push({ filename, size: content.length, sha256: sha256Hex(content) });
     }
 
     // Keep the index until all bytes are removed so partial cleanup remains discoverable.

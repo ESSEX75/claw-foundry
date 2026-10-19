@@ -2,6 +2,7 @@
 
 import { log as auditLog } from "../../audit.js";
 import { emptyRoleWorkerState, type Project, type RoleWorkerState } from "../../domain/index.js";
+import { getErrorMessage } from "../../errors/index.js";
 import { createProvider } from "../../integrations/index.js";
 import {
   getConfiguredRoleIds,
@@ -83,7 +84,7 @@ export async function registerProject(input: RegisterProjectInput): Promise<Regi
   try {
     promptsScaffolded = await scaffoldProjectOverrides(input.workspaceDir, slug, getConfiguredRoleIds(config));
   } catch (error) {
-    scaffoldError = error instanceof Error ? error.message : String(error);
+    scaffoldError = getErrorMessage(error);
   }
 
   await auditLog(input.workspaceDir, PROJECT_AUDIT_EVENT.REGISTER, { projectSlug: slug, isNewProject: committed.isNewProject, scaffoldError });

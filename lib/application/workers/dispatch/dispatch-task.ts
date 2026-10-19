@@ -9,21 +9,28 @@ import { randomUUID } from "node:crypto";
 import { log as auditLog } from "../../../audit.js";
 import type { WorkerDeliveryState } from "../../../domain/index.js";
 import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, resolveQueuePickup, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { AGENT_TURN_STATUS, deleteWorkerSession, ensureSessionModel } from "../../../integrations/index.js";
 import { getFallbackEmoji } from "../../../roles/index.js";
-import { isIssueCreationReady, loadConfig } from "../../../state/index.js";
-import { readIssueStateStore, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
-import { getProject, getRoleWorker, readProjects } from "../../../state/index.js";
+import {
+  getProject,
+  getRoleWorker,
+  isIssueCreationReady,
+  loadConfig,
+  readIssueStateStore,
+  readProjects,
+  readWorkerDeliveryResolution,
+  withIssueOrchestrationLock,
+} from "../../../state/index.js";
 import { transitionWorkflowLabel } from "../../issue-projection/index.js";
-import { getNotificationConfig, NOTIFICATION_EVENT, notify } from "../../notifications/index.js";
-import { resolveIssueNotificationEndpoint } from "../../notifications/index.js";
+import { getNotificationConfig, NOTIFICATION_EVENT, notify, resolveIssueNotificationEndpoint } from "../../notifications/index.js";
 import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageReviewSummaryDelivery } from "../../pull-request-feedback/index.js";
 import { REVIEW_SUMMARY_RECEIPT_STEP, WORKER_AUDIT_EVENT } from "../const.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
 import { recordIssueDelivery, recordSlotDelivery } from "../delivery-state.js";
 import { shouldClearSession } from "../session-budget.js";
 import { formatSessionLabel } from "../session-label.js";
-import { auditDispatch, dispatchErrorMessage } from "./audit.js";
+import { auditDispatch } from "./audit.js";
 import { settleDispatchDelivery } from "./delivery-settlement.js";
 import { loadDispatchContext } from "./dispatch-context.js";
 import { buildDispatchPlan } from "./plan.js";
@@ -183,7 +190,7 @@ export async function dispatchTaskLocked(
       await recordSlotDelivery(workspaceDir, project.slug, issueId, plan, unresolved);
     } catch (error) {
       await auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, { issue: issueId, role,
-        step: "settleDelivery", error: dispatchErrorMessage(error) }).catch(() => {});
+        step: "settleDelivery", error: getErrorMessage(error) }).catch(() => {});
     }
 
     // Notify only after the gateway did not explicitly reject delivery.
@@ -202,7 +209,7 @@ export async function dispatchTaskLocked(
       agentId: project.agentId, runCommand: rc,
     }).catch((err) => {
       auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, {
-        step: "notify", issue: issueId, role, error: dispatchErrorMessage(err),
+        step: "notify", issue: issueId, role, error: getErrorMessage(err),
       }).catch(() => { });
     });
 
@@ -224,7 +231,7 @@ export async function dispatchTaskLocked(
       if (prFeedback) {
         await confirmReviewSummaryDelivery({ workspaceDir, projectSlug: project.slug }, issueId, plan.deliveryId).catch(error =>
           auditLog(workspaceDir, WORKER_AUDIT_EVENT.WARNING, { step: REVIEW_SUMMARY_RECEIPT_STEP, issue: issueId,
-            error: dispatchErrorMessage(error) }).catch(() => {}));
+            error: getErrorMessage(error) }).catch(() => {}));
       }
 
       acknowledgeComments(provider, issueId, isConflictFix ? [] : comments, prFeedback, workspaceDir).catch(() => {});
@@ -250,7 +257,7 @@ export async function dispatchTaskLocked(
             step: "restoreProviderLabel",
             issue: issueId,
             role,
-            error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+            error: getErrorMessage(rollbackError),
           }).catch(() => { });
         }
       }
@@ -264,7 +271,7 @@ export async function dispatchTaskLocked(
           step: "releaseWorkerReservation",
           issue: issueId,
           role,
-          error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+          error: getErrorMessage(rollbackError),
         }).catch(() => { });
       }
     }

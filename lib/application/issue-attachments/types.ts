@@ -40,20 +40,6 @@ export type TaskAttachmentInput = {
   runCommand: RunCommand;
 };
 
-/** Complete SDK routing identity; missing components are never guessed. */
-export type AttachmentMessageRoute = {
-  /** Transport identifier. */
-  channel: string;
-  /** Explicit account identifier. */
-  accountId: string;
-  /** Group/conversation identifier, without a topic suffix. */
-  conversationId: string;
-  /** Optional exact topic or thread. */
-  threadId?: string;
-  /** Explicit session owner parsed at the SDK boundary. */
-  agentId: string;
-};
-
 /** One configured owner's effective workspace. */
 export type AttachmentWorkspace = {
   /** Configured agent identity. */

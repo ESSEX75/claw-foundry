@@ -2,6 +2,7 @@
 
 import type { ExecutionMode } from "../../../domain/index.js";
 import { findAvailableWorkerSlot, ISSUE_INTEGRITY_STATUS, WORKER_DELIVERY_STATUS, workerExecutionBlock } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import type { Issue } from "../../../integrations/index.js";
 import { AGENT_TURN_STATUS } from "../../../integrations/index.js";
 import { getRoleWorker, loadConfig, readIssueStateStore, readProjects, withIssueOrchestrationLock } from "../../../state/index.js";
@@ -77,7 +78,7 @@ export async function scheduleResearch(input: ResearchTaskInput, creation: Creat
         success: true, status: RESEARCH_STATUS.DISPATCHED,
         dispatch, deliveryId: dispatch.deliveryId, deliveryStatus: dispatch.deliveryStatus };
     } catch (error) {
-      return { ...result, success: false, status: RESEARCH_STATUS.DISPATCH_FAILED, reason: error instanceof Error ? error.message : String(error) };
+      return { ...result, success: false, status: RESEARCH_STATUS.DISPATCH_FAILED, reason: getErrorMessage(error) };
     }
   });
 }

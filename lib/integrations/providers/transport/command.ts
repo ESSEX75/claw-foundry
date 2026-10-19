@@ -1,9 +1,9 @@
 /** Executes one CLI request and preserves abnormal process completion as unknown mutation evidence. */
 
 import type { RunCommand } from "../../../context.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { isCompleteCommandOutput, isCompletedCommand } from "../../process/index.js";
-import { PROVIDER_OPERATION_ERROR } from "../errors/index.js";
-import { normalizeProviderFailure, ProviderTransportError } from "../errors/index.js";
+import { normalizeProviderFailure, PROVIDER_OPERATION_ERROR, ProviderTransportError } from "../errors/index.js";
 import { PROVIDER_TRANSPORT_POLICY } from "./const.js";
 
 /** Execute once; callers select replay safety and supply any resilience policy outside this function.
@@ -21,7 +21,7 @@ export async function runProviderCommand(runCommand: RunCommand, argv: string[],
   } catch (error) {
     const failure = normalizeProviderFailure(error);
 
-    throw new ProviderTransportError(error instanceof Error ? error.message : String(error), { ...failure, outcomeUnknown: true }, error);
+    throw new ProviderTransportError(getErrorMessage(error), { ...failure, outcomeUnknown: true }, error);
   }
 
   if (!isCompletedCommand(result)) {

@@ -1,8 +1,8 @@
 /** Delivers optional review events only to the issue's persisted exact endpoint. */
 
 import { log as auditLog } from "../../../audit.js";
-import { notify } from "../../notifications/index.js";
-import { resolveIssueNotificationEndpoint } from "../../notifications/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
+import { notify, resolveIssueNotificationEndpoint } from "../../notifications/index.js";
 import { REVIEW_NOTIFICATION_ERROR } from "./const.js";
 import type { ReviewNotificationInput } from "./types.js";
 
@@ -20,6 +20,6 @@ export async function notifyReviewEvent(input: ReviewNotificationInput): Promise
       accountId: target?.accountId, threadId: target?.threadId, agentId: project.agentId, runtime, runCommand });
   } catch (error) {
     await auditLog(workspaceDir, REVIEW_NOTIFICATION_ERROR, { projectSlug: project.slug, issueId,
-      event: event.type, error: error instanceof Error ? error.message : String(error) }).catch(() => {});
+      event: event.type, error: getErrorMessage(error) }).catch(() => {});
   }
 }

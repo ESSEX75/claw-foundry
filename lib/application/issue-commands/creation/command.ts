@@ -2,15 +2,14 @@
  * Opens or resumes one managed task creation under its idempotency lock.
  */
 
-import { createHash } from "node:crypto";
-
 import { REVIEW_POLICY, STATE_TYPE, TEST_POLICY, type WorkflowConfig } from "../../../domain/index.js";
+import { sha256Hex } from "../../../hashing/index.js";
 import { expectedManagedLabels, stripManagedIssueBody } from "../../../projection/index.js";
 import type { IssueCreationOperation } from "../../../state/index.js";
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, newIssueCreationIdentity, updateIssueCreationStore, withIssueCreationLock } from "../../../state/index.js";
 import { buildInitialIssueRuntimeState } from "../../issue-runtime/index.js";
 import { creationAudit } from "./audit.js";
-import { CREATION_EVENT, CREATION_PAYLOAD_HASH, CREATION_STEPS } from "./const.js";
+import { CREATION_EVENT, CREATION_STEPS } from "./const.js";
 import { IssueCreationFailureError } from "./failure.js";
 import { withCreationPermit } from "./permit.js";
 import { runCreationOperation } from "./runner.js";
@@ -134,5 +133,5 @@ function requireCreationState(workflow: WorkflowConfig, workflowState: string) {
  * @param value - Canonical data bound to the caller's key.
  */
 function hashPayload(value: unknown): string {
-  return createHash(CREATION_PAYLOAD_HASH).update(JSON.stringify(value)).digest("hex");
+  return sha256Hex(JSON.stringify(value));
 }

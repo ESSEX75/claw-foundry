@@ -2,6 +2,7 @@
  * Maps repair failures into stable adapter-visible errors and recovery plans.
  */
 
+import { getErrorMessage } from "../../../errors/index.js";
 import { isProviderIssueLookupError, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../integrations/index.js";
 import { ISSUE_REPAIR_ERROR, REPAIR_STATUS } from "./const.js";
 import type { IssueRepairErrorCode, IssueRepairResult } from "./types.js";
@@ -64,7 +65,7 @@ export function mapRepairFailure(plan: IssueRepairResult, error: unknown): Issue
   }
 
   return {
-    ...blocked(plan, ISSUE_REPAIR_ERROR.REPAIR_APPLY_FAILED, error instanceof Error ? error.message : String(error), true),
+    ...blocked(plan, ISSUE_REPAIR_ERROR.REPAIR_APPLY_FAILED, getErrorMessage(error), true),
     recoveryPlan: ["Keep local integrity blocked.", "Inspect provider state and run a new dry-run."],
   };
 }

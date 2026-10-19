@@ -2,6 +2,13 @@
 
 This layer owns local persistence.
 
+Shared error text/string-code narrowing, SHA-256 mechanics and duration syntax are
+consumed from `lib/errors`, `lib/hashing` and `lib/duration`. State retains lock and
+filesystem recovery policy, payload serialization and all persisted schemas. Missing
+file handling requires a real Error with the exact string code; nested causes are
+unwrapped only by the repository that created the contextual wrapper. Duration schema
+validation uses the common grammar without changing existing accepted raw syntax.
+
 State modules read, write, and lock DevClaw project files such as
 project config, setup files, and managed issue runtime state. They may use domain
 types, but they should not contain queue scheduling or worker dispatch behavior.

@@ -3,6 +3,7 @@
  * Application code consumes codes and never infers destructive meaning from error text.
  */
 
+import { getErrorMessage } from "../../../errors/index.js";
 import { PROVIDER_ERROR_NAME, PROVIDER_ISSUE_LOOKUP_ERROR, PROVIDER_OPERATION_ERROR } from "./const.js";
 import { normalizeProviderFailure } from "./failures.js";
 import type { ProviderIssueLookupErrorCode, ProviderLookupErrorOptions } from "./types.js";
@@ -37,7 +38,7 @@ export class ProviderIssueLookupError extends Error {
  */
 export function classifyProviderLookupFailure(provider: string, error: unknown): ProviderIssueLookupError {
   if (error instanceof ProviderIssueLookupError) return error;
-  const message = error instanceof Error ? error.message : String(error);
+  const message = getErrorMessage(error);
   const failure = normalizeProviderFailure(error);
   const code = failure.code === PROVIDER_OPERATION_ERROR.NOT_FOUND
     || failure.code === PROVIDER_OPERATION_ERROR.CONFLICT || failure.code === PROVIDER_OPERATION_ERROR.VALIDATION_FAILED

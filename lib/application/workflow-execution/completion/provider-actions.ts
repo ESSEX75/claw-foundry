@@ -2,6 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { ACTION, type CompletionRule } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../effects/index.js";
 import { COMPLETION_EFFECT_AUDIT } from "./const.js";
 import type { CompletionActions, CompletionInput } from "./types.js";
@@ -16,7 +17,7 @@ export async function executeCompletionActions(opts: Omit<CompletionInput, "expe
     provider: opts.provider, issueId: opts.issueId, actions: rule.actions, prUrl: opts.prUrl,
     runCommand: opts.runCommand, repoPath: opts.repoPath, gitPullMs,
     onWarning: async (step, error) => { await auditLog(opts.workspaceDir, COMPLETION_EFFECT_AUDIT.WARNING, {
-      step, issue: opts.issueId, role: opts.role, error: error instanceof Error ? error.message : String(error),
+      step, issue: opts.issueId, role: opts.role, error: getErrorMessage(error),
     }); },
   });
   const mergeFailure = result.merge?.kind === MERGE_EFFECT_OUTCOME.CONFLICT ? { error: `Merge conflict: ${result.prUrl}` } : null;

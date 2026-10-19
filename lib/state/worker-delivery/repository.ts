@@ -3,9 +3,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { hasErrorCode } from "../../errors/index.js";
 import { withIssueStoreLock } from "../issues/persistence/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../paths.js";
-import { isErrnoException, writeJsonAtomic } from "../persistence/index.js";
+import { writeJsonAtomic } from "../persistence/index.js";
 import { parseProjectSlug } from "../projects/index.js";
 import { WORKER_RESOLUTIONS_FILE_NAME } from "./const.js";
 import { WorkerResolutionSchema, WorkerResolutionStoreSchema } from "./schema.js";
@@ -34,7 +35,7 @@ async function readResolutions(workspaceDir: string, projectSlug: string): Promi
 
     return records;
   } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return {};
+    if (hasErrorCode(error, "ENOENT")) return {};
     throw error;
   }
 }

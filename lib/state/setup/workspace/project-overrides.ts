@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { hasErrorCode } from "../../../errors/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { CREATE_ONLY_FILE_FLAG, FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
@@ -82,7 +83,7 @@ Call \`workflow_guide\` for the full config reference.
 
     return true;
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === FILESYSTEM_ERROR_CODE.ALREADY_EXISTS) {
+    if (hasErrorCode(error, FILESYSTEM_ERROR_CODE.ALREADY_EXISTS)) {
       if ((await fs.lstat(readmePath)).isFile()) return false;
       throw new Error(`Project documentation path is not a regular file: ${readmePath}`, { cause: error });
     }

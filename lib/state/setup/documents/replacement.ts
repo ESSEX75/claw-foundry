@@ -3,7 +3,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { isErrnoException, LOCK_FILE_SUFFIX, withFileLock, writeFileAtomic } from "../../persistence/index.js";
+import { hasErrorCode } from "../../../errors/index.js";
+import { LOCK_FILE_SUFFIX, withFileLock, writeFileAtomic } from "../../persistence/index.js";
 import { BACKUP_FILE_SUFFIX, DOCUMENT_LOCK_OPTIONS } from "./const.js";
 
 /**
@@ -22,7 +23,7 @@ export async function updateDocument(filePath: string, build: (previous: string 
     try {
       previous = await fs.readFile(filePath, "utf-8");
     } catch (error) {
-      if (!isErrnoException(error) || error.code !== "ENOENT") throw error;
+      if (!hasErrorCode(error, "ENOENT")) throw error;
       previous = null;
     }
 

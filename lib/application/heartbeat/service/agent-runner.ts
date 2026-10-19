@@ -1,6 +1,7 @@
 /** Runs independent agents over fresh workspace state and aggregates tick results. */
 
 import type { RunCommand } from "../../../context.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { fetchGatewaySessions } from "../../../integrations/index.js";
 import { initializeWorkspaceFiles } from "../../../state/index.js";
 import type { NotificationRuntime } from "../../notifications/index.js";
@@ -52,7 +53,7 @@ export async function processAllAgents(
       await initializeWorkspaceFiles(workspace);
     } catch (err) {
       failedWorkspaces.add(workspace);
-      logger.warn(`Workspace refresh failed for ${workspace}: ${err instanceof Error ? err.message : String(err)}`);
+      logger.warn(`Workspace refresh failed for ${workspace}: ${getErrorMessage(err)}`);
     }
   }
 
@@ -82,7 +83,7 @@ export async function processAllAgents(
     } catch (error) {
       result.totalSkipped++;
       result.skipDetails.push({ project: agentId, code: HEARTBEAT_SKIP_REASON.AGENT_TICK_FAILED, reason: "Agent tick failed" });
-      logger.warn(`Heartbeat agent ${agentId} failed in ${workspace}: ${error instanceof Error ? error.message : String(error)}`);
+      logger.warn(`Heartbeat agent ${agentId} failed in ${workspace}: ${getErrorMessage(error)}`);
       continue;
     }
 

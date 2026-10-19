@@ -1,5 +1,6 @@
 /** Registers SDK media capture and passes complete normalized routing to application orchestration. */
 
+import { getErrorMessage } from "../../../errors/index.js";
 import { listConfiguredAgents, resolveConfiguredAgentWorkspace } from "../agents/index.js";
 import { extractMediaAttachments } from "../media/index.js";
 import { normalizeAttachmentRoute } from "./attachment-route.js";
@@ -43,7 +44,7 @@ export function registerAttachmentHook(api: AttachmentHookRegistrar, ctx: Attach
           issueId, provider, uploader: event.from, mediaAttachments: attachments });
       }
     } catch (error) {
-      ctx.logger.warn(`Attachment capture failed: ${error instanceof Error ? error.message : String(error)}`);
+      ctx.logger.warn(`Attachment capture failed: ${getErrorMessage(error)}`);
     }
   });
 }

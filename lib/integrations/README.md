@@ -83,16 +83,24 @@ reviews-to-reactions applies to GitLab. Lower wire/API owners never depend on th
 
 ## OpenClaw ownership and guarantees
 
-`openclaw/index.ts` aggregates six capability APIs; SDK resources remain SDK-owned.
+`openclaw/index.ts` aggregates seven capability APIs; SDK resources remain SDK-owned.
 
 | Capability | Responsibility |
 | --- | --- |
 | `agents` | Active SDK registry, SDK resource resolution, explicit agent registration and directory provisioning. |
 | `sessions` | Complete inventory, metrics, canonical keys, confirmed model patch/deletion and one worker submission. |
 | `hooks` | SDK registration, mutable bootstrap resources and complete normalized attachment routes. |
+| `routing` | Shared normalized incoming route identity and canonical topic framing, without project selection. |
 | `media` | Ordered path/MIME pairing and SDK MIME detection; no local persistence. |
 | `notifications` | One outbound submission with accepted/rejected/unknown outcomes. |
 | `scopes` | Optional CLI transport/evidence; application selects permissions and approval policy. |
+
+Routing owns the single `AttachmentMessageRoute` contract used by incoming hooks and
+application consumers, plus the topic separator used by incoming parsing and outgoing
+peer framing. Topic-removal TODOs remain with the shared framing and hook validation.
+SDK event normalization remains in hooks; application selects and authorizes projects.
+Generic diagnostics use `lib/errors`; provider error classification and delivery
+uncertainty remain adapter responsibilities rather than shared formatter behavior.
 
 The agents API exposes its canonical `ConfiguredAgent` result type for read-only
 consumers, retaining inferred caller metadata without duplicating identity DTOs.

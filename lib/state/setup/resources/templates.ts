@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { RoleId } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import {
   AGENTS_FILE_NAME,
   HEARTBEAT_FILE_NAME,
@@ -44,7 +45,7 @@ async function loadTemplates(): Promise<SetupTemplates> {
     try {
       return await fs.readFile(filePath, "utf-8");
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
 
       throw new Error(`Cannot load setup template ${filePath}: ${message}`, { cause: error });
     }

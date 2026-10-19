@@ -5,9 +5,9 @@
  */
 
 import type { NotificationEndpoint } from "../../domain/index.js";
-import { findConfiguredAgent } from "../../integrations/index.js";
+import { findConfiguredAgent,TOPIC_PEER_SEPARATOR } from "../../integrations/index.js";
 import type { ProjectsData } from "../../state/index.js";
-import { ROUTE_DIAGNOSTIC_CODE, TOPIC_PEER_SEPARATOR } from "./const.js";
+import { ROUTE_DIAGNOSTIC_CODE } from "./const.js";
 import { matchesExactDestination } from "./route-matching.js";
 import type { ProjectRouteInspection, RouteConfig, RouteDiagnostic } from "./types.js";
 

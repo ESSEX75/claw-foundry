@@ -3,6 +3,7 @@
  * Application sagas use these codes instead of inferring recovery safety from CLI text.
  */
 
+import { getErrorMessage } from "../../../errors/index.js";
 import { PROVIDER_ERROR_NAME } from "./const.js";
 import { normalizeProviderFailure } from "./failures.js";
 import type { ProviderOperationErrorCode, ProviderOperationErrorOptions } from "./types.js";
@@ -36,7 +37,7 @@ export class ProviderOperationError extends Error {
  */
 export function classifyProviderOperationError(error: unknown): ProviderOperationError {
   if (error instanceof ProviderOperationError) return error;
-  const message = error instanceof Error ? error.message : String(error);
+  const message = getErrorMessage(error);
   const failure = normalizeProviderFailure(error);
 
   return new ProviderOperationError({ ...failure, message, cause: error });

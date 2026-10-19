@@ -3,12 +3,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { hasErrorCode } from "../../../errors/index.js";
 import { DATA_DIR, WORKFLOW_FILE_NAME } from "../../paths.js";
 import { FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
 import type { WorkspaceWriteResult } from "../documents/index.js";
 import { backupAndWrite } from "../documents/index.js";
-import { PROMPTS_DIRECTORY_NAME, ROLE_PROMPT_FILE_EXTENSION } from "../resources/index.js";
-import { loadSetupTemplates } from "../resources/index.js";
+import { loadSetupTemplates,PROMPTS_DIRECTORY_NAME, ROLE_PROMPT_FILE_EXTENSION } from "../resources/index.js";
 import { DEFAULTS_SCOPE } from "./const.js";
 import { resetDefaults } from "./reset.js";
 import type { DefaultsScope, WorkflowDocuments } from "./types.js";
@@ -21,7 +21,7 @@ export async function readWorkflowDocuments(workspacePath: string): Promise<Work
 
   try { current = await fs.readFile(path.join(workspacePath, DATA_DIR, WORKFLOW_FILE_NAME), STATE_TEXT_ENCODING); }
   catch (error) {
-    if (!(error instanceof Error && "code" in error && error.code === FILESYSTEM_ERROR_CODE.NOT_FOUND)) throw error;
+    if (!hasErrorCode(error, FILESYSTEM_ERROR_CODE.NOT_FOUND)) throw error;
   }
 
   return { current, template: (await loadSetupTemplates()).workflow };

@@ -4,6 +4,7 @@ import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { hasErrorCode } from "../../../errors/index.js";
 import { CREATE_ONLY_FILE_FLAG, FILESYSTEM_ERROR_CODE, LOCK_FILE_SUFFIX, STATE_TEXT_ENCODING, withFileLock } from "../../persistence/index.js";
 import { DOCUMENT_LOCK_OPTIONS } from "./const.js";
 
@@ -18,7 +19,7 @@ export async function fileExists(filePath: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === FILESYSTEM_ERROR_CODE.NOT_FOUND) return false;
+    if (hasErrorCode(error, FILESYSTEM_ERROR_CODE.NOT_FOUND)) return false;
     throw error;
   }
 }
@@ -37,7 +38,7 @@ export async function writeIfMissing(filePath: string, content: string): Promise
     try {
       await fs.writeFile(filePath, content, { encoding: STATE_TEXT_ENCODING, flag: CREATE_ONLY_FILE_FLAG });
     } catch (error) {
-      if (error instanceof Error && "code" in error && error.code === FILESYSTEM_ERROR_CODE.ALREADY_EXISTS) return false;
+      if (hasErrorCode(error, FILESYSTEM_ERROR_CODE.ALREADY_EXISTS)) return false;
       throw error;
     }
 
@@ -59,7 +60,7 @@ export async function copyIfMissing(sourcePath: string, destinationPath: string)
     try {
       await fs.copyFile(sourcePath, destinationPath, fsConstants.COPYFILE_EXCL);
     } catch (error) {
-      if (error instanceof Error && "code" in error && error.code === FILESYSTEM_ERROR_CODE.ALREADY_EXISTS) return false;
+      if (hasErrorCode(error, FILESYSTEM_ERROR_CODE.ALREADY_EXISTS)) return false;
       throw error;
     }
 

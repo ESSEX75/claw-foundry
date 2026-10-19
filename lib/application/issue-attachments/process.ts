@@ -1,6 +1,7 @@
 /** Saves incoming attachments locally before publishing them through a project provider. */
 
 import { log as auditLog } from "../../audit.js";
+import { getErrorMessage } from "../../errors/index.js";
 import { detectAttachmentMime } from "../../integrations/index.js";
 import { type AttachmentMeta, readAttachmentSource, saveAttachment, updateAttachmentPublicUrl } from "../../state/index.js";
 import { ATTACHMENT_EVENT, DEFAULT_ATTACHMENT_MIME } from "./const.js";
@@ -52,6 +53,6 @@ export async function processAttachmentMessage(input: ProcessAttachmentInput): P
 async function recordWarning(input: ProcessAttachmentInput, event: string, error: unknown): Promise<void> {
   await auditLog(input.workspaceDir, event, {
     project: input.projectSlug, issueId: input.issueId,
-    error: error instanceof Error ? error.message : String(error)
+    error: getErrorMessage(error)
   }).catch(() => { });
 }

@@ -1,5 +1,6 @@
 /** Resolves configured agent workspaces and their owned managed projects. */
 
+import { getErrorMessage } from "../../../errors/index.js";
 import type { AgentRegistryConfig } from "../../../integrations/index.js";
 import { listConfiguredAgents, resolveConfiguredAgentWorkspace } from "../../../integrations/index.js";
 import { inspectManagedWorkspace } from "../../../state/index.js";
@@ -30,7 +31,7 @@ export async function discoverAgents(config: AgentRegistryConfig): Promise<Agent
       seen.add(key);
       agents.push({ agentId, workspace });
     } catch (error) {
-      errors.push(`Agent ${agentId} workspace discovery failed: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`Agent ${agentId} workspace discovery failed: ${getErrorMessage(error)}`);
     }
   }
 

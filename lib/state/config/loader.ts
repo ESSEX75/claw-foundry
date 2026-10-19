@@ -2,6 +2,7 @@
 
 import path from "node:path";
 
+import { getErrorMessage } from "../../errors/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../paths.js";
 import { parseProjectSlug } from "../projects/index.js";
 import { readYamlFile } from "./boundary.js";
@@ -50,7 +51,7 @@ function parseLayer(value: unknown, filePath: string): DevClawConfig {
   try {
     return parseConfig(value);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = getErrorMessage(error);
 
     throw new Error(`Invalid config ${filePath}: ${message}`, { cause: error });
   }

@@ -4,14 +4,13 @@
 
 import { log as auditLog } from "../../audit.js";
 import { EXECUTION_MODE } from "../../domain/index.js";
+import { getErrorMessage } from "../../errors/index.js";
 import { loadInstanceName } from "../../instance.js";
 import { createProvider } from "../../integrations/index.js";
-import { loadConfig } from "../../state/index.js";
-import { readProjects } from "../../state/index.js";
+import { loadConfig, readProjects } from "../../state/index.js";
 import { projectTick } from "../queue-scheduling/index.js";
 import { performHealthPass } from "../workers/index.js";
-import { performReviewPass, performReviewSkipPass } from "../workflow-execution/index.js";
-import { testSkipPass } from "../workflow-execution/index.js";
+import { performReviewPass, performReviewSkipPass, testSkipPass } from "../workflow-execution/index.js";
 import { HEARTBEAT_AUDIT_EVENT, HEARTBEAT_PASS, HEARTBEAT_PASS_FAILURE_POLICY, HEARTBEAT_SKIP_REASON } from "./const.js";
 import { performIssueCreationPass, performProjectionIntegrityPass, performTerminalRecoveryPass } from "./maintenance-passes.js";
 import { runHeartbeatPasses } from "./pass-runner.js";
@@ -194,7 +193,7 @@ export async function tick(opts: HeartbeatRunInput): Promise<HeartbeatTickResult
 
     } catch (err) {
       // Per-project isolation: one failing project doesn't crash the entire tick
-      const reason = err instanceof Error ? err.message : String(err);
+      const reason = getErrorMessage(err);
 
       opts.logger.warn(`Heartbeat tick failed for project ${slug}: ${reason}`);
 

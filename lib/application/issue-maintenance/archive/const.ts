@@ -35,14 +35,5 @@ export const ARCHIVE_RECOVERY_UNKNOWN_REASON = "unknown";
 /** Correlation prefix for periodic retention maintenance. */
 export const ARCHIVE_MAINTENANCE_CORRELATION_PREFIX = "maintenance:";
 
-/** Source snapshot digest algorithm. */
-export const ARCHIVE_HASH_ALGORITHM = "sha256";
-
-/** Millisecond conversion factors accepted by strict retention parsing. */
-export const DURATION_MULTIPLIERS: Readonly<Record<string, number>> = { ms: 1, s: 1_000, m: 60_000, h: 3_600_000, d: 86_400_000 };
-
-/** Entire non-negative integral duration including its unit. */
-export const RETENTION_DURATION_PATTERN = /^(\d+)(ms|s|m|h|d)$/;
-
 /** Audit reasons for the selected retention policy. */
 export const RETENTION_REASON = { ARCHIVE: "archive_retention", ATTACHMENTS: "attachments_retention" } as const;

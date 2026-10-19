@@ -1,11 +1,11 @@
 /** Applies bounded retention against exact fresh records, retaining recovery state until cleanup succeeds. */
 
 import { log as auditLog } from "../../../audit.js";
-import { type ArchivedIssueRecord, ATTACHMENT_DISPOSITION } from "../../../domain/index.js";
-import { hasProjectWorkerSlot } from "../../../domain/index.js";
+import { type ArchivedIssueRecord, ATTACHMENT_DISPOSITION, hasProjectWorkerSlot } from "../../../domain/index.js";
+import { parseDuration } from "../../../duration/index.js";
 import { applyArchiveRetention, readIssueArchiveStore, readOptionalProjects, withIssueOrchestrationLock } from "../../../state/index.js";
 import { ARCHIVE_EVENT, ARCHIVE_MAINTENANCE_ACTOR, ARCHIVE_MAINTENANCE_CORRELATION_PREFIX, RETENTION_REASON } from "./const.js";
-import { isArchiveRecordExpired, parseDuration, validateRetentionBudget } from "./planning.js";
+import { isArchiveRecordExpired, validateRetentionBudget } from "./planning.js";
 import type { ArchiveMaintenanceResult, ArchivePurgeResult, MaintainIssueArchiveInput, PurgeIssueArchiveInput } from "./types.js";
 
 /** Project and retention windows common to explicit and periodic cleanup. */

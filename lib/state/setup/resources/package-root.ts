@@ -5,6 +5,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { getErrorMessage, hasErrorCode } from "../../../errors/index.js";
 import {
   DEFAULTS_DIRECTORY_NAME,
   DEVCLAW_PACKAGE_NAME,
@@ -28,8 +29,8 @@ export async function findDevClawPackageRoot(startDirectory: string): Promise<st
 
       if (isDevClawPackageManifest(manifest)) return currentDirectory;
     } catch (error) {
-      if (!isMissingFileError(error)) {
-        const message = error instanceof Error ? error.message : String(error);
+      if (!hasErrorCode(error, "ENOENT")) {
+        const message = getErrorMessage(error);
 
         throw new Error(`Cannot inspect package manifest ${manifestPath}: ${message}`, { cause: error });
       }
@@ -63,13 +64,4 @@ function isDevClawPackageManifest(value: unknown): boolean {
     && value !== null
     && "name" in value
     && value.name === DEVCLAW_PACKAGE_NAME;
-}
-
-/**
- * Check whether a filesystem failure means that a candidate manifest is absent.
- *
- * @param error - Unknown failure raised while reading a package manifest.
- */
-function isMissingFileError(error: unknown): boolean {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }

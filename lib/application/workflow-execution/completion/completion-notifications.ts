@@ -11,12 +11,13 @@ import {
   REVIEW_POLICY,
   STATE_TYPE,
 } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { PR_STATE } from "../../../integrations/index.js";
 import { reservePipelineNotification } from "../../../state/index.js";
-import { NOTIFICATION_BLOCKED } from "../../notifications/index.js";
 import {
   getNotificationConfig,
   NOTIFICATION_BLOCK_REASON,
+  NOTIFICATION_BLOCKED,
   NOTIFICATION_EVENT,
   NOTIFICATION_MERGE_ACTOR,
   notify,
@@ -96,7 +97,7 @@ export async function notifyCompletion(input: CompletionNotificationInput): Prom
 function sendBestEffort(event: NotifyEvent, options: NotifyOptions): void {
   void notify(event, options).catch((error: unknown) => {
     void auditLog(options.workspaceDir, COMPLETION_EFFECT_AUDIT.WARNING, {
-      step: event.type, error: error instanceof Error ? error.message : String(error),
+      step: event.type, error: getErrorMessage(error),
     }).catch(() => { });
   });
 }

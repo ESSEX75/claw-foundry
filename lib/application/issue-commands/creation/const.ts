@@ -50,9 +50,6 @@ export const CREATION_RESULT_INTEGRITY = {
   ERROR: "error"
 } as const;
 
-/** Digest used to bind idempotency keys to immutable creation input. */
-export const CREATION_PAYLOAD_HASH = "sha256";
-
 /** Caller identity recorded when heartbeat resumes a managed creation operation. */
 export const CREATION_RECONCILIATION_REQUESTER = "heartbeat_creation_reconciliation";
 

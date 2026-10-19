@@ -2,6 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { DEFAULT_ROLES, getInitialStateLabel, STATE_TYPE } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { composeManagedIssueBody } from "../../../projection/index.js";
 import { withIssueOrchestrationLock } from "../../../state/index.js";
 import { resolveProject } from "../../projects/index.js";
@@ -111,7 +112,7 @@ async function editTaskBodyLocked(input: EditTaskBodyInput, target: TaskLifecycl
       provider.reactToIssueComment(issueId, commentId, EYES_EMOJI).catch(() => { });
     }).catch((err) => {
       auditLog(workspaceDir, TASK_EVENT.EDIT_BODY_WARNING, {
-        step: "addComment", issueId, error: err instanceof Error ? err.message : String(err),
+        step: "addComment", issueId, error: getErrorMessage(err),
       }).catch(() => { });
     });
   }

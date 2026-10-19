@@ -1,6 +1,7 @@
 /** Owns a managed task lifecycle operation or its pure transition decision. */
 
 import { findSlotByIssue, ISSUE_INTEGRITY_STATUS, STATE_TYPE } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { isIssueCreationReady, readIssueStateStore, readProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../../issue-projection/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
@@ -89,6 +90,6 @@ async function reconcileClaimProjection(input: ClaimManagedTaskInput): Promise<v
       workflow: input.workflow, roles: input.roles, provider: input.provider, owner: TASK_CLAIM_OWNER,
     });
   } catch (error) {
-    throw new Error(`Ownership saved locally; label projection failed: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+    throw new Error(`Ownership saved locally; label projection failed: ${getErrorMessage(error)}`, { cause: error });
   }
 }

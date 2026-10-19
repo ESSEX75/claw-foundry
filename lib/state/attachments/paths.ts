@@ -3,8 +3,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { hasErrorCode } from "../../errors/index.js";
 import { DATA_DIR } from "../paths.js";
-import { isErrnoException, LOCK_FILE_SUFFIX } from "../persistence/index.js";
+import { LOCK_FILE_SUFFIX } from "../persistence/index.js";
 import { parseProjectSlug } from "../projects/index.js";
 import { ATTACHMENTS_DIRECTORY, ATTACHMENTS_INDEX } from "./const.js";
 import { attachmentNameSchema } from "./schema.js";
@@ -60,10 +61,10 @@ export async function inspectAttachmentDirectory(workspaceDir: string, directory
 
       if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`Unsafe attachment directory: ${current}`);
     } catch (error) {
-      if (!isErrnoException(error) || error.code !== "ENOENT") throw error;
+      if (!hasErrorCode(error, "ENOENT")) throw error;
       if (!create) return false;
       try { await fs.mkdir(current); } catch (mkdirError) {
-        if (!isErrnoException(mkdirError) || mkdirError.code !== "EEXIST") throw mkdirError;
+        if (!hasErrorCode(mkdirError, "EEXIST")) throw mkdirError;
       }
 
       const created = await fs.lstat(current);
@@ -86,7 +87,7 @@ export async function inspectAttachmentFile(filePath: string): Promise<boolean> 
 
     return true;
   } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return false;
+    if (hasErrorCode(error, "ENOENT")) return false;
     throw error;
   }
 }

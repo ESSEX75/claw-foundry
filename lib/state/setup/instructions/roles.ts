@@ -6,11 +6,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { isBuiltInRoleId } from "../../../domain/index.js";
+import { getErrorMessage,hasErrorCode } from "../../../errors/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
-import { FILESYSTEM_ERROR_CODE, isErrnoException, STATE_TEXT_ENCODING } from "../../persistence/index.js";
+import { FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
-import { PROMPTS_DIRECTORY_NAME, ROLE_PROMPT_FILE_EXTENSION } from "../resources/index.js";
-import { loadSetupTemplates } from "../resources/index.js";
+import { loadSetupTemplates,PROMPTS_DIRECTORY_NAME, ROLE_PROMPT_FILE_EXTENSION } from "../resources/index.js";
 import { ROLE_INSTRUCTIONS_PACKAGE_SOURCE } from "./const.js";
 import type { RoleInstructionsResult } from "./types.js";
 
@@ -105,8 +105,8 @@ async function readOptionalInstructionFile(filePath: string): Promise<string | n
   try {
     return await fs.readFile(filePath, STATE_TEXT_ENCODING);
   } catch (error) {
-    if (isErrnoException(error) && error.code === FILESYSTEM_ERROR_CODE.NOT_FOUND) return null;
-    const message = error instanceof Error ? error.message : String(error);
+    if (hasErrorCode(error, FILESYSTEM_ERROR_CODE.NOT_FOUND)) return null;
+    const message = getErrorMessage(error);
 
     throw new Error(`Cannot read role instructions ${filePath}: ${message}`, { cause: error });
   }

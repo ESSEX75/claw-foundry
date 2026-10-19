@@ -6,8 +6,8 @@
 import { randomUUID } from "node:crypto";
 
 import { log as auditLog } from "../../../audit.js";
-import { ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, PIPELINE_NOTIFICATION_STATUS } from "../../../domain/index.js";
-import { hasProjectWorkerSlot } from "../../../domain/index.js";
+import { hasProjectWorkerSlot,ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, PIPELINE_NOTIFICATION_STATUS } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { isProviderIssueLookupError, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../integrations/index.js";
 import { readIssueArchiveStore, readIssueStateStore, readOptionalProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
 import { archiveManagedIssueLocked } from "../archive/index.js";
@@ -101,7 +101,7 @@ async function deleteManagedIssueLocked(opts: Parameters<typeof deleteManagedIss
       await auditLog(opts.workspaceDir, DELETE_EVENT.PROVIDER_FAILED, {
         projectSlug: opts.projectSlug, issueId: opts.issueId, provider: state.provider,
         actor: opts.actor, reason: DELETE_REASON.PROVIDER_FAILED, correlationId,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }
@@ -156,7 +156,7 @@ async function deleteManagedIssueLocked(opts: Parameters<typeof deleteManagedIss
   } catch (error) {
     return {
       issueId: opts.issueId, dryRun: false, deleted: true, archived: false, correlationId, plan,
-      recoveryPlan: ["Provider deletion was confirmed. Retry local archival; do not recreate the provider issue.", error instanceof Error ? error.message : String(error)]
+      recoveryPlan: ["Provider deletion was confirmed. Retry local archival; do not recreate the provider issue.", getErrorMessage(error)]
     };
   }
 

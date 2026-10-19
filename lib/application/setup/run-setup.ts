@@ -1,5 +1,6 @@
 /** Applies validated setup plans shared by CLI and tools. */
 
+import { getErrorMessage } from "../../errors/index.js";
 import { provisionAgentResources, provisionConfiguredAgentResources, registerAgentConfiguration, resolveNewAgentResources } from "../../integrations/index.js";
 import { initializeWorkspaceFiles, refreshSystemInstructionFiles, resetDefaults, scaffoldWorkspace, writeWorkspaceModels } from "../../state/index.js";
 import { ensureChannelBinding } from "./bindings/index.js";
@@ -60,7 +61,7 @@ export async function runSetup(opts: SetupOpts): Promise<SetupResult> {
       result.filesWritten.push(...(await writeWorkspaceModels(workspacePath, opts.models)).written);
     }
   } catch (cause) {
-    const recovery: SetupRecovery = { step, reason: cause instanceof Error ? cause.message : String(cause),
+    const recovery: SetupRecovery = { step, reason: getErrorMessage(cause),
       action: opts.newAgentName && !result.agentCreated ? SETUP_RECOVERY_ACTION.INSPECT_REGISTRATION : SETUP_RECOVERY_ACTION.RESUME_TARGET,
       agentId: opts.agentId || opts.newAgentName ? agentId : undefined, workspacePath };
 

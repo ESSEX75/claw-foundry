@@ -1,5 +1,6 @@
 /** Executes project passes in order while retaining partial results and failure details. */
 
+import { getErrorMessage } from "../../errors/index.js";
 import { HEARTBEAT_PASS_FAILURE_POLICY } from "./const.js";
 import type { HeartbeatPass, HeartbeatPassFailurePolicy, HeartbeatPassReport } from "./types.js";
 
@@ -48,7 +49,7 @@ async function runHeartbeatPass(projectSlug: string, pass: HeartbeatPass, report
       report.errors = fixes.flatMap((fix) => fix.error ? [fix.error] : []);
     } else report.appliedActions.push({ kind: pass.name });
   } catch (error) {
-    report.errors.push(error instanceof Error ? error.message : String(error));
+    report.errors.push(getErrorMessage(error));
   }
 
   return report.errors.length === 0;

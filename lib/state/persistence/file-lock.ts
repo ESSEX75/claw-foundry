@@ -7,8 +7,8 @@ import path from "node:path";
 
 import { z } from "zod";
 
+import { hasErrorCode } from "../../errors/index.js";
 import { LOCK_CLAIM_SUFFIX, LOCK_RECORD_EXTENSION } from "./const.js";
-import { isErrnoException } from "./guards.js";
 import type { FileLockOptions, FileLockRecord } from "./types.js";
 
 /** Only the current immutable process ownership contract authorizes recovery. */
@@ -71,7 +71,7 @@ async function acquireLock(lockPath: string, owner: FileLockRecord, options: Fil
 
           return;
         } catch (error) {
-          if (!isErrnoException(error) || !["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOTDIR", "EISDIR"].includes(error.code ?? "")) throw error;
+          if (!hasErrorCode(error) || !["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOTDIR", "EISDIR"].includes(error.code)) throw error;
           publicationFailure = error;
           if (await lockEntryExists(lockPath) && await recoverAbandonedLock(lockPath, options.staleMs)) continue;
         }
@@ -97,7 +97,7 @@ async function lockEntryExists(lockPath: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return false;
+    if (hasErrorCode(error, "ENOENT")) return false;
     throw error;
   }
 }
@@ -139,7 +139,7 @@ async function recoverAbandonedLock(lockPath: string, staleMs: number): Promise<
 
     return true;
   } catch (error) {
-    if (isErrnoException(error) && error.code === "ENOENT") return true;
+    if (hasErrorCode(error, "ENOENT")) return true;
     throw new Error(`Cannot inspect state lock ${lockPath}; inspect ownership before repairing it.`, { cause: error });
   }
 }
@@ -154,7 +154,7 @@ function isProcessAlive(processId: number): boolean {
 
     return true;
   } catch (error) {
-    return !isErrnoException(error) || error.code !== "ESRCH";
+    return !hasErrorCode(error, "ESRCH");
   }
 }
 
@@ -167,7 +167,7 @@ async function removeOwnership(lockPath: string, token: string): Promise<void> {
   try {
     await fs.unlink(markerPath(lockPath, token));
   } catch (error) {
-    if (!isErrnoException(error) || error.code !== "ENOENT") throw error;
+    if (!hasErrorCode(error, "ENOENT")) throw error;
   }
 
   await removeEmptyDirectory(lockPath);
@@ -181,7 +181,7 @@ async function removeEmptyDirectory(directory: string): Promise<void> {
   try {
     await fs.rmdir(directory);
   } catch (error) {
-    if (!isErrnoException(error) || !["ENOENT", "ENOTEMPTY", "EEXIST"].includes(error.code ?? "")) throw error;
+    if (!hasErrorCode(error) || !["ENOENT", "ENOTEMPTY", "EEXIST"].includes(error.code)) throw error;
   }
 }
 

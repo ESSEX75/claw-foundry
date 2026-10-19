@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { hasErrorCode } from "../../../errors/index.js";
 import { FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
 import type { WorkspaceWriteResult } from "../documents/index.js";
 import { backupAndWrite } from "../documents/index.js";
@@ -32,7 +33,7 @@ export async function refreshSystemInstructionFiles(workspacePath: string): Prom
 export async function readWorkspaceAgentInstructions(workspacePath: string): Promise<string | null> {
   try { return await fs.readFile(path.join(workspacePath, AGENTS_FILE_NAME), STATE_TEXT_ENCODING); }
   catch (error) {
-    if (error instanceof Error && "code" in error && error.code === FILESYSTEM_ERROR_CODE.NOT_FOUND) return null;
+    if (hasErrorCode(error, FILESYSTEM_ERROR_CODE.NOT_FOUND)) return null;
     throw error;
   }
 }

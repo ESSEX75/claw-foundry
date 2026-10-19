@@ -1,5 +1,6 @@
 /** Coordinates read-only doctor observations while isolating per-project archive failures. */
 
+import { getErrorMessage } from "../../errors/index.js";
 import { loadConfig, readProjects } from "../../state/index.js";
 import { getIssueArchiveStatus } from "../issue-maintenance/index.js";
 import { resolveProjectToolOwners } from "../setup/index.js";
@@ -36,7 +37,7 @@ export async function runWorkspaceDiagnostics(
 
       archiveReport.archives.push({ projectSlug: project.slug, ...status });
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
 
       archiveReport.findings.push({
         code: DOCTOR_FINDING_CODE.ARCHIVE_INSPECTION_FAILED,

@@ -2,6 +2,7 @@
 
 import { log as auditLog } from "../../../audit.js";
 import { getStateLabels, ISSUE_INTEGRITY_STATUS, type IssueProjectionState, UNVERIFIED_INTEGRITY_ERROR, type WorkflowConfig } from "../../../domain/index.js";
+import { getErrorMessage } from "../../../errors/index.js";
 import { diffIssueProjection } from "../../../projection/index.js";
 import { readIssueStateStore, updateIssueStateStore, withIssueOrchestrationLock } from "../../../state/index.js";
 import { applyManagedLabelDiff } from "./apply.js";
@@ -60,7 +61,7 @@ export async function reconcileManagedLabelsLocked(
       changed: diff.missingManagedLabels.length > 0 || diff.unexpectedManagedLabels.length > 0,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = getErrorMessage(error);
 
     await setProjectionIntegrity(input, `${PROJECTION_FAILURE_PREFIX}${input.owner}: ${message}`);
     throw error;
@@ -83,7 +84,7 @@ export async function reconcileManagedLabelsLocked(
       integrityErrors: integrity.integrityErrors,
     });
   } catch (error) {
-    auditError = error instanceof Error ? error.message : String(error);
+    auditError = getErrorMessage(error);
   }
 
   return { ...result, integrity, ...(auditError ? { auditError } : {}) };

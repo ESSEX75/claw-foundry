@@ -1,5 +1,4 @@
-/** Aggregates supported heartbeat configuration, service and health APIs. */
+/** Exposes the supported heartbeat capability API. */
 
 export * from "./configuration/index.js";
-export * from "./health/index.js";
 export { registerHeartbeatService } from "./registration.js";

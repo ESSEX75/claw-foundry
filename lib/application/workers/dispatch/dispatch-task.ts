@@ -8,16 +8,16 @@ import { randomUUID } from "node:crypto";
 
 import { log as auditLog } from "../../../audit.js";
 import type { WorkerDeliveryState } from "../../../domain/index.js";
-import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, STATE_TYPE, WORKER_DELIVERY_STATUS, WORKFLOW_EVENT } from "../../../domain/index.js";
+import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, resolveQueuePickup, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import { AGENT_TURN_STATUS, deleteWorkerSession, ensureSessionModel } from "../../../integrations/index.js";
 import { getFallbackEmoji } from "../../../roles/index.js";
 import { isIssueCreationReady, loadConfig } from "../../../state/index.js";
 import { readIssueStateStore, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
 import { getProject, getRoleWorker, readProjects } from "../../../state/index.js";
+import { transitionWorkflowLabel } from "../../issue-projection/index.js";
 import { getNotificationConfig, NOTIFICATION_EVENT, notify } from "../../notifications/index.js";
 import { resolveIssueNotificationEndpoint } from "../../notifications/index.js";
-import { transitionWorkflowLabel } from "../../projection/index.js";
-import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageReviewSummaryDelivery } from "../../review/index.js";
+import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI, stageReviewSummaryDelivery } from "../../pull-request-feedback/index.js";
 import { REVIEW_SUMMARY_RECEIPT_STEP, WORKER_AUDIT_EVENT } from "../const.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
 import { recordIssueDelivery, recordSlotDelivery } from "../delivery-state.js";
@@ -93,11 +93,9 @@ export async function dispatchTaskLocked(
 
   const resolvedConfig = await loadConfig(workspaceDir, project.slug);
   const source = resolvedConfig.workflow.states[existingState.workflowState];
-  const pickup = source?.on?.[WORKFLOW_EVENT.PICKUP];
-  const target = pickup ? resolvedConfig.workflow.states[pickup.target] : undefined;
+  const pickup = resolveQueuePickup(resolvedConfig.workflow, existingState.workflowState, role);
 
-  if (source?.type !== STATE_TYPE.QUEUE || source.label !== existingState.workflowLabel || source.label !== fromLabel
-    || source.role !== role || target?.type !== STATE_TYPE.ACTIVE || target.role !== role || target.label !== toLabel) {
+  if (!pickup || source.label !== existingState.workflowLabel || source.label !== fromLabel || pickup.toLabel !== toLabel) {
     throw new Error(`Issue #${issueId} no longer matches its configured queue/PICKUP transition.`);
   }
 

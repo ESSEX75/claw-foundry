@@ -4,7 +4,7 @@
 
 import type { Command } from "commander";
 
-import { runRoutingDoctor } from "../../../application/index.js";
+import { runWorkspaceDiagnostics } from "../../../application/index.js";
 import { type AdministrativeCliContext, requireWorkspace } from "../../runtime/index.js";
 import { printDoctorReport } from "./output.js";
 
@@ -20,7 +20,7 @@ export function registerDoctorCommand(parent: Command, ctx: AdministrativeCliCon
     .action(async (opts: { workspace?: string }) => {
       const workspace = requireWorkspace(opts.workspace, ctx.runtime);
 
-      const report = await runRoutingDoctor(ctx.runtime, workspace);
+      const report = await runWorkspaceDiagnostics(ctx.runtime, workspace);
 
       printDoctorReport(report);
 

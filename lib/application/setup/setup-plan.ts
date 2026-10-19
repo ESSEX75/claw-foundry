@@ -2,9 +2,9 @@
 
 import { findConfiguredAgent, resolveNewAgentResources } from "../../integrations/index.js";
 import { getAgentId, resolveWorkspacePath } from "./agents/index.js";
+import { planChannelBinding } from "./bindings/index.js";
 import { SETUP_OPERATION, UNKNOWN_AGENT_ID } from "./const.js";
 import { resolveSetupModels } from "./model-configuration.js";
-import { planChannelBinding } from "./routing/index.js";
 import type { SetupOpts, SetupResult } from "./types.js";
 
 /** Resolve a validated setup plan; performs reads only and never invokes command transport.

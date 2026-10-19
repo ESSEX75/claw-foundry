@@ -6,7 +6,7 @@ import path from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { loadConfig } from "../../state/index.js";
 import { createSetupRuntime } from "../../testing/index.js";
-import { runRoutingDoctor } from "../doctor/index.js";
+import { runWorkspaceDiagnostics } from "../workspace-diagnostics/index.js";
 import { runSetup } from "./run-setup.js";
 
 /** Temporary test workspaces cleaned after each case. */
@@ -114,10 +114,10 @@ describe("shared setup command", () => {
     const root = await workspace();
     const target = path.join(root, "missing");
     const fixture = createSetupRuntime();
-    await assert.rejects(runRoutingDoctor(fixture.runtime, target), /Cannot read projects registry/);
+    await assert.rejects(runWorkspaceDiagnostics(fixture.runtime, target), /Cannot read projects registry/);
     await fs.writeFile(path.join(root, "devclaw", "projects.json"), '{"projects":{}}');
     const before = await fs.readdir(root, { recursive: true });
-    await runRoutingDoctor(fixture.runtime, root);
+    await runWorkspaceDiagnostics(fixture.runtime, root);
     assert.deepEqual(await fs.readdir(root, { recursive: true }), before);
     await assert.rejects(fs.access(target));
     assert.deepEqual(fixture.writes, []);

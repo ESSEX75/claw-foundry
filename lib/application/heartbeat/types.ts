@@ -5,9 +5,10 @@ import type { Project } from "../../domain/index.js";
 import type { IssueProvider, SessionLookup } from "../../integrations/index.js";
 import type { ValueOf } from "../../types.js";
 import type { NotificationRuntime } from "../notifications/index.js";
+import type { QueueSkipReason } from "../queue-scheduling/index.js";
+import type { HealthFix, HealthIssue } from "../workers/index.js";
 import type { HeartbeatConfig } from "./configuration/index.js";
-import type { HEARTBEAT_PASS_FAILURE_POLICY } from "./const.js";
-import type { HealthFix, HealthIssue } from "./health/index.js";
+import type { HEARTBEAT_PASS_FAILURE_POLICY, HEARTBEAT_SKIP_REASON } from "./const.js";
 import type { ServiceContext } from "./service/types.js";
 
 /** One project tick's resolved application and transport dependencies. */
@@ -76,7 +77,7 @@ export type HeartbeatTickResult = {
   /** Skipped projects and queue candidates. */
   totalSkipped: number;
   /** Bounded diagnostics for each counted skip. */
-  skipDetails: Array<{ project: string; role?: string; issueId?: number; code: string; reason: string }>;
+  skipDetails: HeartbeatSkipDetail[];
   /** Successful human review transitions. */
   totalReviewTransitions: number;
   /** Successful review skip transitions. */
@@ -93,4 +94,18 @@ export type HeartbeatTickResult = {
   totalCreationsManual: number;
   /** Per-project pass outcomes, including failures. */
   passes: HeartbeatPassReport[];
+};
+
+/** Bounded refusal detail combining heartbeat and queue-owned reason registries. */
+type HeartbeatSkipDetail = {
+  /** Project whose scheduling was skipped. */
+  project: string;
+  /** Role, when a concrete queue was inspected. */
+  role?: string;
+  /** Issue, when a concrete candidate was selected. */
+  issueId?: number;
+  /** Stable owner-derived diagnostic code. */
+  code: ValueOf<typeof HEARTBEAT_SKIP_REASON> | QueueSkipReason;
+  /** Redacted operator diagnostic. */
+  reason: string;
 };

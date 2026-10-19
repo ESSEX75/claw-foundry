@@ -132,3 +132,11 @@ transition authorization, provider effects and persistence of the selected edge.
 Workers also own the shared session-action registry and its derived type, used by dispatch and notifications without application implementation imports.
 
 Project slot semantics expose exact run and reservation comparisons alongside the shared released-slot transformation. Callers retain active, delivery-token and release authorization policy.
+
+Projects also own pure project reservation lookup and workspace exclusivity queries.
+Reservation lookup returns a slot observation, including incomplete/inactive evidence,
+not an authoritative active issue worker. Application owns comparison and authorization.
+Workflow exposes canonical queue PICKUP validation shared by scheduling, research and
+dispatch; only an active destination of the same configured role is valid. Issue semantics
+own CreatedIssueReference, the provider-local id/title/url reference shared by completion
+and notifications, independently of creation saga results or notification transport.

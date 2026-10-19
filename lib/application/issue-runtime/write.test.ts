@@ -7,14 +7,9 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-
 import { DEFAULT_WORKFLOW, ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../domain/index.js";
 import { loadConfig, readIssueStateStore } from "../../state/index.js";
-import {
-  createEmptyIssueStateStoreForTesting as emptyIssueStateStore,
-  createTestHarness,
-  replaceIssueStateStoreForTesting as writeIssueStateStore,
-} from "../../testing/index.js";
+import { createEmptyIssueStateStoreForTesting as emptyIssueStateStore, createTestHarness, replaceIssueStateStoreForTesting as writeIssueStateStore } from "../../testing/index.js";
 import { initializeIssueRuntimeState } from "./initialization.js";
 import { writeIssueRuntimeState } from "./write.js";
 import type { IssueStateInitializeInput } from "./types.js";

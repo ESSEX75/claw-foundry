@@ -3,7 +3,26 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
 
-import { ACTION, resolveCompletionTransition, resolveWorkflowTransition, STATE_TYPE, WORKFLOW_EVENT, type WorkflowConfig } from "./index.js";
+import { ACTION, resolveCompletionTransition, resolveQueuePickup, resolveWorkflowTransition, STATE_TYPE, WORKFLOW_EVENT, type WorkflowConfig } from "./index.js";
+
+it("accepts only canonical same-role queue pickups, including custom identifiers", () => {
+  const workflow: WorkflowConfig = { initial: "waiting", states: {
+    waiting: { type: STATE_TYPE.QUEUE, role: "security", label: "Waiting", color: "#111111",
+      on: { PICKUP: { target: "auditing" } } },
+    auditing: { type: STATE_TYPE.ACTIVE, role: "security", label: "Audit", color: "#222222" },
+  } };
+
+  assert.equal(resolveQueuePickup(workflow, "waiting", "security")?.toState, "auditing");
+  assert.equal(resolveQueuePickup(workflow, "Waiting", "security"), null);
+  assert.equal(resolveQueuePickup(workflow, "waiting", "developer"), null);
+  assert.equal(resolveQueuePickup(workflow, "auditing", "security"), null);
+  workflow.states.auditing = { type: STATE_TYPE.ACTIVE, role: "other", label: "Audit", color: "#222222" };
+  assert.equal(resolveQueuePickup(workflow, "waiting", "security"), null);
+  workflow.states.auditing = { type: STATE_TYPE.TERMINAL, label: "Finished", color: "#222222" };
+  assert.equal(resolveQueuePickup(workflow, "waiting", "security"), null);
+  delete workflow.states.auditing;
+  assert.equal(resolveQueuePickup(workflow, "waiting", "security"), null);
+});
 
 it("resolves custom identities and descriptions without deriving keys from labels", () => {
   const workflow: WorkflowConfig = { initial: "audit", states: {

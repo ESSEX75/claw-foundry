@@ -6,20 +6,23 @@ capability entrypoints; never import the root or a capability's own barrel inter
 
 | Capability | Ownership |
 | --- | --- |
-| `doctor` | Read-only routing diagnostics. |
-| `heartbeat` | Periodic maintenance, health, recovery, and pickup scheduling. |
-| `issue-runtime` | Runtime resolution, initialization, and complete state writes. |
-| `labels` | Idempotent project label-definition provisioning, separate from issue reconciliation. |
-| `issues` | Archive, deletion, retention, policy migration, and repair. |
-| `notifications` | Exact endpoint delivery, terminal retries, and delivery audit. |
-| `pipeline` | Completion transitions and provider effects. |
-| `projects` | Project routing and persisted provider selection. |
-| `projection` | Applying deterministic provider projection changes. |
-| `queue` | Local candidate selection and queue ticks. |
-| `review` | PR feedback/context and comment acknowledgement. |
-| `setup` | Agent configuration, permissions, and route validation. |
-| `tasks` | Managed task commands, attachments, and worker context. |
-| `workers` | Dispatch, completion, and uncertain-delivery recovery. |
+| `workspace-diagnostics` | Read-only route, tool-isolation and archive diagnostics. |
+| `heartbeat` | Periodic service lifecycle, ordered passes, project isolation and pickup budgets. |
+| `issue-runtime` | Explicit initialization, runtime resolution and validated complete state writes. |
+| `issue-commands` | Creation, activation, assignment, content, comments, queries and research commands. |
+| `issue-attachments` | Incoming/manual attachment persistence, upload and attachment presentation. |
+| `issue-maintenance` | Archive/recovery/retention, deletion, policy migration, repair and administration. |
+| `issue-projection` | Reconciliation effects and provider/metadata verification against local truth. |
+| `label-catalog` | Idempotent project label-definition provisioning, never individual issue reconciliation. |
+| `workflow-execution` | Completion, automatic transitions, transition commit/recovery and ordered provider effects. |
+| `queue-scheduling` | Local candidate selection and budgeted queue pickup orchestration. |
+| `workers` | Reservation/submission/settlement, uncertain delivery, bootstrap/session policy and health. |
+| `worker-context` | Worker input assembly, size selection and attachment context loading. |
+| `pull-request-feedback` | PR observations, feedback/context, summary receipts and acknowledgement. |
+| `notifications` | Exact endpoint delivery, terminal retries, rendering and delivery audit. |
+| `projects` | Registration, persisted endpoints and provider selection. |
+| `project-routing` | Cross-store validation of project endpoints against SDK agents/accounts/bindings. |
+| `setup` | Setup plan/apply, agent targeting, onboarding, permissions, models and binding configuration. |
 
 Each capability exposes its supported API through `index.ts`. Storage uses
 `lib/state/index.ts`; provider/session effects use integration APIs. Pure projection
@@ -35,12 +38,12 @@ under the registry lock, and reports post-commit scaffold failures for explicit 
 Channel names are allocated from fresh locked state; unlink uses exact route identity
 and retains at least one endpoint. Existing administrative authorization is preserved.
 
-`tasks/research` owns stable-key research creation and exact-issue scheduling. It selects
+`issue-commands/research` owns stable-key research creation and exact-issue scheduling. It selects
 an architect queue by its configured state key and validates its PICKUP target, rejects
 ambiguous queues, and returns creation recovery and gateway delivery evidence separately.
 Retries lock the issue and retain existing or uncertain reservations; provider labels
-never select a retry transition. Workers consume task context/attachment capability APIs
-directly so task orchestration can call worker commands without ancestor-barrel cycles.
+never select a retry transition. Workers consume the independent worker-context API. Attachment capture belongs to
+issue-attachments; worker-context loads its persisted references without importing issue commands.
 
 This README is the single application-layer contract; subpackages do not maintain
 separate READMEs. Their file responsibilities and API details belong in source JSDoc.
@@ -66,7 +69,7 @@ separate READMEs. Their file responsibilities and API details belong in source J
   restores creation identity from the durable operation. Body edits retain creation
   identity from local state, never from a provider-only marker.
   Attachment capture requires exact project/route identity and saves bytes before upload.
-- Application/projection selects exact workflow labels and colors from resolved configuration.
+- Application/issue-projection selects exact workflow labels and colors from resolved configuration.
   Workflow label effects add the selected target before removing obsolete configured labels;
   required cleanup failures propagate, while optional final observations remain diagnostic.
   Provider label effects are a two-phase projection: failed cleanup may leave both source
@@ -158,7 +161,7 @@ retain independent failures and distinguish them from eligibility refusals. Disc
 commands validate configured attribution and publish comments without requiring or
 initializing local workflow state. Comments are never automatically replayed.
 
-Registration and administrative label sync share `labels` catalog provisioning for
+Registration and administrative label sync share `label-catalog` catalog provisioning for
 resolved workflow, enabled role/level and policy labels. Sync uses persisted provider
 identity, validates exact scope before effects and retains independent project failures.
 A failed catalog may be partially applied; repeating it is idempotent. Catalog
@@ -169,7 +172,7 @@ project configuration before selecting local records or performing effects. Unkn
 keys are errors, including when the managed issue store is empty; custom keys remain
 valid when present in that configuration.
 
-`issues/administration` resolves project retention policy and persisted provider
+`issue-maintenance/administration` resolves project retention policy and persisted provider
 selection for operator commands; adapters parse input and render the returned results.
 Archive status/purge operate on local project stores without requiring a registry
 entry. Delete requires a registered project and delegates fresh ownership and
@@ -187,10 +190,10 @@ in the discovery snapshot. The menu is not authorization: setup planning and SDK
 mutation validate the fresh route again before writing. SDK read failures propagate;
 discovery neither queries providers/gateway nor changes local runtime state.
 
-The setup root is a facade: it explicitly exposes setup commands, discovery and
-supported route-validation contracts. Internal routing discovery and planned-binding
-diagnostics stay with their owning capability; they are not exposed through the
-application root merely to support composition or tests.
+The setup root is a facade exposing setup commands and discovery contracts. Internal
+binding discovery and planned-binding diagnostics stay with setup/bindings. Shared
+route inspection and its DTOs belong to project-routing; runtime consumers never
+load setup merely to validate a destination.
 
 Setup model queries reuse setup's target planning and return only effective enabled
 role-level assignments, including custom identifiers. They perform reads only and
@@ -198,7 +201,7 @@ do not query model catalogs or request scope approval. Explicit overrides are
 validated again during setup; unknown/removed levels and disabled roles fail before
 effects. Standalone file recovery does not load or validate the existing workflow.
 
-Doctor exposes its canonical `RoutingDoctorReport` DTO and `DOCTOR_SEVERITY` registry
+Workspace diagnostics exposes its canonical `WorkspaceDiagnosticsReport` DTO and `DOCTOR_SEVERITY` registry
 for adapter-owned rendering without duplicating diagnostic protocol values.
 
 Completion requires an exact captured worker frame, one matching active slot and live exact PR validation inside the issue lock. A completion receipt commits with transition/release/notification intents; only the same run/result resumes it after release. Archive-first duplicates resume before reconciliation alters the exact source snapshot.
@@ -206,7 +209,7 @@ Completion requires an exact captured worker frame, one matching active slot and
 Heartbeat also resumes terminal archive-first duplicates before provider projection
 can change the exact source snapshot. Failed snapshot verification stops that pass.
 
-`pipeline/effects` owns ordered merge, lifecycle, detection and optional checkout effects.
+`workflow-execution/effects` owns ordered merge, lifecycle, detection and optional checkout effects.
 Pipeline planning delegates graph-edge resolution to domain/workflow; command errors,
 worker ownership checks and execution of the selected transition remain application-owned.
 Completion and heartbeat use this supported API while retaining policy and notification
@@ -252,19 +255,54 @@ resource creation with the host while explicit registration plans can be resumed
 
 Operator tools render completion, dispatch, lifecycle and projection repair guidance from structured application facts. Worker prompts and outbound notifications remain application effects; gateway session labels belong to workers. Shared session-action semantics belong to domain/workers.
 
-Heartbeat projection-maintenance owns provider/metadata verification, confirmation policy, integrity persistence and its regression tests. Issue-coordination owns local candidate queries and locked heartbeat transitions; root heartbeat files compose passes. Issues/ownership exposes project reservation queries and exact worker selection without importing pipeline. Workers retain durable reservation/submission/settlement/recovery capabilities; pipeline retains transition, completion receipt and effect coordination. Collection search reuses provider observations only within one read-only invocation; mutation paths retain locked fresh reads.
+Issue-projection/verification owns provider/metadata verification, confirmation policy,
+integrity persistence and its regression tests. Archive effects are mandatory composition-
+injected callbacks: verification resumes archive-first duplicates before observing or
+changing projection, without importing issue-maintenance back into reconciliation.
+Heartbeat supplies the real archive callbacks; test callers exercise those same effects.
 
-Application aggregation barrels delegate public child APIs with export *. Owning leaves
-explicitly select their supported operations and contracts; setup remains a facade.
-Heartbeat exposes configuration, health and its composed registration command; timer
-lifecycle, issue-coordination and projection-maintenance APIs serve internal composition.
-The service receives its project-tick callback from heartbeat registration and never
-imports the parent tick implementation. Shared configuration has its own read-only API;
-setup imports heartbeat/configuration directly without loading service orchestration.
-Worker dispatch may consume tasks/context and tasks/attachments APIs directly, preserving
-the documented worker-input boundary independently of task command aggregation. Shared
-parent const/types contracts, worker evidence/session policy, setup root/child types and
-heartbeat's service context type remain narrow internal exceptions. Architecture checks
-enforce sibling/child entrypoints, own/ancestor barrel rejection and hierarchical exports.
+Workflow-execution owns planning, completion command/execution/replay, automatic review/
+review-skip/test-skip passes, transition commit/release and ordered effects. Automatic-transition queries select only initialized local issues;
+transitions owns the exact locked execution wrapper. Completion and automatic passes consume sibling planning/effects/
+transitions APIs, never the ancestor workflow-execution barrel.
+
+Domain/projects owns reservation queries returning reservation observations. Application
+compares captured reservation frames with authoritative issue workers before transition
+or release; a slot lookup never establishes managed runtime ownership. Workers retain
+durable reservation/submission/settlement/recovery. Collection search reuses provider
+observations only within one read-only invocation; mutations retain locked fresh reads.
+
+Application aggregation barrels delegate supported child APIs with export *. Leaves
+explicitly select their operations and contracts; setup remains a facade. Heartbeat exposes
+configuration and registration, while workers exposes health. The heartbeat service receives
+its project-tick callback from registration and never imports the parent tick implementation.
+Setup may import heartbeat/configuration directly without loading timers. Shared parent
+const/types contracts, worker evidence/session policy, setup root/child types and heartbeat's
+service context type remain narrow internal exceptions. Worker input no longer requires a
+cross-capability tasks/context or tasks/attachments exception.
+
+At the application root only index.ts, public-api.test.ts and this README remain. Root
+heartbeat files share one periodic cycle: tick-runner sequences phases, pass-runner records
+failure policy, maintenance-passes composes recovery operations, registration supplies the
+service callback and scheduler adapts domain reservation exclusivity. Their const/types
+contain only cycle reports, events and run inputs. Bootstrap/session evidence remains at
+workers root because dispatch and delivery recovery share it independently of commands.
+Projects and notifications remain focused flat capabilities; no extra directories are
+required for their cohesive small contracts.
+
+Issue commands separate activation (approval/start), assignment (owner/prepared level),
+content (title/body), comments, creation, queries and research. Internal prerequisites owns
+captured-route/readiness checks and the shared approval lookup; its contracts do not depend
+on activation commands. Issue-maintenance remains separate so workflow recovery does not
+load research/dispatch through an aggregate issue-command barrel. Archive keeps recovery,
+retention and queries together. Setup bindings owns discovery/planning/mutation; agents,
+onboarding and permissions keep their existing contracts.
+
+To locate a new operation: creation idempotency belongs to issue-commands/creation;
+provider label definitions to label-catalog; issue label verification to issue-projection;
+queue candidate choice to queue-scheduling; gateway submission/uncertainty to workers;
+worker input budgets to worker-context; completion and automatic policy transitions to
+workflow-execution; exact runtime destination checks to project-routing; binding writes
+to setup/bindings. Persistence and locks always stay in state.
 
 Task creation, discussion and manual attachments also return structured facts. Their tool adapters own readiness/repair guidance and command acknowledgements; provider comments, worker prompts and notification bodies remain application-owned effect content.

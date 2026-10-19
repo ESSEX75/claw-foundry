@@ -18,5 +18,15 @@ export const HEARTBEAT_CREATION_LIMIT = 20;
 /** Audit operation emitted after one complete project sweep. */
 export const HEARTBEAT_AUDIT_EVENT = {
   TICK: "heartbeat_tick",
-  REVIEW_NOTIFICATION_ERROR: "heartbeat_review_notification_error",
+} as const;
+
+/** Machine-readable project-cycle refusals, independent of queue candidate reasons. */
+export const HEARTBEAT_SKIP_REASON = {
+  PASS_FAILED: "pass_failed",
+  WORKFLOW_PASS_FAILED: "workflow_pass_failed",
+  PROJECT_BLOCKED: "project_blocked",
+  QUEUE_SKIPPED: "queue_skipped",
+  TICK_FAILED: "tick_failed",
+  WORKSPACE_REFRESH_FAILED: "workspace_refresh_failed",
+  AGENT_TICK_FAILED: "agent_tick_failed",
 } as const;

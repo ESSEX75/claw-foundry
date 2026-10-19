@@ -3,8 +3,17 @@
  */
 
 import type {
-  ActiveIssueWorker, IssueCompletionReceipt, IssueIntegrityStatus, IssueProviderId, IssueRuntimeState, NotifyBindingRef,
-  Project, ReviewPolicy, TestPolicy, WorkflowConfig, WorkflowStateConfig,
+  ActiveIssueWorker,
+  IssueCompletionReceipt,
+  IssueIntegrityStatus,
+  IssueProviderId,
+  IssueRuntimeState,
+  NotifyBindingRef,
+  Project,
+  ReviewPolicy,
+  TestPolicy,
+  WorkflowConfig,
+  WorkflowStateConfig,
 } from "../../domain/index.js";
 import type { Issue } from "../../integrations/index.js";
 import type { ResolvedConfig } from "../../state/index.js";

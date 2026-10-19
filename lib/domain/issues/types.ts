@@ -183,3 +183,14 @@ export type ArchivedIssueRecord = {
   /** SHA-256 of the active runtime snapshot used to create this record. */
   sourceSnapshotHash: string;
 };
+
+
+/** Provider-local issue reference shared by completion facts and their notifications. */
+export type CreatedIssueReference = {
+  /** Provider-local task issue identifier. */
+  id: number;
+  /** New task title. */
+  title: string;
+  /** Link to the task issue. */
+  url: string;
+};

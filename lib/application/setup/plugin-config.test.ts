@@ -11,8 +11,8 @@ import { createSetupRuntime as createRuntime } from "../../testing/index.js";
 import { resolveProjectToolOwners } from "./permissions/index.js";
 import { DEVCLAW_AGENT_TOOLS } from "./permissions/index.js";
 import { readProjects } from "../../state/index.js";
-import { DOCTOR_FINDING_CODE } from "../doctor/const.js";
-import { runRoutingDoctor } from "../doctor/index.js";
+import { DOCTOR_FINDING_CODE } from "../workspace-diagnostics/const.js";
+import { runWorkspaceDiagnostics } from "../workspace-diagnostics/index.js";
 import { writePluginConfig } from "./plugin-config.js";
 
 describe("writePluginConfig", () => {
@@ -87,7 +87,7 @@ it("preserves both project owners through A -> B -> A while denying a foreign ag
         }
       }
     }
-    const report = await runRoutingDoctor(runtime, path.join(root, "a"));
+    const report = await runWorkspaceDiagnostics(runtime, path.join(root, "a"));
     assert.equal(report.findings.some(finding => finding.code === DOCTOR_FINDING_CODE.FOREIGN_AGENT_TOOLS_VISIBLE), false);
     assert.ok(report.agents.filter(agent => agent.agentId !== "foreign").every(agent => agent.devclawToolsAllowed));
     const foreign = runtime.config.current().agents?.list?.find(agent => agent.id === "foreign");

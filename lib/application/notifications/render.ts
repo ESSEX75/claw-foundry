@@ -2,13 +2,7 @@
 
 import { COMPLETION_RESULT, getCompletionEmoji, REVIEW_POLICY } from "../../domain/index.js";
 import { WORKER_SESSION_ACTION } from "../../domain/index.js";
-import {
-  MERGE_ACTOR_TEXT,
-  MERGE_REQUEST_PATH_SEGMENT,
-  NOTIFICATION_EVENT,
-  PULL_REQUEST_NUMBER_PATTERN,
-  WORKER_RESULT_TEXT,
-} from "./const.js";
+import { MERGE_ACTOR_TEXT, MERGE_REQUEST_PATH_SEGMENT, NOTIFICATION_EVENT, PULL_REQUEST_NUMBER_PATTERN, WORKER_RESULT_TEXT } from "./const.js";
 import type { NotifyEvent } from "./types.js";
 
 /** Issue identity required to render the common provider link. */

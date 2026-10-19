@@ -5,7 +5,6 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it, type TestContext } from "node:test";
-
 import { findConfiguredAgent, resolveNewAgentResources } from "../../integrations/index.js";
 import { loadConfig } from "../../state/index.js";
 import { createSetupRuntime } from "../../testing/index.js";

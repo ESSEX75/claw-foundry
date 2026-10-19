@@ -3,7 +3,7 @@
 import type { AgentTurnOutcome } from "../../../integrations/index.js";
 import { AGENT_TURN_STATUS } from "../../../integrations/index.js";
 import { readIssueStateStore, readProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../state/index.js";
-import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI } from "../../review/index.js";
+import { acknowledgeComments, confirmReviewSummaryDelivery, EYES_EMOJI } from "../../pull-request-feedback/index.js";
 import { reconcileUncertainDispatch } from "../delivery-recovery/index.js";
 import { recordIssueDelivery, recordSlotDelivery } from "../delivery-state.js";
 import type { DispatchAttempt, DispatchContext, DispatchOpts } from "./types.js";

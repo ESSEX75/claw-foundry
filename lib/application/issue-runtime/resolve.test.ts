@@ -2,7 +2,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { describe, it } from "node:test";
-
 import { DEFAULT_WORKFLOW, ISSUE_PROVIDER } from "../../domain/index.js";
 import { createTestHarness } from "../../testing/index.js";
 import { resolveIssueRuntimeState } from "./resolve.js";

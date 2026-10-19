@@ -2,11 +2,10 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-
 import { createSetupRuntime } from "../../testing/index.js";
 import { CONFIG_RELOAD_MODE } from "./const.js";
 import { getSetupEndpointChoices } from "./endpoint-choices.js";
-import { ensureChannelBinding } from "./routing/index.js";
+import { ensureChannelBinding } from "./bindings/index.js";
 
 describe("setup endpoint discovery", () => {
   it("retains own group/topic bindings and excludes foreign owners with exact kind/account matching", () => {

@@ -2,7 +2,7 @@
 
 import { log as auditLog } from "../../audit.js";
 import { parseNotificationEndpoint, readProjects, updateProjects } from "../../state/index.js";
-import { validateDestinationAvailability, validateProjectRoute } from "../setup/index.js";
+import { validateDestinationAvailability, validateProjectRoute } from "../project-routing/index.js";
 import { PROJECT_AUDIT_EVENT } from "./const.js";
 import { allocateEndpointName, matchesProjectRoute, selectProject } from "./selection.js";
 import type { LinkProjectChannelInput, ProjectChannelInput, ProjectChannelResult } from "./types.js";

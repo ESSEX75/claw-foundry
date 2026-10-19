@@ -4,8 +4,8 @@ import { log as auditLog } from "../../../audit.js";
 import { WORKER_DELIVERY_RESOLUTION, type WorkflowConfig } from "../../../domain/index.js";
 import type { IssueProvider } from "../../../integrations/index.js";
 import { readIssueStateStore, readProjects, updateIssueRuntimeRecord, updateProjects, type WorkerDeliveryResolution, writeWorkerDeliveryResolution } from "../../../state/index.js";
-import { transitionWorkflowLabel } from "../../projection/index.js";
-import { confirmReviewSummaryDelivery } from "../../review/index.js";
+import { transitionWorkflowLabel } from "../../issue-projection/index.js";
+import { confirmReviewSummaryDelivery } from "../../pull-request-feedback/index.js";
 import { WORKER_AUDIT_EVENT } from "../const.js";
 
 /** Apply idempotent effects under the caller's issue lock, retaining intent on every failure.

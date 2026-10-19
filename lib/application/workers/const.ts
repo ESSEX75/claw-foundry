@@ -6,8 +6,6 @@ export const WORKER_AUDIT_EVENT = {
   SESSION_BUDGET_RESET: "session_budget_reset",
   WARNING: "dispatch_warning",
   MODEL_SELECTION: "model_selection",
-  FINISHED: "work_finish",
-  FINISH_REJECTED: "work_finish_rejected",
   DELIVERY_RESOLVED: "dispatch_delivery_resolved",
   DELIVERY_UNKNOWN: "dispatch_delivery_unknown",
   DELIVERY_ATTENTION: "dispatch_delivery_needs_attention",

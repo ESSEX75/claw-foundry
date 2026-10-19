@@ -4,13 +4,14 @@ import type { RunCommand } from "../../context.js";
 import type { Project } from "../../domain/index.js";
 import type { IssueProvider } from "../../integrations/index.js";
 import type { ResolvedConfig } from "../../state/index.js";
-import { maintainIssueArchive, recoverTerminalIssueArchives } from "../issues/index.js";
+import { reconcileManagedTaskCreations } from "../issue-commands/index.js";
+import { maintainIssueArchive, recoverTerminalIssueArchives } from "../issue-maintenance/index.js";
+import { archiveManagedIssueLocked, recoverArchivedIssueLocked } from "../issue-maintenance/index.js";
+import { projectionIntegrityPass } from "../issue-projection/index.js";
 import type { NotificationRuntime } from "../notifications/index.js";
 import { retryPendingPipelineNotifications } from "../notifications/index.js";
-import { recoverTransitionWorkers } from "../pipeline/index.js";
-import { reconcileManagedTaskCreations } from "../tasks/index.js";
+import { recoverTransitionWorkers } from "../workflow-execution/index.js";
 import { HEARTBEAT_CREATION_LIMIT } from "./const.js";
-import { projectionIntegrityPass } from "./projection-maintenance/index.js";
 
 /** Verify initialized managed issues against their provider projection.
  * @param workspaceDir - Workspace containing authoritative issue state.
@@ -24,7 +25,7 @@ export async function performProjectionIntegrityPass(
   provider: IssueProvider,
   resolvedConfig: ResolvedConfig,
 ): Promise<number> {
-  const result = await projectionIntegrityPass({
+  const result = await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked },
     workspaceDir,
     project,
     provider,
@@ -71,7 +72,7 @@ export async function performIssueCreationPass(
  * @param runtime - OpenClaw runtime used for routed notification delivery.
  * @param runCommand - Command runner available as the notification fallback path.
  */
-export async function performIssueArchivePass(
+export async function performTerminalRecoveryPass(
   workspaceDir: string,
   project: Project,
   provider: IssueProvider,

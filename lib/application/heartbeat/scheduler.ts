@@ -1,6 +1,6 @@
 /** Evaluates workspace-wide project exclusivity from fresh registry ownership. */
 
-import { EXECUTION_MODE, type Project, type WorkflowConfig } from "../../domain/index.js";
+import { EXECUTION_MODE, hasOtherProjectReservation, type Project, type WorkflowConfig } from "../../domain/index.js";
 
 /** Permit a project pickup only when no different project currently owns a worker.
  * This uses the entire registry, so result is independent of iteration order.
@@ -11,7 +11,5 @@ import { EXECUTION_MODE, type Project, type WorkflowConfig } from "../../domain/
 export function mayScheduleProject(projectSlug: string, projects: Readonly<Record<string, Project>>, mode: WorkflowConfig["roleExecution"]): boolean {
   if (mode !== EXECUTION_MODE.SEQUENTIAL) return true;
 
-  return !Object.entries(projects).some(([slug, project]) => slug !== projectSlug
-    && Object.values(project.workers).some(worker =>
-      Object.values(worker.levels).some(slots => slots?.some(slot => slot.active) ?? false)));
+  return !hasOtherProjectReservation(projects, projectSlug);
 }

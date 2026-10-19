@@ -2,9 +2,9 @@
 
 import { hasReviewCheck, isFeedbackState } from "../../../domain/index.js";
 import { loadRoleInstructions, type ResolvedConfig } from "../../../state/index.js";
-import { fetchPrContext, fetchPrFeedback, PR_FEEDBACK_REASON } from "../../review/index.js";
-import { formatAttachmentsForTask } from "../../tasks/attachments/index.js";
-import { assertTaskInputFits, buildConflictFixMessage, selectTaskContext } from "../../tasks/context/index.js";
+import { fetchPrContext, fetchPrFeedback, PR_FEEDBACK_REASON } from "../../pull-request-feedback/index.js";
+import { formatAttachmentsForTask } from "../../worker-context/index.js";
+import { assertTaskInputFits, buildConflictFixMessage, selectTaskContext } from "../../worker-context/index.js";
 import type { DispatchContext, DispatchOpts } from "./types.js";
 
 /** Load context without mutating worker ownership or submitting a turn.

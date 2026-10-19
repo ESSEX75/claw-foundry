@@ -4,11 +4,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, it } from "node:test";
-
 import { ISSUE_PROVIDER, NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { DATA_DIR } from "../../state/index.js";
 import { createTestHarness } from "../../testing/index.js";
-import { findProjectByRoute, resolveProject, resolveProjectByRoute, resolveProvider } from "./index.js";
+import { findProjectByRoute, resolveProject, resolveProjectByRoute, resolveProvider } from "./context.js";
 
 describe("project context", () => {
   it("requires exactly one route for a channel-only project lookup", async () => {

@@ -126,11 +126,9 @@ export function checkApplicationApiBoundary(source: string, target: string): str
   const targetCapability = imported.slice(root.length).split("/")[0];
 
   if (sourceCapability !== targetCapability && sourceCapability !== "index.ts") {
-    const sharedWorkerInput = sourceCapability === "workers"
-      && ["tasks/context/index.ts", "tasks/attachments/index.ts"].includes(imported.slice(root.length));
     const sharedHeartbeatSettings = sourceCapability === "setup" && imported === `${root}heartbeat/configuration/index.ts`;
 
-    if (sharedWorkerInput || sharedHeartbeatSettings) return null;
+    if (sharedHeartbeatSettings) return null;
 
     return imported === `${root}${targetCapability}/index.ts`
       ? null : "application siblings must use the target capability entrypoint";

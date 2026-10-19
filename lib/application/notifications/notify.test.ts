@@ -5,7 +5,8 @@ import assert from "node:assert";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { getNotificationConfig, notify, type NotificationRuntime } from "./index.js";
+import { getNotificationConfig, notify } from "./notify.js";
+import { type NotificationRuntime } from "./types.js";
 import type { RunCommand } from "../../context.js";
 import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 
@@ -348,7 +349,6 @@ describe("notifications", () => {
     }
   });
 });
-
 
 it("audits unreadable route configuration without submitting a message", async () => {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));

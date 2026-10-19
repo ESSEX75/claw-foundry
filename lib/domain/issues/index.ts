@@ -26,3 +26,4 @@ export type {
   ProviderMissingState,
   ReviewSummaryReceipt,
 } from "./types.js";
+export type { CreatedIssueReference } from "./types.js";

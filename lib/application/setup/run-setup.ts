@@ -2,11 +2,11 @@
 
 import { provisionAgentResources, provisionConfiguredAgentResources, registerAgentConfiguration, resolveNewAgentResources } from "../../integrations/index.js";
 import { initializeWorkspaceFiles, refreshSystemInstructionFiles, resetDefaults, scaffoldWorkspace, writeWorkspaceModels } from "../../state/index.js";
+import { ensureChannelBinding } from "./bindings/index.js";
 import { CONFIG_RELOAD_MODE, SETUP_APPLY_STEP, SETUP_OPERATION, SETUP_RECOVERY_ACTION } from "./const.js";
 import { SetupApplyError } from "./errors.js";
 import { ensureRequiredOpenClawScopes } from "./permissions/index.js";
 import { writePluginConfig } from "./plugin-config.js";
-import { ensureChannelBinding } from "./routing/index.js";
 import { planSetup } from "./setup-plan.js";
 import type { SetupOpts, SetupRecovery, SetupResult } from "./types.js";
 

@@ -1,7 +1,24 @@
 /** Resolves configured workflow edges without provider observations or runtime effects. */
 
-import { STATE_TYPE } from "./const.js";
+import { STATE_TYPE, WORKFLOW_EVENT } from "./const.js";
 import type { WorkflowDefinition, WorkflowEvent, WorkflowTransition } from "./types.js";
+
+/** Resolve a queue pickup only when its configured destination is active for the same role.
+ * @param workflow - Resolved workflow graph, including custom identifiers.
+ * @param fromState - Canonical queue key from authoritative issue state.
+ * @param role - Configured role requesting the pickup.
+ */
+export function resolveQueuePickup<TRoleId extends string, TStateKey extends string, TLabel extends string>(
+  workflow: WorkflowDefinition<TRoleId, TStateKey, TLabel>, fromState: TStateKey, role: TRoleId,
+): WorkflowTransition<TStateKey, TLabel> | null {
+  const source = workflow.states[fromState];
+
+  if (source?.type !== STATE_TYPE.QUEUE || source.role !== role) return null;
+  const transition = resolveWorkflowTransition(workflow, fromState, WORKFLOW_EVENT.PICKUP);
+  const target = transition ? workflow.states[transition.toState] : undefined;
+
+  return target?.type === STATE_TYPE.ACTIVE && target.role === role ? transition : null;
+}
 
 /** Resolve an event from its canonical source key; absent edges or states return null.
  * The returned action list is independent of the configuration snapshot.

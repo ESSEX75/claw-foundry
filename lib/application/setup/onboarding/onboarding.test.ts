@@ -5,7 +5,6 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { it } from "node:test";
-
 import { getOnboardingContext } from "./onboarding.js";
 
 it("offers explicit assignments and default acceptance without model discovery", async () => {

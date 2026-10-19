@@ -7,8 +7,8 @@ import { WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import type { AGENT_TURN_STATUS, AgentTurnOutcome, IssueComment, IssueProvider } from "../../../integrations/index.js";
 import type { ResolvedRoleConfig } from "../../../state/index.js";
 import type { NotificationRuntime } from "../../notifications/index.js";
-import type { PrFeedback } from "../../review/index.js";
-import type { TaskContextBudget } from "../../tasks/context/index.js";
+import type { PrFeedback } from "../../pull-request-feedback/index.js";
+import type { TaskContextBudget } from "../../worker-context/index.js";
 
 /** Immutable inputs used to plan one worker session assignment. */
 export type DispatchPlanInput = {

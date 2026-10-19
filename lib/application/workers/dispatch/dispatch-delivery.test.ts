@@ -3,12 +3,11 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, it } from "node:test";
-
 import type { RunCommand } from "../../../context.js";
 import { PR_COMMENT_KIND, PR_STATE } from "../../../integrations/index.js";
 import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
-import { checkWorkerHealth } from "../../heartbeat/health/index.js";
-import { summarizeTaskIssue } from "../../tasks/index.js";
+import { checkWorkerHealth } from "../health/index.js";
+import { summarizeTaskIssue } from "../../issue-commands/index.js";
 import { getRoleWorker, updateIssueRuntimeRecord, updateSlot } from "../../../state/index.js";
 import { readIssueStateStore } from "../../../state/index.js";
 import { createEmptyIssueStateStoreForTesting, createTestHarness, replaceIssueStateStoreForTesting } from "../../../testing/index.js";
@@ -16,7 +15,7 @@ import { dispatchTask } from "./dispatch-task.js";
 import { WORKER_DELIVERY_RESOLUTION } from "../../../domain/index.js";
 import { resolveWorkerDelivery } from "../delivery-recovery/index.js";
 import { completeWorkerForTesting } from "../../../testing/index.js";
-import { recoverTransitionWorkers } from "../../pipeline/index.js";
+import { recoverTransitionWorkers } from "../../workflow-execution/index.js";
 
 /** Build a dispatch input for a seeded issue in the temporary project. */
 function dispatchInput(h: Awaited<ReturnType<typeof createTestHarness>>, issueId: number, runCommand: RunCommand) {

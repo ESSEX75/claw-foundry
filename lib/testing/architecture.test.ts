@@ -81,32 +81,32 @@ it("enforces application public, sibling, child and ancestor APIs on Windows and
     const path = (value: string) => value.replaceAll("/", separator);
     const check = (source: string, target: string) => checkApplicationApiBoundary(path(source), path(target));
 
-    assert.ok(check("lib/tools/adapters/worker/work-finish.ts", "lib/application/pipeline/completion.ts"));
+    assert.ok(check("lib/tools/adapters/worker/work-finish.ts", "lib/application/workflow-execution/completion/completion.ts"));
     assert.equal(check("index.ts", "lib/application/index.ts"), null);
-    assert.ok(check("lib/application/queue/tick.ts", "lib/application/index.ts"));
+    assert.ok(check("lib/application/queue-scheduling/tick.ts", "lib/application/index.ts"));
     assert.ok(check("lib/application/workers/dispatch/dispatch-task.ts", "lib/application/workers/index.ts"));
     assert.ok(check("lib/application/workers/dispatch/plan.ts", "lib/application/workers/dispatch/index.ts"));
-    assert.ok(check("lib/application/heartbeat/tick-runner.ts", "lib/application/queue/tick.ts"));
-    assert.equal(check("lib/application/heartbeat/tick-runner.ts", "lib/application/queue/index.ts"), null);
-    assert.ok(check("lib/application/tasks/research/command.ts", "lib/application/tasks/creation/command.ts"));
-    assert.equal(check("lib/application/tasks/research/command.ts", "lib/application/tasks/creation/index.ts"), null);
-    assert.equal(check("lib/application/workers/dispatch/dispatch-context.ts", "lib/application/tasks/context/index.ts"), null);
-    assert.ok(check("lib/application/workers/dispatch/dispatch-context.ts", "lib/application/tasks/context/selection.ts"));
+    assert.ok(check("lib/application/heartbeat/tick-runner.ts", "lib/application/queue-scheduling/tick.ts"));
+    assert.equal(check("lib/application/heartbeat/tick-runner.ts", "lib/application/queue-scheduling/index.ts"), null);
+    assert.ok(check("lib/application/issue-commands/research/command.ts", "lib/application/issue-commands/creation/command.ts"));
+    assert.equal(check("lib/application/issue-commands/research/command.ts", "lib/application/issue-commands/creation/index.ts"), null);
+    assert.equal(check("lib/application/workers/dispatch/dispatch-context.ts", "lib/application/worker-context/index.ts"), null);
+    assert.ok(check("lib/application/workers/dispatch/dispatch-context.ts", "lib/application/worker-context/selection.ts"));
     assert.equal(check("lib/application/setup/plugin-config.ts", "lib/application/heartbeat/configuration/index.ts"), null);
     assert.ok(check("lib/application/setup/plugin-config.ts", "lib/application/heartbeat/configuration/defaults.ts"));
     assert.equal(check("lib/application/workers/dispatch/dispatch-task.ts", "lib/application/workers/session-budget.ts"), null);
-    assert.equal(check("lib/application/setup/routing/binding-manager.ts", "lib/application/setup/types.ts"), null);
-    assert.equal(check("lib/application/setup/types.ts", "lib/application/setup/routing/types.ts"), null);
-    assert.ok(check("lib/application/tasks/research/command.ts", "lib/application/tasks/hidden.ts"));
+    assert.equal(check("lib/application/setup/bindings/binding-manager.ts", "lib/application/setup/types.ts"), null);
+    assert.equal(check("lib/application/setup/types.ts", "lib/application/setup/bindings/types.ts"), null);
+    assert.ok(check("lib/application/issue-commands/research/command.ts", "lib/application/issue-commands/hidden.ts"));
     assert.ok(check("lib/application/heartbeat/service/agent-runner.ts", "lib/application/heartbeat/tick-runner.ts"));
   }
 });
 
 it("rejects hand-picked child aggregation while retaining leaf exports and the setup facade", () => {
-  const named = 'export { startTask } from "./lifecycle/index.js";';
+  const named = 'export { startTask } from "./activation/index.js";';
 
-  assert.ok(checkApplicationAggregation("lib/application/tasks/index.ts", named));
-  assert.equal(checkApplicationAggregation("lib/application/tasks/index.ts", 'export * from "./lifecycle/index.js";'), null);
+  assert.ok(checkApplicationAggregation("lib/application/issue-commands/index.ts", named));
+  assert.equal(checkApplicationAggregation("lib/application/issue-commands/index.ts", 'export * from "./activation/index.js";'), null);
   assert.equal(checkApplicationAggregation("lib/application/setup/index.ts", named), null);
-  assert.equal(checkApplicationAggregation("lib/application/tasks/lifecycle/index.ts", 'export { startTask } from "./start-task.js";'), null);
+  assert.equal(checkApplicationAggregation("lib/application/issue-commands/activation/index.ts", 'export { startTask } from "./start-task.js";'), null);
 });

@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, it } from "node:test";
-
 import { EXECUTION_MODE } from "../../domain/index.js";
 import { renderIssueMetadata } from "../../projection/index.js";
 import { DATA_DIR, readIssueStateStore } from "../../state/index.js";
@@ -13,7 +12,7 @@ import { createTestHarness } from "../../testing/index.js";
 import { seedIssueRuntimeState } from "../../testing/index.js";
 import { discoverAgents } from "./service/agent-discovery.js";
 import { processAllAgents } from "./service/agent-runner.js";
-import { notifyReviewEvent } from "./review/review-notification.js";
+import { notifyReviewEvent } from "../workflow-execution/automatic-transitions/review-notification.js";
 import { mayScheduleProject } from "./scheduler.js";
 import { tick } from "./tick-runner.js";
 

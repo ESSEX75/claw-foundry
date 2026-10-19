@@ -2,7 +2,6 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-
 import { NOTIFICATION_EVENT } from "./const.js";
 import { renderNotificationMessage } from "./render.js";
 

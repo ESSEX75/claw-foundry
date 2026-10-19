@@ -1,11 +1,12 @@
 /** Defines notification events, delivery receipts, runtime capability, and route options. */
 
 import type { RunCommand } from "../../context.js";
-import type { NotificationChannel, REVIEW_POLICY,ReviewPolicy } from "../../domain/index.js";
+import type { NotificationChannel, REVIEW_POLICY, ReviewPolicy } from "../../domain/index.js";
 import type { WorkerSessionAction } from "../../domain/index.js";
+import type { CreatedIssueReference } from "../../domain/index.js";
 import type { MessageDeliveryOutcome, NotificationChannelRuntime } from "../../integrations/index.js";
 import type { ValueOf } from "../../types.js";
-import type { RouteConfig } from "../setup/index.js";
+import type { RouteConfig } from "../project-routing/index.js";
 import type { NOTIFICATION_BLOCKED, NOTIFICATION_EVENT, NOTIFICATION_MERGE_ACTOR } from "./const.js";
 
 /** Per-event-type toggle. All default to true — set to false to suppress. */
@@ -34,16 +35,6 @@ export type NotificationRuntime = {
   };
   /** Native channel capability owned by the OpenClaw integration. */
   channel: NotificationChannelRuntime;
-};
-
-/** One task created by a worker and linked in its completion message. */
-export type NotificationCreatedTask = {
-  /** Provider-local task issue identifier. */
-  id: number;
-  /** New task title. */
-  title: string;
-  /** Link to the task issue. */
-  url: string;
 };
 
 /** Project and provider issue identity shared by lifecycle notifications. */
@@ -115,7 +106,7 @@ type WorkerCompleteEvent = NotificationIssue & NotificationPullRequest & {
   /** Workflow label selected after completion. */
   nextState?: string;
   /** Tasks created by the completing worker. */
-  createdTasks?: NotificationCreatedTask[];
+  createdTasks?: CreatedIssueReference[];
 };
 
 /** Request for the saved review recipient to inspect a PR. */

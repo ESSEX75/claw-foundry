@@ -3,7 +3,7 @@
 import type { RunCommand } from "../../context.js";
 import type { NotificationEndpoint, Project, WorkflowConfig } from "../../domain/index.js";
 import type { ProjectsData } from "../../state/index.js";
-import type { RouteConfig } from "../setup/index.js";
+import type { RouteConfig } from "../project-routing/index.js";
 
 /** Complete route identity used to match a project endpoint without guessing. */
 export type ProjectRoute = {

@@ -1,7 +1,6 @@
 /** Tests pure session reuse and reset planning for configured worker slots. */
 import assert from "node:assert/strict";
 import { it } from "node:test";
-
 import { emptySlot } from "../../../domain/index.js";
 import { loadConfig } from "../../../state/index.js";
 import { createTestHarness } from "../../../testing/index.js";

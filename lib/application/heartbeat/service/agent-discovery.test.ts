@@ -2,7 +2,6 @@
 import assert from "node:assert/strict";
 import { realpath } from "node:fs/promises";
 import { it } from "node:test";
-
 import { createTestHarness } from "../../../testing/index.js";
 import { discoverAgents } from "./agent-discovery.js";
 

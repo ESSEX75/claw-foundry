@@ -4,11 +4,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, it } from "node:test";
-
 import type { RunCommand } from "../../context.js";
 import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { createTestHarness } from "../../testing/index.js";
-import type { RouteConfig } from "../setup/index.js";
+import type { RouteConfig } from "../project-routing/index.js";
 import { linkProjectChannel } from "./channels.js";
 import { registerProject } from "./registration.js";
 

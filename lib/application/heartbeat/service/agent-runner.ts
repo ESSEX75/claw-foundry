@@ -62,7 +62,7 @@ export async function processAllAgents(
   for (const { agentId, workspace } of agents) {
     if (failedWorkspaces.has(workspace)) {
       result.totalSkipped++;
-      result.skipDetails.push({ project: agentId, code: "workspace_refresh_failed", reason: "Workspace refresh failed" });
+      result.skipDetails.push({ project: agentId, code: HEARTBEAT_SKIP_REASON.WORKSPACE_REFRESH_FAILED, reason: "Workspace refresh failed" });
       continue;
     }
 
@@ -81,7 +81,7 @@ export async function processAllAgents(
       });
     } catch (error) {
       result.totalSkipped++;
-      result.skipDetails.push({ project: agentId, code: "agent_tick_failed", reason: "Agent tick failed" });
+      result.skipDetails.push({ project: agentId, code: HEARTBEAT_SKIP_REASON.AGENT_TICK_FAILED, reason: "Agent tick failed" });
       logger.warn(`Heartbeat agent ${agentId} failed in ${workspace}: ${error instanceof Error ? error.message : String(error)}`);
       continue;
     }
@@ -102,7 +102,6 @@ export async function processAllAgents(
 
   return result;
 }
-
 
 /** Log a completed tick only when it changed or attempted maintenance.
  * @param result - Aggregated agent outcomes.
@@ -132,3 +131,5 @@ export function logTickResult(
     );
   }
 }
+
+import { HEARTBEAT_SKIP_REASON } from "../const.js";

@@ -1,8 +1,9 @@
 /** Resolves an existing or proposed setup agent for read-only endpoint discovery. */
 
 import { findConfiguredAgent } from "../../integrations/index.js";
+import { type RouteConfig } from "../project-routing/index.js";
 import { getAgentId } from "./agents/index.js";
-import { listChannelBindingChoices, type RouteConfig, type SetupEndpointChoice } from "./routing/index.js";
+import { listChannelBindingChoices, type SetupEndpointChoice } from "./bindings/index.js";
 import type { SetupEndpointChoicesInput } from "./types.js";
 
 /** Inspect exact endpoints without creating an agent, workspace, binding, or scope request.

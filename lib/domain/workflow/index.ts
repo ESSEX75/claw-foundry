@@ -35,7 +35,7 @@ export {
   producesReviewableWork,
 } from "./queries.js";
 export * from "./routing/index.js";
-export { resolveCompletionTransition, resolveWorkflowTransition } from "./transitions.js";
+export { resolveCompletionTransition, resolveQueuePickup, resolveWorkflowTransition } from "./transitions.js";
 export type {
   BuiltInWorkflowConfig,
   CompletionEventMap,

@@ -4,11 +4,18 @@ import { log as auditLog } from "../../audit.js";
 import { emptyRoleWorkerState, type Project, type RoleWorkerState } from "../../domain/index.js";
 import { createProvider } from "../../integrations/index.js";
 import {
-  getConfiguredRoleIds, getLevelMaxWorkers, loadConfig, parseNotificationEndpoint, parseProjectSlug,
-  readProjects, resolveRepoPath, scaffoldProjectOverrides, updateProjects,
+  getConfiguredRoleIds,
+  getLevelMaxWorkers,
+  loadConfig,
+  parseNotificationEndpoint,
+  parseProjectSlug,
+  readProjects,
+  resolveRepoPath,
+  scaffoldProjectOverrides,
+  updateProjects,
 } from "../../state/index.js";
-import { provisionLabelCatalog } from "../labels/index.js";
-import { validateDestinationAvailability, validateProjectRoute } from "../setup/index.js";
+import { provisionLabelCatalog } from "../label-catalog/index.js";
+import { validateDestinationAvailability, validateProjectRoute } from "../project-routing/index.js";
 import { PROJECT_AUDIT_EVENT } from "./const.js";
 import { allocateEndpointName, matchesProjectRoute } from "./selection.js";
 import type { RegisterProjectInput, RegisterProjectResult } from "./types.js";

@@ -4,8 +4,8 @@ import type { IssueRuntimeState, WorkerDeliveryState } from "../../../domain/ind
 import { EXECUTION_MODE, releasedWorkerSlot, sameWorkerRun, slotOwnsWorkerRun, WORKER_DELIVERY_STATUS } from "../../../domain/index.js";
 import type { ResolvedConfig } from "../../../state/index.js";
 import { activateWorker, getLevelMaxWorkers, readIssueStateStore, updateIssueRuntimeRecord, updateSlot } from "../../../state/index.js";
+import { reconcileManagedLabelsLocked } from "../../issue-projection/index.js";
 import { writeIssueRuntimeState } from "../../issue-runtime/index.js";
-import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { WORKER_DISPATCH_OWNER } from "./const.js";
 import type { DispatchAttempt, DispatchOpts } from "./types.js";
 

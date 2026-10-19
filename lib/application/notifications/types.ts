@@ -6,7 +6,7 @@ import type { WorkerSessionAction } from "../../domain/index.js";
 import type { CreatedIssueReference } from "../../domain/index.js";
 import type { MessageDeliveryOutcome, NotificationChannelRuntime } from "../../integrations/index.js";
 import type { ValueOf } from "../../types.js";
-import type { RouteConfig } from "../project-routing/index.js";
+import type { RouteConfig } from "../projects/routing/index.js";
 import type { NOTIFICATION_BLOCKED, NOTIFICATION_EVENT, NOTIFICATION_MERGE_ACTOR } from "./const.js";
 
 /** Per-event-type toggle. All default to true — set to false to suppress. */

@@ -7,9 +7,9 @@ import { describe, it } from "node:test";
 import type { RunCommand } from "../../context.js";
 import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { createTestHarness } from "../../testing/index.js";
-import type { RouteConfig } from "../project-routing/index.js";
-import { linkProjectChannel } from "./channels.js";
-import { registerProject } from "./registration.js";
+import type { RouteConfig } from "./routing/index.js";
+import { linkProjectChannel } from "./channels/commands.js";
+import { registerProject } from "./registration/command.js";
 
 /** Canonical paths of scaffold resources exercised by failure/recovery tests. */
 const PROJECT_PATH = ["devclaw", "projects"];

@@ -4,25 +4,40 @@ Owns use cases coordinating domain decisions, state persistence, and integration
 Adapters outside this layer use the root `index.ts`. Within application, use sibling
 capability entrypoints; never import the root or a capability's own barrel internally.
 
-| Capability | Ownership |
+| Subsystem | Ownership and capabilities |
 | --- | --- |
-| `workspace-diagnostics` | Read-only route, tool-isolation and archive diagnostics. |
-| `heartbeat` | Periodic service lifecycle, ordered passes, project isolation and pickup budgets. |
-| `issue-runtime` | Explicit initialization, runtime resolution and validated complete state writes. |
-| `issue-commands` | Creation, activation, assignment, content, comments, queries and research commands. |
-| `issue-attachments` | Incoming/manual attachment persistence, upload and attachment presentation. |
-| `issue-maintenance` | Archive/recovery/retention, deletion, policy migration, repair and administration. |
-| `issue-projection` | Reconciliation effects and provider/metadata verification against local truth. |
-| `label-catalog` | Idempotent project label-definition provisioning, never individual issue reconciliation. |
-| `workflow-execution` | Completion, automatic transitions, transition commit/recovery and ordered provider effects. |
-| `queue-scheduling` | Local candidate selection and budgeted queue pickup orchestration. |
-| `workers` | Reservation/submission/settlement, uncertain delivery, bootstrap/session policy and health. |
-| `worker-context` | Worker input assembly, size selection and attachment context loading. |
-| `pull-request-feedback` | PR observations, feedback/context, summary receipts and acknowledgement. |
+| `workspace` | Environment administration: `setup`, `configuration`, `agents`, `bindings`, `permissions`, `onboarding`. |
+| `projects` | Registered project management: `registration`, `channels`, `routing`, `context`, `labels`. |
+| `issues` | Managed issue lifecycle: `commands`, `queries`, `runtime`, `attachments`, `projection`, `maintenance`. |
+| `execution` | Pipeline execution: `heartbeat`, `scheduling`, `workers`, `workflow`, `context`, `feedback`. |
 | `notifications` | Exact endpoint delivery, terminal retries, rendering and delivery audit. |
-| `projects` | Registration, persisted endpoints and provider selection. |
-| `project-routing` | Cross-store validation of project endpoints against SDK agents/accounts/bindings. |
-| `setup` | Setup plan/apply, agent targeting, onboarding, permissions, models and binding configuration. |
+| `diagnostics` | Read-only workspace, route, tool-isolation and archive diagnostics. |
+
+The root API aggregates these six subsystem APIs. Projects, issues and execution
+aggregate their supported capability APIs. Workspace is a facade selecting supported
+administrative operations; it hides agent, binding, permission and configuration
+composition helpers. Setup coordinates target planning and ordered apply; ongoing
+configuration comparison/reset, model resolution and plugin writes belong to
+workspace/configuration. SDK bindings and agent permissions are workspace-wide;
+registered project endpoints and their authorization belong to projects.
+
+These groups organize related capabilities without creating new runtime dependency
+cycles. Application-internal consumers use the target capability's entrypoint,
+including across subsystem groups, rather than the group aggregate. For example,
+research calls execution/workers, heartbeat resumes issues/commands creation, and
+diagnostics calls workspace/permissions. Descendants never import their own or an
+ancestor barrel. Outside application, callers use only application/index.ts.
+Existing nested capability APIs remain the boundary for siblings; configuration may
+read execution/heartbeat/configuration directly without loading service registration.
+
+Workspace root types/const contain the shared setup inputs, runtime ports, operation
+and recovery contracts used by its capabilities. Its type-only composition can read
+binding and permission types directly. Projects root types/const hold common project,
+endpoint, command-result and audit contracts. Root selection.ts is internal shared
+endpoint matching/name allocation for registration, channels and context; public
+project selection belongs to context. Notifications stays flat as one delivery
+capability; diagnostics stays flat as one read-only report capability. No nested
+README files or compatibility entrypoints are supported.
 
 Each capability exposes its supported API through `index.ts`. Storage uses
 `lib/state/index.ts`; provider/session effects use integration APIs. Pure projection
@@ -45,12 +60,12 @@ under the registry lock, and reports post-commit scaffold failures for explicit 
 Channel names are allocated from fresh locked state; unlink uses exact route identity
 and retains at least one endpoint. Existing administrative authorization is preserved.
 
-`issue-commands/research` owns stable-key research creation and exact-issue scheduling. It selects
+`issues/commands/research` owns stable-key research creation and exact-issue scheduling. It selects
 an architect queue by its configured state key and validates its PICKUP target, rejects
 ambiguous queues, and returns creation recovery and gateway delivery evidence separately.
 Retries lock the issue and retain existing or uncertain reservations; provider labels
-never select a retry transition. Workers consume the independent worker-context API. Attachment capture belongs to
-issue-attachments; worker-context loads its persisted references without importing issue commands.
+never select a retry transition. Workers consume the independent execution/context API. Attachment capture belongs to
+issues/attachments; execution/context loads its persisted references without importing issue commands.
 
 This README is the single application-layer contract; subpackages do not maintain
 separate READMEs. Their file responsibilities and API details belong in source JSDoc.
@@ -76,7 +91,7 @@ separate READMEs. Their file responsibilities and API details belong in source J
   restores creation identity from the durable operation. Body edits retain creation
   identity from local state, never from a provider-only marker.
   Attachment capture requires exact project/route identity and saves bytes before upload.
-- Application/issue-projection selects exact workflow labels and colors from resolved configuration.
+- Application/issues/projection selects exact workflow labels and colors from resolved configuration.
   Workflow label effects add the selected target before removing obsolete configured labels;
   required cleanup failures propagate, while optional final observations remain diagnostic.
   Provider label effects are a two-phase projection: failed cleanup may leave both source
@@ -153,10 +168,10 @@ separate READMEs. Their file responsibilities and API details belong in source J
   overrides positive fields; an unavailable scope command is nonblocking.
 - Onboarding collects explicit role-level model overrides or accepts defaults. Reconfiguration guidance reads effective enabled workspace roles, including custom levels; it does not discover models or invoke LLM selection.
 
-Within workers, shared root evidence and session policy operations/constants may be imported directly
-to avoid command-barrel cycles; recovery must not depend on dispatch. In setup,
-shared runtime types come from root `types.ts`, and root contracts may import child
-`types.ts` directly to avoid barrel cycles.
+Within execution/workers, shared root evidence and session policy operations/constants may be imported directly
+to avoid command-barrel cycles; recovery must not depend on dispatch. In workspace,
+shared setup/runtime types come from workspace/types.ts; those type-only contracts
+may import binding and permission types directly to avoid barrel cycles.
 
 Task ownership commands select bulk candidates only from local configured queues and
 recheck the queue pair, provider availability, local active/release ownership and fresh
@@ -168,7 +183,7 @@ retain independent failures and distinguish them from eligibility refusals. Disc
 commands validate configured attribution and publish comments without requiring or
 initializing local workflow state. Comments are never automatically replayed.
 
-Registration and administrative label sync share `label-catalog` catalog provisioning for
+Registration and administrative label sync share `projects/labels` catalog provisioning for
 resolved workflow, enabled role/level and policy labels. Sync uses persisted provider
 identity, validates exact scope before effects and retains independent project failures.
 A failed catalog may be partially applied; repeating it is idempotent. Catalog
@@ -179,7 +194,7 @@ project configuration before selecting local records or performing effects. Unkn
 keys are errors, including when the managed issue store is empty; custom keys remain
 valid when present in that configuration.
 
-`issue-maintenance/administration` resolves project retention policy and persisted provider
+`issues/maintenance/administration` resolves project retention policy and persisted provider
 selection for operator commands; adapters parse input and render the returned results.
 Archive status/purge operate on local project stores without requiring a registry
 entry. Delete requires a registered project and delegates fresh ownership and
@@ -197,9 +212,9 @@ in the discovery snapshot. The menu is not authorization: setup planning and SDK
 mutation validate the fresh route again before writing. SDK read failures propagate;
 discovery neither queries providers/gateway nor changes local runtime state.
 
-The setup root is a facade exposing setup commands and discovery contracts. Internal
-binding discovery and planned-binding diagnostics stay with setup/bindings. Shared
-route inspection and its DTOs belong to project-routing; runtime consumers never
+The workspace root is a facade exposing administration and setup contracts. Internal
+binding discovery and planned-binding diagnostics stay with workspace/bindings. Shared
+route inspection and its DTOs belong to projects/routing; runtime consumers never
 load setup merely to validate a destination.
 
 Setup model queries reuse setup's target planning and return only effective enabled
@@ -216,7 +231,7 @@ Completion requires an exact captured worker frame, one matching active slot and
 Heartbeat also resumes terminal archive-first duplicates before provider projection
 can change the exact source snapshot. Failed snapshot verification stops that pass.
 
-`workflow-execution/effects` owns ordered merge, lifecycle, detection and optional checkout effects.
+`execution/workflow/effects` owns ordered merge, lifecycle, detection and optional checkout effects.
 Pipeline planning delegates graph-edge resolution to domain/workflow; command errors,
 worker ownership checks and execution of the selected transition remain application-owned.
 Completion and heartbeat use this supported API while retaining policy and notification
@@ -265,13 +280,13 @@ Operator tools render completion, dispatch, lifecycle and projection repair guid
 Issue-projection/verification owns provider/metadata verification, confirmation policy,
 integrity persistence and its regression tests. Archive effects are mandatory composition-
 injected callbacks: verification resumes archive-first duplicates before observing or
-changing projection, without importing issue-maintenance back into reconciliation.
+changing projection, without importing issues/maintenance back into reconciliation.
 Heartbeat supplies the real archive callbacks; test callers exercise those same effects.
 
 Workflow-execution owns planning, completion command/execution/replay, automatic review/
 review-skip/test-skip passes, transition commit/release and ordered effects. Automatic-transition queries select only initialized local issues;
 transitions owns the exact locked execution wrapper. Completion and automatic passes consume sibling planning/effects/
-transitions APIs, never the ancestor workflow-execution barrel.
+transitions APIs, never the ancestor execution/workflow barrel.
 
 Domain/projects owns reservation queries returning reservation observations. Application
 compares captured reservation frames with authoritative issue workers before transition
@@ -280,11 +295,11 @@ durable reservation/submission/settlement/recovery. Collection search reuses pro
 observations only within one read-only invocation; mutations retain locked fresh reads.
 
 Application aggregation barrels delegate supported child APIs with export *. Leaves
-explicitly select their operations and contracts; setup remains a facade. Heartbeat exposes
+explicitly select their operations and contracts; workspace remains a facade. Heartbeat exposes
 configuration and registration, while workers exposes health. The heartbeat service receives
 its project-tick callback from registration and never imports the parent tick implementation.
-Setup may import heartbeat/configuration directly without loading timers. Shared parent
-const/types contracts, worker evidence/session policy, setup root/child types and heartbeat's
+Workspace configuration may import execution/heartbeat/configuration without loading timers. Shared parent
+const/types contracts, worker evidence/session policy, workspace root/child types and heartbeat's
 service context type remain narrow internal exceptions. Worker input no longer requires a
 cross-capability tasks/context or tasks/attachments exception.
 
@@ -294,22 +309,23 @@ failure policy, maintenance-passes composes recovery operations, registration su
 service callback and scheduler adapts domain reservation exclusivity. Their const/types
 contain only cycle reports, events and run inputs. Bootstrap/session evidence remains at
 workers root because dispatch and delivery recovery share it independently of commands.
-Projects and notifications remain focused flat capabilities; no extra directories are
-required for their cohesive small contracts.
+Projects separates registration, channels, context, routing and labels. Their shared
+root contracts and endpoint selection helpers do not perform provider provisioning.
 
 Issue commands separate activation (approval/start), assignment (owner/prepared level),
-content (title/body), comments, creation, queries and research. Internal prerequisites owns
+content (title/body), comments, creation and research. Read-only queries live at
+issues/queries, independently of the commands aggregate. Internal prerequisites owns
 captured-route/readiness checks and the shared approval lookup; its contracts do not depend
 on activation commands. Issue-maintenance remains separate so workflow recovery does not
 load research/dispatch through an aggregate issue-command barrel. Archive keeps recovery,
 retention and queries together. Setup bindings owns discovery/planning/mutation; agents,
 onboarding and permissions keep their existing contracts.
 
-To locate a new operation: creation idempotency belongs to issue-commands/creation;
-provider label definitions to label-catalog; issue label verification to issue-projection;
-queue candidate choice to queue-scheduling; gateway submission/uncertainty to workers;
-worker input budgets to worker-context; completion and automatic policy transitions to
-workflow-execution; exact runtime destination checks to project-routing; binding writes
-to setup/bindings. Persistence and locks always stay in state.
+To locate a new operation: creation idempotency belongs to issues/commands/creation;
+provider label definitions to projects/labels; issue label verification to issues/projection;
+queue candidate choice to execution/scheduling; gateway submission/uncertainty to workers;
+worker input budgets to execution/context; completion and automatic policy transitions to
+execution/workflow; exact runtime destination checks to projects/routing; binding writes
+to workspace/bindings. Persistence and locks always stay in state.
 
 Task creation, discussion and manual attachments also return structured facts. Their tool adapters own readiness/repair guidance and command acknowledgements; provider comments, worker prompts and notification bodies remain application-owned effect content.

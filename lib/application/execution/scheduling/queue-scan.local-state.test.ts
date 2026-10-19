@@ -1,0 +1,176 @@
+/** Tests local queue truth independently of provider routing labels. */
+
+import { describe, it } from "node:test";
+import assert from "node:assert";
+import fs from "node:fs/promises";
+import path from "node:path";
+import os from "node:os";
+import { createEmptyIssueStateStoreForTesting as emptyIssueStateStore, replaceIssueStateStoreForTesting as writeIssueStateStore } from "../../../testing/index.js";
+import { TestProvider } from "../../../testing/test-provider.js";
+import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../../domain/index.js";
+import { DEFAULT_WORKFLOW } from "../../../domain/index.js";
+import { findNextIssueForRole } from "./scan.js";
+
+function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
+  return {
+    projectSlug: "devclaw",
+    issueId: 123,
+    provider: ISSUE_PROVIDER.GITHUB,
+    workflowState: "todo",
+    workflowLabel: "To Do",
+    assignedRole: "developer",
+    assignedLevel: "senior",
+    owner: null,
+    reviewPolicy: "human",
+    testPolicy: "skip",
+    notifyTarget: null,
+    activeWorker: null,
+    integrityStatus: ISSUE_INTEGRITY_STATUS.OK,
+    integrityErrors: [],
+    createdAt: "2026-06-22T00:00:00.000Z",
+    updatedAt: "2026-06-22T00:00:00.000Z",
+    closedAt: null,
+    providerMissing: null,
+    pipelineNotification: null,
+    ...overrides,
+  };
+}
+
+async function withStore<T>(states: IssueRuntimeState[], fn: (tmpDir: string, provider: TestProvider) => Promise<T>): Promise<T> {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-scan-"));
+  const provider = new TestProvider();
+  try {
+    const store = emptyIssueStateStore("devclaw");
+    for (const issueState of states) {
+      store.issues[String(issueState.issueId)] = issueState;
+    }
+    await writeIssueStateStore(tmpDir, "devclaw", store);
+    return await fn(tmpDir, provider);
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  }
+}
+
+describe("findNextIssueForRole local state", () => {
+  it("dispatches initialized managed issues from local workflow state", async () => {
+    await withStore([state()], async (tmpDir, provider) => {
+      provider.seedIssue({ iid: 123, labels: ["Doing", "human:label"], description: "Body" });
+
+      const next = await findNextIssueForRole(
+        provider,
+        "developer",
+        DEFAULT_WORKFLOW,
+        undefined,
+        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+      );
+
+      assert.strictEqual(next?.issue.iid, 123);
+      assert.strictEqual(next?.label, "To Do");
+      assert.strictEqual(next?.localState?.assignedLevel, "senior");
+      assert.strictEqual(provider.callsTo("listIssuesByLabel").length, 0);
+    });
+  });
+
+  it("retains a locally queued issue after it is closed at the provider", async () => {
+    await withStore([state()], async (tmpDir, provider) => {
+      provider.seedIssue({ iid: 123, labels: ["To Do"], state: "closed" });
+
+      const next = await findNextIssueForRole(
+        provider, "developer", DEFAULT_WORKFLOW, undefined,
+        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+      );
+
+      assert.equal(next?.issue.iid, 123);
+      assert.equal(next?.localState.workflowState, "todo");
+    });
+  });
+
+  it("skips initialized managed issues with integrity_error", async () => {
+    await withStore([state({
+      integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR,
+      integrityErrors: ["tamper"],
+    })], async (tmpDir, provider) => {
+      provider.seedIssue({ iid: 123, labels: ["To Do"], description: "Body" });
+
+      const next = await findNextIssueForRole(
+        provider,
+        "developer",
+        DEFAULT_WORKFLOW,
+        undefined,
+        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+      );
+
+      assert.strictEqual(next, null);
+    });
+  });
+
+  it("skips issues with an active worker or unpublished creation operation", async () => {
+    const active = state({ issueId: 124, activeWorker: {
+      role: "developer", level: "senior", slotIndex: 0, sessionKey: "s", startedAt: new Date().toISOString(),
+    } });
+    const unpublished = state({ issueId: 125, creationOperationId: "00000000-0000-4000-8000-000000000125" });
+
+    await withStore([active, unpublished], async (tmpDir, provider) => {
+      provider.seedIssue({ iid: 124, labels: ["To Do"] });
+      provider.seedIssue({ iid: 125, labels: ["To Do"] });
+      const next = await findNextIssueForRole(
+        provider, "developer", DEFAULT_WORKFLOW, undefined,
+        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+      );
+
+      assert.equal(next, null);
+      assert.equal(provider.callsTo("getIssue").length, 0);
+    });
+  });
+
+  it("does not silently dispatch provider-only issues in managed local-state mode", async () => {
+    await withStore([], async (tmpDir, provider) => {
+      provider.seedIssue({ iid: 456, labels: ["To Do", "bug"], description: "Legacy body" });
+
+      const next = await findNextIssueForRole(
+        provider,
+        "developer",
+        DEFAULT_WORKFLOW,
+        undefined,
+        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+      );
+
+      assert.strictEqual(next, null);
+      assert.strictEqual(provider.callsTo("listIssuesByLabel").length, 0);
+    });
+  });
+
+  it("uses local ownership when the provider owner label disagrees", async () => {
+    await withStore([state({ owner: "primary" })], async (tmpDir, provider) => {
+      provider.seedIssue({ iid: 123, labels: ["To Do", "owner:secondary"], description: "Body" });
+
+      const next = await findNextIssueForRole(
+        provider,
+        "developer",
+        DEFAULT_WORKFLOW,
+        "primary",
+        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+      );
+
+      assert.strictEqual(next?.issue.iid, 123);
+      assert.strictEqual(next?.localState.owner, "primary");
+    });
+  });
+
+  it("does not dispatch an issue locally owned by another instance", async () => {
+    await withStore([state({ owner: "secondary" })], async (tmpDir, provider) => {
+      provider.seedIssue({ iid: 123, labels: ["To Do", "owner:primary"], description: "Body" });
+
+      const next = await findNextIssueForRole(
+        provider,
+        "developer",
+        DEFAULT_WORKFLOW,
+        "primary",
+        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+      );
+
+      assert.strictEqual(next, null);
+      assert.strictEqual(provider.callsTo("getIssue").length, 0);
+    });
+  });
+});

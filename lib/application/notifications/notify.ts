@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { getErrorMessage } from "../../errors/index.js";
 import { deliverNotificationMessage, MESSAGE_DELIVERY_PATH } from "../../integrations/index.js";
-import { inspectProjectRoute } from "../project-routing/index.js";
+import { inspectProjectRoute } from "../projects/routing/index.js";
 import { auditNotificationOutcome } from "./audit.js";
 import { NOTIFICATION_AUDIT_OUTCOME, NOTIFICATION_BLOCK_REASON, NOTIFICATION_BLOCKED, NOTIFICATION_EVENT_TYPES } from "./const.js";
 import { renderNotificationMessage } from "./render.js";

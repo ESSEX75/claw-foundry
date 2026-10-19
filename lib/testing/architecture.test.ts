@@ -81,32 +81,61 @@ it("enforces application public, sibling, child and ancestor APIs on Windows and
     const path = (value: string) => value.replaceAll("/", separator);
     const check = (source: string, target: string) => checkApplicationApiBoundary(path(source), path(target));
 
-    assert.ok(check("lib/tools/adapters/worker/work-finish.ts", "lib/application/workflow-execution/completion/completion.ts"));
+    assert.ok(check("lib/tools/adapters/worker/work-finish.ts", "lib/application/execution/workflow/completion/completion.ts"));
     assert.equal(check("index.ts", "lib/application/index.ts"), null);
-    assert.ok(check("lib/application/queue-scheduling/tick.ts", "lib/application/index.ts"));
-    assert.ok(check("lib/application/workers/dispatch/dispatch-task.ts", "lib/application/workers/index.ts"));
-    assert.ok(check("lib/application/workers/dispatch/plan.ts", "lib/application/workers/dispatch/index.ts"));
-    assert.ok(check("lib/application/heartbeat/tick-runner.ts", "lib/application/queue-scheduling/tick.ts"));
-    assert.equal(check("lib/application/heartbeat/tick-runner.ts", "lib/application/queue-scheduling/index.ts"), null);
-    assert.ok(check("lib/application/issue-commands/research/command.ts", "lib/application/issue-commands/creation/command.ts"));
-    assert.equal(check("lib/application/issue-commands/research/command.ts", "lib/application/issue-commands/creation/index.ts"), null);
-    assert.equal(check("lib/application/workers/dispatch/dispatch-context.ts", "lib/application/worker-context/index.ts"), null);
-    assert.ok(check("lib/application/workers/dispatch/dispatch-context.ts", "lib/application/worker-context/selection.ts"));
-    assert.equal(check("lib/application/setup/plugin-config.ts", "lib/application/heartbeat/configuration/index.ts"), null);
-    assert.ok(check("lib/application/setup/plugin-config.ts", "lib/application/heartbeat/configuration/defaults.ts"));
-    assert.equal(check("lib/application/workers/dispatch/dispatch-task.ts", "lib/application/workers/session-budget.ts"), null);
-    assert.equal(check("lib/application/setup/bindings/binding-manager.ts", "lib/application/setup/types.ts"), null);
-    assert.equal(check("lib/application/setup/types.ts", "lib/application/setup/bindings/types.ts"), null);
-    assert.ok(check("lib/application/issue-commands/research/command.ts", "lib/application/issue-commands/hidden.ts"));
-    assert.ok(check("lib/application/heartbeat/service/agent-runner.ts", "lib/application/heartbeat/tick-runner.ts"));
+    assert.ok(check("lib/application/execution/scheduling/tick.ts", "lib/application/index.ts"));
+    assert.ok(check("lib/application/execution/workers/dispatch/dispatch-task.ts", "lib/application/execution/workers/index.ts"));
+    assert.ok(check("lib/application/execution/workers/dispatch/plan.ts", "lib/application/execution/workers/dispatch/index.ts"));
+    assert.ok(check("lib/application/execution/heartbeat/tick-runner.ts", "lib/application/execution/scheduling/tick.ts"));
+    assert.equal(check("lib/application/execution/heartbeat/tick-runner.ts", "lib/application/execution/scheduling/index.ts"), null);
+    assert.ok(check("lib/application/issues/commands/research/command.ts", "lib/application/issues/commands/creation/command.ts"));
+    assert.equal(check("lib/application/issues/commands/research/command.ts", "lib/application/issues/commands/creation/index.ts"), null);
+    assert.equal(check("lib/application/execution/workers/dispatch/dispatch-context.ts", "lib/application/execution/context/index.ts"), null);
+    assert.ok(check("lib/application/execution/workers/dispatch/dispatch-context.ts", "lib/application/execution/context/selection.ts"));
+    assert.equal(check("lib/application/workspace/configuration/plugin-config.ts", "lib/application/execution/heartbeat/configuration/index.ts"), null);
+    assert.ok(check("lib/application/workspace/configuration/plugin-config.ts", "lib/application/execution/heartbeat/configuration/defaults.ts"));
+    assert.equal(check("lib/application/execution/workers/dispatch/dispatch-task.ts", "lib/application/execution/workers/session-budget.ts"), null);
+    assert.equal(check("lib/application/workspace/bindings/binding-manager.ts", "lib/application/workspace/types.ts"), null);
+    assert.equal(check("lib/application/workspace/types.ts", "lib/application/workspace/bindings/types.ts"), null);
+    assert.ok(check("lib/application/issues/commands/research/command.ts", "lib/application/issues/commands/hidden.ts"));
+    assert.ok(check("lib/application/execution/heartbeat/service/agent-runner.ts", "lib/application/execution/heartbeat/tick-runner.ts"));
   }
 });
 
-it("rejects hand-picked child aggregation while retaining leaf exports and the setup facade", () => {
+it("rejects hand-picked child aggregation while retaining leaf exports and the workspace facade", () => {
   const named = 'export { startTask } from "./activation/index.js";';
 
-  assert.ok(checkApplicationAggregation("lib/application/issue-commands/index.ts", named));
-  assert.equal(checkApplicationAggregation("lib/application/issue-commands/index.ts", 'export * from "./activation/index.js";'), null);
-  assert.equal(checkApplicationAggregation("lib/application/setup/index.ts", named), null);
-  assert.equal(checkApplicationAggregation("lib/application/issue-commands/activation/index.ts", 'export { startTask } from "./start-task.js";'), null);
+  assert.ok(checkApplicationAggregation("lib/application/issues/commands/index.ts", named));
+  assert.equal(checkApplicationAggregation("lib/application/issues/commands/index.ts", 'export * from "./activation/index.js";'), null);
+  assert.equal(checkApplicationAggregation("lib/application/workspace/index.ts", named), null);
+  assert.equal(checkApplicationAggregation("lib/application/issues/commands/activation/index.ts", 'export { startTask } from "./start-task.js";'), null);
+});
+
+it("preserves capability boundaries across application groups on both platforms", () => {
+  for (const separator of ["/", "\\"]) {
+    const check = (source: string, target: string) => checkApplicationApiBoundary(source.replaceAll("/", separator), target.replaceAll("/", separator));
+    const research = "lib/application/issues/commands/research/command.ts";
+    const heartbeat = "lib/application/execution/heartbeat/maintenance-passes.ts";
+
+    assert.equal(check(research, "lib/application/execution/workers/index.ts"), null);
+    assert.ok(check(research, "lib/application/execution/workers/dispatch/index.ts"));
+    assert.ok(check(research, "lib/application/execution/index.ts"));
+    assert.equal(check(heartbeat, "lib/application/issues/commands/index.ts"), null);
+    assert.ok(check(heartbeat, "lib/application/issues/commands/creation/command.ts"));
+    assert.ok(check(heartbeat, "lib/application/issues/index.ts"));
+    assert.ok(check("lib/application/issues/queries/list-tasks.ts", "lib/application/issues/commands/creation/command.ts"));
+    assert.equal(check("lib/application/issues/queries/list-tasks.ts", "lib/application/issues/commands/index.ts"), null);
+    assert.ok(check("lib/application/projects/registration/command.ts", "lib/application/projects/channels/commands.ts"));
+    assert.equal(check("lib/application/projects/registration/command.ts", "lib/application/projects/routing/index.ts"), null);
+    assert.ok(check("lib/application/workspace/setup/run-setup.ts", "lib/application/workspace/configuration/plugin-config.ts"));
+    assert.equal(check("lib/application/workspace/setup/run-setup.ts", "lib/application/workspace/configuration/index.ts"), null);
+    for (const group of ["workspace", "projects", "issues", "execution"]) {
+      assert.ok(check("lib/tools/adapters/setup/setup.ts", `lib/application/${group}/index.ts`));
+      assert.ok(check(`lib/application/${group}/nested/operation.ts`, `lib/application/${group}/index.ts`));
+      assert.equal(check("lib/application/index.ts", `lib/application/${group}/index.ts`), null);
+    }
+    assert.equal(check("lib/application/issues/index.ts", "lib/application/issues/queries/index.ts"), null);
+    assert.ok(check("lib/application/issues/index.ts", "lib/application/issues/queries/list-tasks.ts"));
+    assert.ok(check("lib/application/diagnostics/report.ts", "lib/application/workspace/types.ts"));
+  }
 });

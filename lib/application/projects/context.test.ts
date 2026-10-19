@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 import { ISSUE_PROVIDER, NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { DATA_DIR } from "../../state/index.js";
 import { createTestHarness } from "../../testing/index.js";
-import { findProjectByRoute, resolveProject, resolveProjectByRoute, resolveProvider } from "./context.js";
+import { findProjectByRoute, resolveProject, resolveProjectByRoute, resolveProvider } from "./context/resolve.js";
 
 describe("project context", () => {
   it("requires exactly one route for a channel-only project lookup", async () => {

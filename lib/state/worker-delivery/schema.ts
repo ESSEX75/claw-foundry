@@ -3,11 +3,12 @@
 import { z } from "zod";
 
 import { WORKER_DELIVERY_RESOLUTION } from "../../domain/index.js";
+import { TimestampSchema } from "../persistence/index.js";
 
 /** Strict recovery record tied to a concrete provider issue and submission. */
 export const WorkerResolutionSchema = z.object({
   deliveryId: z.string().uuid(), issueId: z.number().int().positive(), sessionKey: z.string().min(1),
-  role: z.string().min(1), level: z.string().min(1), slotIndex: z.number().int().nonnegative(), startedAt: z.string(),
+  role: z.string().min(1), level: z.string().min(1), slotIndex: z.number().int().nonnegative(), startedAt: TimestampSchema,
   decision: z.enum(WORKER_DELIVERY_RESOLUTION), reason: z.string().min(1),
   fromState: z.string().min(1), fromLabel: z.string().min(1), toState: z.string().min(1), toLabel: z.string().min(1),
   completed: z.boolean(),

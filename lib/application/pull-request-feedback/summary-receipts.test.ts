@@ -60,7 +60,7 @@ it("pending context cannot be acknowledged by a different submission or reused s
   const h = await createTestHarness();
   try {
     const issue = h.provider.seedIssue({ iid: 42, labels: ["Doing"] });
-    const worker = { role: "developer", level: "medior", slotIndex: 0, sessionKey: "worker", startedAt: "2026-01-01" };
+    const worker = { role: "developer", level: "medior", slotIndex: 0, sessionKey: "worker", startedAt: "2026-01-01T00:00:00.000Z" };
     await seedIssueRuntimeState({ workspaceDir: h.workspaceDir, project: h.project, issue, providerType: h.project.provider,
       workflow: h.workflow, workflowState: "doing", workflowLabel: "Doing", activeWorker: worker });
     const context = { workspaceDir: h.workspaceDir, projectSlug: h.project.slug };
@@ -72,7 +72,7 @@ it("pending context cannot be acknowledged by a different submission or reused s
     assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].processedReviewSummaries, undefined);
     await updateIssueRuntimeRecord(h.workspaceDir, h.project.slug, 42, previous => {
       if (!previous) throw new Error("Missing issue");
-      return { ...previous, activeWorker: { ...worker, startedAt: "2026-01-02" } };
+      return { ...previous, activeWorker: { ...worker, startedAt: "2026-01-02T00:00:00.000Z" } };
     });
     await confirmReviewSummaryDelivery(context, 42, id);
     assert.equal((await readIssueStateStore(h.workspaceDir, h.project.slug)).issues["42"].processedReviewSummaries, undefined);

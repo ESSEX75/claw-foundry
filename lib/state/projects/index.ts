@@ -6,4 +6,4 @@ export { resolveRepoPath } from "./paths.js";
 export { getProject, getRoleWorker } from "./queries.js";
 export { readOptionalProjects, readProjects, updateProjects } from "./repository.js";
 export { parseNotificationEndpoint, parseProjectSlug } from "./schema.js";
-export type { ProjectsData } from "./types.js";
+export type { ManagedWorkspaceSnapshot, ProjectsData } from "./types.js";

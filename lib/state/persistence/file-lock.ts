@@ -1,139 +1,99 @@
-/**
- * Serializes state repository operations through token-owned filesystem locks.
- */
+/** Serializes cooperative local writers without expiring a paused live owner. */
 
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
+import { hostname } from "node:os";
 import path from "node:path";
 
-import { LOCK_RENEWAL_INTERVAL_DIVISOR } from "./const.js";
-import { isErrnoException } from "./guards.js";
-import type { FileLockOptions } from "./types.js";
+import { z } from "zod";
 
-/** Ownership record persisted inside a filesystem lock. */
-type LockRecord = {
-  /** Unique token proving which caller owns the lock. */
-  token: string;
-  /** Acquisition timestamp used to determine whether ownership is stale. */
-  createdAt: number;
-};
+import { LOCK_CLAIM_SUFFIX, LOCK_RECORD_EXTENSION } from "./const.js";
+import { isErrnoException } from "./guards.js";
+import type { FileLockOptions, FileLockRecord } from "./types.js";
+
+/** Only the current immutable process ownership contract authorizes recovery. */
+const FileLockRecordSchema = z.object({
+  token: z.string().uuid(),
+  processId: z.number().int().positive().safe(),
+  hostname: z.string().min(1),
+  createdAt: z.number().nonnegative().finite(),
+}).strict();
 
 /**
- * Run an operation while holding a token-owned lock and release only that ownership token.
- *
- * @param lockPath - Lock file scoped by the calling repository.
- * @param options - Repository-specific wait and stale-lock policy.
- * @param operation - Work that must be serialized by the lock.
+ * Publish complete ownership atomically and hold it until the callback settles.
+ * Live local processes and foreign hosts never expire. Cooperative writers must not
+ * remove locks externally; malformed or former lock formats require operator repair.
+ * @param lockPath - Directory path dedicated to this repository lock.
+ * @param options - Wait policy and minimum age for dead-process recovery.
+ * @param operation - Work serialized until its promise settles, including failure cleanup.
  */
 export async function withFileLock<T>(
   lockPath: string,
   options: FileLockOptions,
   operation: () => T | Promise<T>,
 ): Promise<T> {
-  const owner: LockRecord = { token: randomUUID(), createdAt: Date.now() };
+  const owner: FileLockRecord = {
+    token: randomUUID(), processId: process.pid, hostname: hostname(), createdAt: Date.now(),
+  };
 
   await acquireLock(lockPath, owner, options);
-  let renewalFailure: unknown;
-  let pendingRenewal = Promise.resolve();
-  const renewalTimer = setInterval(() => {
-    pendingRenewal = pendingRenewal.then(async () => {
-      if (!await renewLockOwnedBy(lockPath, owner.token)) {
-        throw new Error(`Lost ownership of state lock: ${lockPath}`);
-      }
-    }).catch((error: unknown) => {
-      renewalFailure ??= error;
-    });
-  }, Math.max(1, Math.floor(options.staleMs / LOCK_RENEWAL_INTERVAL_DIVISOR)));
-
-  renewalTimer.unref();
   try {
-    const result = await operation();
-
-    if (renewalFailure) {
-      throw new Error(`Cannot safely complete operation after losing state lock: ${lockPath}`, {
-        cause: renewalFailure,
-      });
-    }
-
-    return result;
+    return await operation();
   } finally {
-    clearInterval(renewalTimer);
-    await pendingRenewal;
-    await removeLockOwnedBy(lockPath, owner.token);
+    await removeOwnership(lockPath, owner.token);
   }
 }
 
 /**
- * Acquire a new lock or recover an invalid or stale lock before the timeout.
- *
- * @param lockPath - Lock file to create exclusively.
- * @param owner - Token and acquisition time persisted for this caller.
- * @param options - Repository-specific wait and stale-lock policy.
+ * Prepare a nonempty claim before rename, so no observer sees an empty live lock.
+ * Only an empty directory can be replaced by rename on POSIX; ownership is nonempty.
+ * @param lockPath - Lock directory to publish without replacing a live owner.
+ * @param owner - Immutable local process identity.
+ * @param options - Contention and abandoned-process inspection policy.
  */
-async function acquireLock(
-  lockPath: string,
-  owner: LockRecord,
-  options: FileLockOptions,
-): Promise<void> {
+async function acquireLock(lockPath: string, owner: FileLockRecord, options: FileLockOptions): Promise<void> {
   const deadline = Date.now() + options.timeoutMs;
 
   await fs.mkdir(path.dirname(lockPath), { recursive: true });
-  while (Date.now() <= deadline) {
-    try {
-      await fs.writeFile(lockPath, JSON.stringify(owner), { flag: "wx" });
+  const claimPath = await fs.mkdtemp(`${lockPath}${LOCK_CLAIM_SUFFIX}`);
+  let published = false;
+  let publicationFailure: unknown;
 
-      return;
-    } catch (error) {
-      if (!isErrnoException(error) || error.code !== "EEXIST") throw error;
+  try {
+    await fs.writeFile(markerPath(claimPath, owner.token), JSON.stringify(owner), { flag: "wx" });
+    while (Date.now() <= deadline) {
+      if (await lockEntryExists(lockPath)) {
+        if (await recoverAbandonedLock(lockPath, options.staleMs)) continue;
+      } else {
+        try {
+          await fs.rename(claimPath, lockPath);
+          published = true;
+
+          return;
+        } catch (error) {
+          if (!isErrnoException(error) || !["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOTDIR", "EISDIR"].includes(error.code ?? "")) throw error;
+          publicationFailure = error;
+          if (await lockEntryExists(lockPath) && await recoverAbandonedLock(lockPath, options.staleMs)) continue;
+        }
+      }
+
+      if (Date.now() >= deadline) break;
+      await new Promise<void>(resolve => setTimeout(resolve, options.retryMs));
     }
 
-    if (await removeStaleLock(lockPath, options.staleMs)) continue;
-    if (Date.now() >= deadline) break;
-    await wait(options.retryMs);
-  }
-
-  throw new Error(`Timed out waiting for state lock: ${lockPath}`);
-}
-
-/**
- * Remove a stale lock only while it still carries the observed ownership token.
- * Invalid lock content is recoverable because it cannot identify a live owner.
- *
- * @param lockPath - Existing lock candidate.
- * @param staleMs - Maximum accepted age for a valid lock.
- */
-async function removeStaleLock(lockPath: string, staleMs: number): Promise<boolean> {
-  try {
-    const [raw, stats] = await Promise.all([
-      fs.readFile(lockPath, "utf-8"),
-      fs.stat(lockPath),
-    ]);
-    const record = parseLockRecord(raw);
-
-    if (Date.now() - stats.mtimeMs <= staleMs) return false;
-    if (record) return removeLockOwnedBy(lockPath, record.token);
-    await fs.rm(lockPath, { force: true });
-
-    return true;
-  } catch (error) {
-    return isErrnoException(error) && error.code === "ENOENT";
+    throw new Error(`Timed out waiting for state lock: ${lockPath}`, { cause: publicationFailure });
+  } finally {
+    if (!published) await removeOwnership(claimPath, owner.token);
   }
 }
 
 /**
- * Refresh one live lock lease only while its ownership token is still current.
- *
- * @param lockPath - Lock file whose modification time represents the live lease.
- * @param ownerToken - Ownership token allowed to renew the lease.
+ * Inspect existing entries before publication, preserving old files on Windows rename.
+ * @param lockPath - Target whose absence permits publishing a complete directory.
  */
-async function renewLockOwnedBy(lockPath: string, ownerToken: string): Promise<boolean> {
+async function lockEntryExists(lockPath: string): Promise<boolean> {
   try {
-    const record = parseLockRecord(await fs.readFile(lockPath, "utf-8"));
-
-    if (record?.token !== ownerToken) return false;
-    const now = new Date();
-
-    await fs.utimes(lockPath, now, now);
+    await fs.lstat(lockPath);
 
     return true;
   } catch (error) {
@@ -143,69 +103,93 @@ async function renewLockOwnedBy(lockPath: string, ownerToken: string): Promise<b
 }
 
 /**
- * Remove a lock only when its current token still belongs to the expected owner.
- *
- * @param lockPath - Lock file that may still exist.
- * @param ownerToken - Ownership token allowed to release the lock.
+ * Recover only a proven dead local process. Age alone never revokes ownership.
+ * A stale observer unlinks its observed token; rmdir cannot remove a new nonempty owner.
+ * @param lockPath - Published directory to inspect without following links.
+ * @param staleMs - Minimum age before attempting a process-liveness check.
  */
-async function removeLockOwnedBy(lockPath: string, ownerToken: string): Promise<boolean> {
+async function recoverAbandonedLock(lockPath: string, staleMs: number): Promise<boolean> {
   try {
-    const record = parseLockRecord(await fs.readFile(lockPath, "utf-8"));
+    const stat = await fs.lstat(lockPath);
 
-    if (record?.token !== ownerToken) return false;
-    await fs.rm(lockPath, { force: true });
+    if (stat.isSymbolicLink() || !stat.isDirectory()) {
+      throw new Error(`State lock requires operator repair (expected an ownership directory): ${lockPath}`);
+    }
+
+    const entries = await fs.readdir(lockPath);
+
+    if (entries.length === 0) {
+      await removeEmptyDirectory(lockPath);
+
+      return true;
+    }
+
+    if (entries.length !== 1) throw new Error(`Invalid state lock ownership directory: ${lockPath}`);
+    const entry = entries[0]!;
+    const entryPath = path.join(lockPath, entry);
+    const marker = await fs.lstat(entryPath);
+
+    if (marker.isSymbolicLink() || !marker.isFile()) throw new Error(`Invalid state lock marker: ${entryPath}`);
+    const raw: unknown = JSON.parse(await fs.readFile(entryPath, "utf-8"));
+    const record = FileLockRecordSchema.parse(raw);
+
+    if (entry !== `${record.token}${LOCK_RECORD_EXTENSION}`) throw new Error(`State lock token mismatch: ${lockPath}`);
+    if (record.hostname !== hostname() || Date.now() - record.createdAt < staleMs || isProcessAlive(record.processId)) return false;
+    await removeOwnership(lockPath, record.token);
 
     return true;
   } catch (error) {
     if (isErrnoException(error) && error.code === "ENOENT") return true;
-    throw error;
+    throw new Error(`Cannot inspect state lock ${lockPath}; inspect ownership before repairing it.`, { cause: error });
   }
 }
 
 /**
- * Parse the strict persisted lock contract.
- *
- * @param raw - Raw lock file content.
+ * Treat denied or unknown process outcomes as live, preserving exclusive ownership.
+ * @param processId - Process on this host recorded by the immutable marker.
  */
-function parseLockRecord(raw: string): LockRecord | null {
-  let value: unknown;
-
+function isProcessAlive(processId: number): boolean {
   try {
-    value = JSON.parse(raw);
-  } catch {
-    return null;
+    process.kill(processId, 0);
+
+    return true;
+  } catch (error) {
+    return !isErrnoException(error) || error.code !== "ESRCH";
+  }
+}
+
+/**
+ * Remove only the unique observed marker and an empty directory, never recursively.
+ * @param lockPath - Published or unpublished ownership directory.
+ * @param token - Immutable token identifying the only marker this caller may unlink.
+ */
+async function removeOwnership(lockPath: string, token: string): Promise<void> {
+  try {
+    await fs.unlink(markerPath(lockPath, token));
+  } catch (error) {
+    if (!isErrnoException(error) || error.code !== "ENOENT") throw error;
   }
 
-  if (!isStrictLockRecord(value)) return null;
-
-  return { token: value.token, createdAt: value.createdAt };
+  await removeEmptyDirectory(lockPath);
 }
 
 /**
- * Validate exact membership in the lock record contract.
- *
- * @param value - Parsed JSON candidate.
+ * Leave replacement ownership intact even after delayed recovery.
+ * @param directory - Directory which may already have disappeared or been republished.
  */
-function isStrictLockRecord(value: unknown): value is LockRecord {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  const keys = Object.keys(value);
-
-  return keys.length === 2
-    && keys.includes("token")
-    && keys.includes("createdAt")
-    && "token" in value
-    && typeof value.token === "string"
-    && value.token.length > 0
-    && "createdAt" in value
-    && typeof value.createdAt === "number"
-    && Number.isFinite(value.createdAt);
+async function removeEmptyDirectory(directory: string): Promise<void> {
+  try {
+    await fs.rmdir(directory);
+  } catch (error) {
+    if (!isErrnoException(error) || !["ENOENT", "ENOTEMPTY", "EEXIST"].includes(error.code ?? "")) throw error;
+  }
 }
 
 /**
- * Wait before retrying a contended lock.
- *
- * @param milliseconds - Delay selected by the owning repository.
+ * Address a marker using an internally generated or validated UUID.
+ * @param directory - Ownership directory containing the immutable marker.
+ * @param token - Unique acquisition UUID.
  */
-function wait(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+function markerPath(directory: string, token: string): string {
+  return path.join(directory, `${token}${LOCK_RECORD_EXTENSION}`);
 }

@@ -102,7 +102,7 @@ for (const step of [SETUP_APPLY_STEP.SCAFFOLD, SETUP_APPLY_STEP.MODELS]) {
     const write = fs.writeFile;
     const fault = t.mock.method(fs, "writeFile", async (...args: Parameters<typeof fs.writeFile>) => {
       if (step === SETUP_APPLY_STEP.SCAFFOLD && String(args[0]) === path.join(resources.workspacePath, "AGENTS.md")) throw new Error("scaffold failed");
-      if (step === SETUP_APPLY_STEP.MODELS && String(args[0]) === path.join(resources.workspacePath, "devclaw", "workflow.yaml")
+      if (step === SETUP_APPLY_STEP.MODELS && String(args[0]).startsWith(path.join(resources.workspacePath, "devclaw", "workflow.yaml."))
         && typeof args[1] === "string" && args[1].includes("model/recovered")) throw new Error("model persistence failed");
 
       return write(...args);

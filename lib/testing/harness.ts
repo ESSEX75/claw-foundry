@@ -292,7 +292,7 @@ export async function createTestHarness(opts?: HarnessOptions): Promise<TestHarn
         active: overrides.active ?? false,
         issueId: overrides.issueId ?? null,
         sessionKey: overrides.sessionKey ?? null,
-        startTime: overrides.startTime ?? null,
+        startTime: overrides.startTime !== undefined ? overrides.startTime : overrides.active ? new Date().toISOString() : null,
         previousLabel: overrides.previousLabel ?? null,
         lastIssueId: overrides.lastIssueId,
       }];

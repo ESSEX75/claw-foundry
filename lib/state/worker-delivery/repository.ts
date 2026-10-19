@@ -6,7 +6,7 @@ import path from "node:path";
 import { withIssueStoreLock } from "../issues/persistence/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../paths.js";
 import { isErrnoException, writeJsonAtomic } from "../persistence/index.js";
-import { parseProjectSlug } from "../projects/schema.js";
+import { parseProjectSlug } from "../projects/index.js";
 import { WORKER_RESOLUTIONS_FILE_NAME } from "./const.js";
 import { WorkerResolutionSchema, WorkerResolutionStoreSchema } from "./schema.js";
 import type { WorkerDeliveryResolution } from "./types.js";

@@ -12,6 +12,7 @@ export {
 export type {
   IssueCreationErrorCode,
   IssueCreationFailure,
+  IssueCreationIdentity,
   IssueCreationOperation,
   IssueCreationStatus,
   IssueCreationStore,

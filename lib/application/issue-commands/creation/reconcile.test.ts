@@ -96,13 +96,13 @@ it("rechecks readiness after lock wait and spends the unchanged budget on the ne
   await acquired;
   let attempted = () => {};
   const lockAttempt = new Promise<void>(resolve => { attempted = resolve; });
-  const write = fs.writeFile;
+  const prepareClaim = fs.mkdtemp;
   const lockName = `${createHash("sha256").update("a").digest("hex")}.lock`;
 
-  t.mock.method(fs, "writeFile", async (...args: Parameters<typeof fs.writeFile>) => {
-    if (String(args[0]).endsWith(lockName)) attempted();
+  t.mock.method(fs, "mkdtemp", async (...args: Parameters<typeof fs.mkdtemp>) => {
+    if (String(args[0]).endsWith(`${lockName}.claim-`)) attempted();
 
-    return write(...args);
+    return prepareClaim(...args);
   });
   const pass = reconcileManagedTaskCreations({ ...context(h), maxItems: 1 });
 

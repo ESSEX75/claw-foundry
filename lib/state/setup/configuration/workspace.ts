@@ -3,12 +3,15 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { DATA_DIR, WORKFLOW_FILE_NAME } from "../paths.js";
-import { FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../persistence/index.js";
-import { AGENTS_FILE_NAME, DEFAULTS_SCOPE, PROMPTS_DIRECTORY_NAME, ROLE_PROMPT_FILE_EXTENSION } from "./const.js";
-import { loadSetupTemplates } from "./templates.js";
-import type { DefaultsScope, WorkflowDocuments, WorkspaceWriteResult } from "./types.js";
-import { backupAndWrite, resetDefaults } from "./workspace-files.js";
+import { DATA_DIR, WORKFLOW_FILE_NAME } from "../../paths.js";
+import { FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
+import type { WorkspaceWriteResult } from "../documents/index.js";
+import { backupAndWrite } from "../documents/index.js";
+import { PROMPTS_DIRECTORY_NAME, ROLE_PROMPT_FILE_EXTENSION } from "../resources/index.js";
+import { loadSetupTemplates } from "../resources/index.js";
+import { DEFAULTS_SCOPE } from "./const.js";
+import { resetDefaults } from "./reset.js";
+import type { DefaultsScope, WorkflowDocuments } from "./types.js";
 
 /** Read both workflow documents without creating missing state.
  * @param workspacePath - Workspace to inspect.
@@ -40,15 +43,4 @@ export async function resetWorkspaceConfiguration(workspacePath: string, scope: 
   for (const [relativePath, content] of files) await backupAndWrite(path.join(workspacePath, relativePath), content);
 
   return { written: files.map(([relativePath]) => relativePath) };
-}
-
-/** Read existing agent instructions for onboarding detection without creating files.
- * @param workspacePath - Workspace whose instructions may be absent.
- */
-export async function readWorkspaceAgentInstructions(workspacePath: string): Promise<string | null> {
-  try { return await fs.readFile(path.join(workspacePath, AGENTS_FILE_NAME), STATE_TEXT_ENCODING); }
-  catch (error) {
-    if (error instanceof Error && "code" in error && error.code === FILESYSTEM_ERROR_CODE.NOT_FOUND) return null;
-    throw error;
-  }
 }

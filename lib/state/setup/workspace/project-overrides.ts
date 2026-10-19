@@ -3,10 +3,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../paths.js";
-import { CREATE_ONLY_FILE_FLAG, FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../persistence/index.js";
-import { parseProjectSlug } from "../projects/index.js";
-import { PROJECT_OVERRIDES_FILE_NAME, PROMPTS_DIRECTORY_NAME } from "./const.js";
+import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
+import { CREATE_ONLY_FILE_FLAG, FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
+import { parseProjectSlug } from "../../projects/index.js";
+import { PROMPTS_DIRECTORY_NAME } from "../resources/index.js";
+import { PROJECT_OVERRIDES_FILE_NAME } from "./const.js";
 
 /**
  * Scaffold a canonical project directory with a prompts folder and override documentation.

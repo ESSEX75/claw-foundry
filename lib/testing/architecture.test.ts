@@ -16,7 +16,7 @@ describe("setup architecture boundaries", () => {
     }
   });
   it("allows filesystem persistence inside its owning layer", () => {
-    assert.equal(checkApplicationAdapterBoundary("lib/state/setup/workspace-files.ts", undefined, "node:fs/promises"), null);
+    assert.equal(checkApplicationAdapterBoundary("lib/state/setup/workspace/initialization.ts", undefined, "node:fs/promises"), null);
   });
 });
 

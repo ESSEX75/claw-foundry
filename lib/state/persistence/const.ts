@@ -6,8 +6,11 @@ export const LOCK_FILE_SUFFIX = ".lock";
 /** Suffix identifying an incomplete sibling used during atomic replacement. */
 export const TEMPORARY_FILE_SUFFIX = ".tmp";
 
-/** Number of renewal intervals that fit inside one live lock lease. */
-export const LOCK_RENEWAL_INTERVAL_DIVISOR = 3;
+/** Prefix for unpublished ownership directories prepared beside their lock. */
+export const LOCK_CLAIM_SUFFIX = ".claim-";
+
+/** Extension of the uniquely named ownership marker within a lock directory. */
+export const LOCK_RECORD_EXTENSION = ".json";
 
 /** Encoding used by persisted text documents and registries. */
 export const STATE_TEXT_ENCODING = "utf-8";

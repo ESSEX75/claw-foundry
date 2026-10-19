@@ -10,6 +10,7 @@ import {
   ISSUE_INTEGRITY_STATUS,
   ISSUE_PROVIDER,
 } from "../../../domain/index.js";
+import { TimestampSchema } from "../../persistence/index.js";
 import { issueArchiveKey } from "./identity.js";
 import type { IssueArchiveStore } from "./types.js";
 
@@ -18,8 +19,8 @@ const ArchivedIssueSchema = z.object({
   projectSlug: z.string(), issueId: z.number().int().positive(), provider: z.enum(ISSUE_PROVIDER),
   title: z.string().optional(), issueUrl: z.string().optional(), finalWorkflowState: z.string(),
   finalWorkflowLabel: z.string().optional(), archiveReason: z.enum(ISSUE_ARCHIVE_REASON),
-  closedAt: z.string().nullable().optional(), providerDeletedAt: z.string().nullable().optional(),
-  archivedAt: z.string(), lastIntegrityStatus: z.enum(ISSUE_INTEGRITY_STATUS),
+  closedAt: TimestampSchema.nullable().optional(), providerDeletedAt: TimestampSchema.nullable().optional(),
+  archivedAt: TimestampSchema, lastIntegrityStatus: z.enum(ISSUE_INTEGRITY_STATUS),
   attachmentDisposition: z.enum(ATTACHMENT_DISPOSITION), sourceSnapshotHash: z.string().regex(/^[0-9a-f]{64}$/),
 }).strict();
 

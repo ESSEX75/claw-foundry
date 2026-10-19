@@ -12,19 +12,16 @@ import {
   PIPELINE_NOTIFICATION_STATUS,
   REVIEW_POLICY,
   TEST_POLICY,
-  WORKER_DELIVERY_STATUS,
 } from "../../../domain/index.js";
+import { TimestampSchema } from "../../persistence/index.js";
+import { WorkerDeliveryMarkerSchema } from "../../worker-delivery/markers/index.js";
 import type { IssueStateStore } from "./types.js";
 
 /** Validates worker identity retained through a committed slot release. */
 const ActiveWorkerSchema = z.object({
   role: z.string(), level: z.string(), slotIndex: z.number().int().nonnegative(),
-  sessionKey: z.string().nullable(), startedAt: z.string(), lastNudgeAt: z.string().datetime().optional(),
-  delivery: z.object({
-    operationId: z.string().uuid().optional(),
-    status: z.enum(WORKER_DELIVERY_STATUS), recordedAt: z.string(), reason: z.string(),
-    checkedAt: z.string().optional(), sessionObserved: z.boolean().nullable().optional(),
-  }).strict().optional(),
+  sessionKey: z.string().nullable(), startedAt: TimestampSchema, lastNudgeAt: TimestampSchema.optional(),
+  delivery: WorkerDeliveryMarkerSchema.optional(),
 }).strict();
 
 /** Full-content summary fingerprint bound to one provider request and review identity. */
@@ -52,14 +49,14 @@ const RuntimeIssueSchema = z.object({
     worker: ActiveWorkerSchema.omit({ delivery: true, lastNudgeAt: true }), receipts: z.array(ReviewSummaryReceiptSchema),
   }).strict().optional(),
   integrityStatus: z.enum(ISSUE_INTEGRITY_STATUS), integrityErrors: z.array(z.string()),
-  createdAt: z.string(), updatedAt: z.string(),
-  closedAt: z.string().nullable(),
+  createdAt: TimestampSchema, updatedAt: TimestampSchema,
+  closedAt: TimestampSchema.nullable(),
   providerMissing: z.object({
-    confirmations: z.number().int().positive(), firstConfirmedAt: z.string(), lastConfirmedAt: z.string(),
+    confirmations: z.number().int().positive(), firstConfirmedAt: TimestampSchema, lastConfirmedAt: TimestampSchema,
   }).strict().nullable(),
   pipelineNotification: z.object({
     eventKey: z.string(), status: z.enum(PIPELINE_NOTIFICATION_STATUS),
-    attemptedAt: z.string(), deliveredAt: z.string().optional(), reason: z.string().optional(),
+    attemptedAt: TimestampSchema, deliveredAt: TimestampSchema.optional(), reason: z.string().optional(),
   }).strict().nullable(),
 }).strict();
 

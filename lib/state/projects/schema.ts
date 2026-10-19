@@ -6,8 +6,10 @@ import {
   ISSUE_PROVIDER,
   NOTIFICATION_CHANNEL,
   type NotificationEndpoint,
-  WORKER_DELIVERY_STATUS,
 } from "../../domain/index.js";
+import { TimestampSchema } from "../persistence/index.js";
+import { WorkerDeliveryMarkerSchema } from "../worker-delivery/markers/index.js";
+import { RESERVED_PROJECT_SLUG_PATTERN } from "./const.js";
 import type { ProjectsData } from "./types.js";
 
 /** Reusable non-empty string constraint for required registry identifiers and names. */
@@ -17,7 +19,7 @@ const NonEmptyString = z.string().trim().min(1);
 const ProjectSlugSchema = z.string().regex(
   /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
   "must use lowercase kebab-case",
-);
+).refine(value => !RESERVED_PROJECT_SLUG_PATTERN.test(value), "must not be a reserved Windows device name");
 
 /** Strict schema for one configured notification endpoint. */
 const NotificationEndpointSchema = z.object({
@@ -36,15 +38,11 @@ const SlotStateSchema = z.object({
   active: z.boolean(),
   issueId: SlotIssueIdSchema.nullable(),
   sessionKey: z.string().nullable(),
-  startTime: z.string().nullable(),
+  startTime: TimestampSchema.nullable(),
   previousLabel: z.string().nullable().optional(),
   name: z.string().optional(),
   lastIssueId: SlotIssueIdSchema.nullable().optional(),
-  delivery: z.object({
-    operationId: z.string().uuid().optional(),
-    status: z.enum(WORKER_DELIVERY_STATUS), recordedAt: z.string(), reason: z.string(),
-    checkedAt: z.string().optional(), sessionObserved: z.boolean().nullable().optional(),
-  }).strict().optional(),
+  delivery: WorkerDeliveryMarkerSchema.optional(),
 }).strict();
 
 /** Strict schema for the level-indexed slots assigned to one role. */

@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { DATA_DIR } from "../paths.js";
 import { isErrnoException, LOCK_FILE_SUFFIX } from "../persistence/index.js";
-import { parseProjectSlug } from "../projects/schema.js";
+import { parseProjectSlug } from "../projects/index.js";
 import { ATTACHMENTS_DIRECTORY, ATTACHMENTS_INDEX } from "./const.js";
 import { attachmentNameSchema } from "./schema.js";
 

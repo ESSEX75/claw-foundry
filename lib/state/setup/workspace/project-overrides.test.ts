@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { it } from "node:test";
 
-import { createTestHarness } from "../../testing/index.js";
+import { createTestHarness } from "../../../testing/index.js";
 import { PROJECT_OVERRIDES_FILE_NAME } from "./const.js";
 import { scaffoldProjectOverrides } from "./project-overrides.js";
 

@@ -3,22 +3,24 @@
  *
  * Verifies that initialization creates missing files without hidden overwrites.
  *
- * Run: npx tsx --test lib/state/setup/workspace-files.test.ts
+ * Run: npx tsx --test lib/state/setup/workspace/initialization.test.ts
  */
 import { describe, it, afterEach } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { fileExists, initializeWorkspaceFiles, refreshSystemInstructionFiles } from "./workspace-files.js";
-import { DATA_DIR, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../paths.js";
+import { fileExists } from "../documents/index.js";
+import { refreshSystemInstructionFiles } from "../instructions/index.js";
+import { initializeWorkspaceFiles } from "./initialization.js";
+import { LOG_DIRECTORY_NAME } from "./const.js";
+import { DATA_DIR, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../../paths.js";
 import {
   AGENTS_FILE_NAME,
   IDENTITY_FILE_NAME,
-  LOG_DIRECTORY_NAME,
   PROMPTS_DIRECTORY_NAME,
   ROLE_PROMPT_FILE_EXTENSION,
-} from "./const.js";
+} from "../resources/index.js";
 
 /** Prefix used for isolated setup filesystem test workspaces. */
 const TEST_WORKSPACE_PREFIX = "devclaw-ws-test-";

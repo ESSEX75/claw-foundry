@@ -4,13 +4,14 @@
 
 import path from "node:path";
 
+import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { LOCK_FILE_SUFFIX, withFileLock } from "../../persistence/index.js";
-import { issueStatePath } from "../active/repository.js";
+import { parseProjectSlug } from "../../projects/index.js";
 import { ISSUE_ORCHESTRATION_LOCK_OPTIONS, ORCHESTRATION_LOCKS_DIRECTORY_NAME } from "../const.js";
 
 /** Optional per-call overrides for the default issue orchestration lock policy. */
 type IssueLockOptions = {
-  /** Maximum age of a live orchestration lock. */
+  /** Minimum age before checking whether a local owner has exited; live owners never expire. */
   staleMs?: number;
   /** Delay between contended acquisition attempts. */
   retryMs?: number;
@@ -19,7 +20,7 @@ type IssueLockOptions = {
 };
 
 /**
- * Resolve the lock file dedicated to one managed issue.
+ * Resolve the ownership directory dedicated to one managed issue.
  *
  * @param workspaceDir - Workspace containing project-local issue state.
  * @param projectSlug - Project that owns the issue.
@@ -31,7 +32,7 @@ export function issueOrchestrationLockPath(
   issueId: number,
 ): string {
   return path.join(
-    path.dirname(issueStatePath(workspaceDir, projectSlug)),
+    workspaceDir, DATA_DIR, PROJECTS_DIRECTORY_NAME, parseProjectSlug(projectSlug),
     ORCHESTRATION_LOCKS_DIRECTORY_NAME,
     `${issueId}${LOCK_FILE_SUFFIX}`,
   );

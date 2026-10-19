@@ -3,7 +3,7 @@
 import path from "node:path";
 
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../paths.js";
-import { parseProjectSlug } from "../projects/schema.js";
+import { parseProjectSlug } from "../projects/index.js";
 import { readYamlFile } from "./boundary.js";
 import { buildDefaultConfig } from "./defaults.js";
 import { mergeConfig } from "./merge.js";

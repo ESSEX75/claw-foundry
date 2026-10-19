@@ -47,7 +47,7 @@ it("does not overwrite delivery evidence and clears it only on explicit release"
   const h = await createTestHarness();
   try {
     h.project.workers.architect = { levels: { custom: [{ ...emptySlot(), sessionKey: "reusable", name: "Ada",
-      delivery: { status: "unknown", recordedAt: "now", reason: "unconfirmed" } }] } };
+      delivery: { status: "unknown", recordedAt: "2026-01-01T00:00:00.000Z", reason: "unconfirmed" } }] } };
     await h.writeProjects({ projects: { [h.project.slug]: h.project } });
     await assert.rejects(activateWorker(h.workspaceDir, h.project.slug, "architect", {
       issueId: 42, level: "custom", maxWorkers: 1,

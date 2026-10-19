@@ -10,6 +10,14 @@ export type ProjectsData = {
   projects: Record<string, Project>;
 };
 
+/** Canonical workspace identity and optional validated registry observed in one read. */
+export type ManagedWorkspaceSnapshot = {
+  /** Existing workspace resolved through realpath before registry access. */
+  workspace: string;
+  /** Registry snapshot, absent only when its file does not exist. */
+  projects: ProjectsData | undefined;
+};
+
 /** Immutable replacement returned by a projects-registry transaction. */
 export type ProjectsUpdate<T> = {
   /** Complete registry value to persist after validation. */

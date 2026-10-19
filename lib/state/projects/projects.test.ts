@@ -28,7 +28,17 @@ import {
   updateProjects,
 } from "./index.js";
 import { projectsPath } from "./paths.js";
-import { parseProjectsData } from "./schema.js";
+import { parseProjectSlug, parseProjectsData } from "./schema.js";
+
+describe("portable project identities", () => {
+  it("rejects Windows device names before persistence while preserving ordinary slugs", () => {
+    for (const name of ["con", "prn", "aux", "nul", "com1", "com9", "lpt1", "lpt9"]) {
+      assert.throws(() => parseProjectSlug(name), /reserved Windows device name/);
+    }
+    assert.equal(parseProjectSlug("con-project"), "con-project");
+    assert.equal(parseProjectSlug("custom-project-12"), "custom-project-12");
+  });
+});
 
 /** Notification endpoint fragment accepted by the projects fixture builder. */
 type ProjectFixtureChannel = {

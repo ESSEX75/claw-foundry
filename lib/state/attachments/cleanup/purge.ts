@@ -3,9 +3,9 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 
-import { ATTACHMENT_HASH_ALGORITHM, ATTACHMENTS_INDEX } from "./const.js";
-import { withAttachmentLock } from "./lock.js";
-import { attachmentFilePath, inspectAttachmentDirectory, inspectAttachmentFile } from "./paths.js";
+import { ATTACHMENT_HASH_ALGORITHM, ATTACHMENTS_INDEX } from "../const.js";
+import { withAttachmentLock } from "../lock.js";
+import { attachmentFilePath, inspectAttachmentDirectory, inspectAttachmentFile } from "../paths.js";
 import type { AttachmentPurgeCheckpoint, AttachmentPurgeManifestEntry } from "./types.js";
 
 /** Validate every entry before deletion; reject junctions, symlinks, and nested directories.

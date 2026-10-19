@@ -17,7 +17,57 @@ contracts exposed to other layers only through `lib/state/index.ts`.
 - Internal state modules import implementation owners directly and never import the root entrypoint.
 - State schemas, parsers, filesystem locks, and persistence helpers stay private unless an exported operation is itself the required boundary API.
 - `lib/state/paths.ts` owns filesystem names shared by multiple state capabilities.
-- `lib/state/persistence` owns token-based file locking and atomic replacement used by state repositories; it is not exported from the root API.
+- `lib/state/persistence` owns process-backed directory locking, timestamp validation,
+  and atomic replacement used by state repositories; it is not exported from the root API.
+- Internal capabilities use sibling entrypoints. The narrow transaction exception is
+  `issues/archive/transaction.ts` accessing `issues/active/repository.ts` for validated
+  writes while already holding the shared store lock. Attachments may read
+  `issues/archive/repository.ts` directly to avoid loading archive retention back into
+  the attachment API. Neither raw writer is exported through the state root.
+- `setup` is an explicit facade: internal resources and document mechanics are not
+  aggregated into the external API. `worker-delivery/markers` is an internal schema
+  entrypoint shared by registry slots and issue workers without loading recovery effects.
+- `attachments/cleanup` exposes retention manifests and purge independently from save
+  repositories. Archive retention uses this entrypoint to avoid a reverse dependency
+  through attachment saves back into archive records. Parent attachment paths, constants
+  and the common lock remain shared internal mechanics of that attachment capability.
+
+## Lock Ownership and Recovery
+
+Locks are nonempty directories containing one immutable, uniquely named ownership
+marker. A prepared sibling directory is renamed into place only after the marker
+has been written. Cleanup unlinks only the observed token and uses non-recursive
+`rmdir`; delayed cleanup cannot remove a replacement owner's nonempty directory.
+
+Lock age only controls when to inspect process liveness. A live local process never
+expires, even after an event-loop pause. Recovery requires the same hostname and an
+OS `ESRCH` result for the recorded PID. Permission failures, foreign hosts and PID
+reuse fail closed; they may require operator inspection. These locks assume local
+storage, one host PID namespace and cooperative writers. External lock deletion
+while a process is live is unsupported. Atomic file publication does not claim
+power-loss durability or cross-file transactionality.
+
+The ownership format intentionally replaces the former lock file format. Stop all
+old writers before upgrading; inspect and remove abandoned old lock files manually.
+Unknown, malformed and linked lock entries are errors, never automatically deleted.
+Interrupted preparation may leave an unpublished `.claim-*` sibling; it never owns
+the protected resource and may be removed after stopping and inspecting writers.
+
+Persisted timestamps require ISO date-times with explicit timezone and valid calendar
+values. Existing malformed records are rejected with no normalization or automatic
+reset. Before upgrade, inspect and repair affected date fields using authoritative
+evidence, preserving a backup; do not invent timestamps or discard runtime records.
+
+If an existing project uses a newly rejected device basename, migrate its identity
+explicitly before upgrading: stop writers, back up the workspace, choose one portable
+slug, and update the registry key/slug, project directory, store envelopes and nested
+project references, archive keys, attachment directory and scoped configuration together.
+Verify archive-first duplicate snapshot identities before resuming recovery. A directory
+rename or registry-only edit is insufficient; no compatibility alias or implicit rename
+is provided. This change does not alter the serialized shape of valid runtime records.
+
+`npm run test` includes separate-process contention and abrupt-owner-exit checks,
+including a live event-loop pause longer than the abandoned-owner inspection age.
 
 ## Managed Issue Stores
 
@@ -95,6 +145,7 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
   as reservation; concurrent dispatches cannot both claim different projects.
 - Project queries and mutations accept only the canonical project slug; notification routing is resolved before entering state.
 - Canonical slugs use strict lowercase kebab-case and must match their registry key; display names never address files or registry entries.
+- Slugs also reject reserved Windows device basenames before registry or filesystem writes.
 - The registry accepts only its current schema and performs no legacy field or identifier normalization.
 
 ## Configuration Pipeline
@@ -109,6 +160,20 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 - Only `loadConfig` and resolved runtime selectors are public outside state; parsing details remain internal.
 
 ## Setup Files
+
+Setup resources owns package discovery and cached templates; workspace owns create-only
+initialization and project scaffolding; documents owns per-document synchronization,
+atomic replacement and backups; configuration owns YAML reads, model patches and resets;
+instructions owns prompt precedence and explicit system instruction refresh. Constants
+and types stay with these capabilities. Shared resource filenames belong to resources.
+Only index.ts remains at the setup root because it is a supported facade.
+
+Create, patch, reset and refresh share a per-document lock. Model patches read fresh
+content under that lock and preserve comments and unrelated settings. Replacements
+atomically publish the exact prior text to `.bak` before atomically replacing the
+document. Backup failure prevents replacement; destination failure leaves the old
+document and recoverable backup. Multi-document reset is intentionally resumable file
+by file, not an atomic transaction across all defaults.
 
 Project override scaffolding validates the slug and exclusively creates documentation;
 existing regular files are preserved. Non-file collisions and write failures propagate
@@ -141,7 +206,7 @@ remain errors, and the operation never creates files.
 this strict optional read, so symlinked or alternate path spellings share identity.
 
 
-`workers` stores the latest operator delivery decision per issue in
+`worker-delivery` stores the latest operator delivery decision per issue in
 `worker-delivery-resolutions.json`, under the issue-store lock. Intent is immutable
 and survives slot release and runtime replacement. Only the same decision may be
 marked complete; a different submission may replace only a completed record.

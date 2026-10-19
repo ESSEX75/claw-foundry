@@ -57,7 +57,7 @@ it("rejects a stale run with a reused session and a changed local start time", a
   await updateIssueRuntimeRecord(h.workspaceDir, h.project.slug, 42, state => {
     assert.ok(state?.activeWorker);
 
-    return { ...state, activeWorker: { ...state.activeWorker, startedAt: "replacement-run" } };
+    return { ...state, activeWorker: { ...state.activeWorker, startedAt: "2099-01-01T00:00:00.000Z" } };
   });
   await assert.rejects(executeCompletion(request(h, worker)), /Worker changed/);
   assert.equal(h.provider.calls.length, 0);

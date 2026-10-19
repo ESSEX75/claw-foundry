@@ -5,12 +5,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { isBuiltInRoleId } from "../../domain/index.js";
-import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../paths.js";
-import { FILESYSTEM_ERROR_CODE, isErrnoException, STATE_TEXT_ENCODING } from "../persistence/index.js";
-import { parseProjectSlug } from "../projects/schema.js";
-import { PROMPTS_DIRECTORY_NAME, ROLE_INSTRUCTIONS_PACKAGE_SOURCE, ROLE_PROMPT_FILE_EXTENSION } from "./const.js";
-import { loadSetupTemplates } from "./templates.js";
+import { isBuiltInRoleId } from "../../../domain/index.js";
+import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
+import { FILESYSTEM_ERROR_CODE, isErrnoException, STATE_TEXT_ENCODING } from "../../persistence/index.js";
+import { parseProjectSlug } from "../../projects/index.js";
+import { PROMPTS_DIRECTORY_NAME, ROLE_PROMPT_FILE_EXTENSION } from "../resources/index.js";
+import { loadSetupTemplates } from "../resources/index.js";
+import { ROLE_INSTRUCTIONS_PACKAGE_SOURCE } from "./const.js";
 import type { RoleInstructionsResult } from "./types.js";
 
 /** Optional diagnostics request for role-instruction resolution. */

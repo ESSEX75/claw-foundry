@@ -7,7 +7,7 @@ import path from "node:path";
 
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { isErrnoException, writeJsonAtomic } from "../../persistence/index.js";
-import { parseProjectSlug } from "../../projects/schema.js";
+import { parseProjectSlug } from "../../projects/index.js";
 import { ACTIVE_ISSUES_FILE_NAME } from "../const.js";
 import { withIssueStoreLock } from "../persistence/index.js";
 import { parseIssueStateStore } from "./schema.js";

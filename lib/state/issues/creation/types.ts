@@ -6,6 +6,14 @@ import type { IssueProviderId, NotifyBindingRef, ReviewPolicy, TestPolicy } from
 import type { ValueOf } from "../../../types.js";
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "./const.js";
 
+/** Stable identifiers allocated once when a creation intent is first persisted. */
+export type IssueCreationIdentity = {
+  /** Identity of the resumable creation operation. */
+  operationId: string;
+  /** Identity correlating audit observations, never an authority for runtime state. */
+  auditCorrelationId: string;
+};
+
 /** Durable stage of a resumable managed-issue creation operation. */
 export type IssueCreationStatus = ValueOf<typeof ISSUE_CREATION_STATUS>;
 

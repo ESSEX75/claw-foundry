@@ -9,11 +9,11 @@ import path from "node:path";
 
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { isErrnoException, LOCK_FILE_SUFFIX, withFileLock, writeJsonAtomic } from "../../persistence/index.js";
-import { parseProjectSlug } from "../../projects/schema.js";
+import { parseProjectSlug } from "../../projects/index.js";
 import { CREATION_LOCKS_DIRECTORY_NAME, ISSUE_CREATION_LOCK_OPTIONS, ISSUE_CREATIONS_FILE_NAME } from "../const.js";
 import { ISSUE_CREATION_STATUS } from "./const.js";
 import { parseIssueCreationStore } from "./schema.js";
-import type { IssueCreationStore, IssueCreationUpdate } from "./types.js";
+import type { IssueCreationIdentity, IssueCreationStore, IssueCreationUpdate } from "./types.js";
 
 /**
  * Resolve the durable creation operation file for a project.
@@ -138,12 +138,7 @@ export async function withIssueCreationLock<T>(
 }
 
 /** Build identifiers shared by a newly requested creation operation. */
-export function newIssueCreationIdentity(): {
-  /** Stable identifier of the resumable creation operation. */
-  operationId: string;
-  /** Correlation identifier shared by audit records for the operation. */
-  auditCorrelationId: string;
-} {
+export function newIssueCreationIdentity(): IssueCreationIdentity {
   return { operationId: randomUUID(), auditCorrelationId: randomUUID() };
 }
 

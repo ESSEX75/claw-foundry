@@ -13,7 +13,7 @@ import { setTaskLevel } from "../assignment/index.js";
 import { startTask } from "../activation/index.js";
 import type { TaskLifecycleInput } from "./types.js";
 
-/** Exact issue lock filename observed to synchronize the route race without timing sleeps. */
+/** Exact issue lock directory observed to synchronize the route race without timing sleeps. */
 const ISSUE_LOCK_FIXTURE = "42.lock";
 
 /** Three real lifecycle commands share the route capture and common prerequisite contract. */
@@ -38,12 +38,12 @@ for (const command of commands) {
     await acquired;
     let attempted = () => {};
     const lockAttempted = new Promise<void>(resolve => { attempted = resolve; });
-    const write = fs.writeFile;
+    const prepareClaim = fs.mkdtemp;
 
-    t.mock.method(fs, "writeFile", async (...args: Parameters<typeof fs.writeFile>) => {
-      if (String(args[0]).endsWith(ISSUE_LOCK_FIXTURE)) attempted();
+    t.mock.method(fs, "mkdtemp", async (...args: Parameters<typeof fs.mkdtemp>) => {
+      if (String(args[0]).endsWith(`${ISSUE_LOCK_FIXTURE}.claim-`)) attempted();
 
-      return write(...args);
+      return prepareClaim(...args);
     });
     const get = t.mock.method(GitHubProvider.prototype, "getIssue", (id: number) => h.provider.getIssue(id));
     const pending = command.run({ workspaceDir: h.workspaceDir, channelId: h.project.channels[0].channelId,

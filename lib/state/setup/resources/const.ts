@@ -1,17 +1,9 @@
-/**
- * Defines filesystem names and packaged-template paths shared by the state setup capability.
- */
+/** Owns filesystem and protocol identifiers for setup resources. */
 
-import type { RoleId } from "../../domain/index.js";
+import type { RoleId } from "../../../domain/index.js";
 
 /** Name of the managed role-prompt directory. */
 export const PROMPTS_DIRECTORY_NAME = "prompts";
-
-/** Project-local documentation created once during registration. */
-export const PROJECT_OVERRIDES_FILE_NAME = "README.md";
-
-/** Name of the managed runtime log directory. */
-export const LOG_DIRECTORY_NAME = "log";
 
 /** Name of the packaged defaults directory at the DevClaw package root. */
 export const DEFAULTS_DIRECTORY_NAME = "defaults";
@@ -43,9 +35,6 @@ export const USER_FILE_NAME = "USER.md";
 /** Extension used by packaged and workspace role instruction files. */
 export const ROLE_PROMPT_FILE_EXTENSION = ".md";
 
-/** Suffix used for recoverable backups created during explicit replacement. */
-export const BACKUP_FILE_SUFFIX = ".bak";
-
 /** Relative packaged-template path for the workspace workflow configuration. */
 export const WORKFLOW_TEMPLATE_PATH = "devclaw/workflow.yaml";
 
@@ -56,13 +45,3 @@ export const ROLE_TEMPLATE_PATHS = {
   architect: "devclaw/prompts/architect.md",
   reviewer: "devclaw/prompts/reviewer.md",
 } satisfies Readonly<Record<RoleId, string>>;
-
-/** Explicit subsets of packaged defaults available for replacement. */
-export const DEFAULTS_SCOPE = {
-  ALL: "all",
-  WORKFLOW: "workflow",
-  PROMPTS: "prompts",
-} as const;
-
-/** Diagnostic source marker for instructions supplied by packaged defaults. */
-export const ROLE_INSTRUCTIONS_PACKAGE_SOURCE = "package-default";

@@ -49,7 +49,7 @@ describe("durable worker resolution", () => {
         const rename = fs.rename.bind(fs);
         let writes = 0;
         const fault = t.mock.method(fs, "rename", async (...args: Parameters<typeof fs.rename>) => {
-          if (++writes === failedWrite) throw new Error("injected disk failure");
+          if (String(args[1]).endsWith(".json") && ++writes === failedWrite) throw new Error("injected disk failure");
 
           return rename(...args);
         });
@@ -80,7 +80,7 @@ describe("durable worker resolution", () => {
       const rename = fs.rename.bind(fs);
       let writes = 0;
       const fault = t.mock.method(fs, "rename", async (...args: Parameters<typeof fs.rename>) => {
-        if (++writes === 3) throw new Error("issue write failed");
+        if (String(args[1]).endsWith(".json") && ++writes === 3) throw new Error("issue write failed");
 
         return rename(...args);
       });

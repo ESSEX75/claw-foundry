@@ -5,6 +5,9 @@
 /** Directory below a workspace that contains all DevClaw-managed state. */
 export const DATA_DIR = "devclaw";
 
+/** Directory for diagnostic journals and workspace logs. */
+export const LOG_DIRECTORY_NAME = "log";
+
 /** Directory below managed state that contains project-local state. */
 export const PROJECTS_DIRECTORY_NAME = "projects";
 

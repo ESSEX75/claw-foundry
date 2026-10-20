@@ -66,7 +66,8 @@ describe("managed projection coordinator", () => {
       try {
         const result = await reconcileManagedLabels({ workspaceDir, projectSlug: "devclaw", issueId: 123,
           workflow: DEFAULT_WORKFLOW, provider, owner: "test" });
-        assert.equal(result.auditError, "audit storage unavailable");
+        assert.equal(result.integrity.integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
+        await assert.rejects(fs.access(path.join(workspaceDir, "devclaw", "log", "audit.log")), { code: "ENOENT" });
         const state = (await readIssueStateStore(workspaceDir, "devclaw")).issues["123"];
         assert.equal(state.integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
         assert.deepEqual(state.integrityErrors, []);

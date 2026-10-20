@@ -13,8 +13,7 @@ import os from "node:os";
 import { fileExists } from "../documents/index.js";
 import { refreshSystemInstructionFiles } from "../instructions/index.js";
 import { initializeWorkspaceFiles } from "./initialization.js";
-import { LOG_DIRECTORY_NAME } from "./const.js";
-import { DATA_DIR, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../../paths.js";
+import { DATA_DIR, LOG_DIRECTORY_NAME, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../../paths.js";
 import {
   AGENTS_FILE_NAME,
   IDENTITY_FILE_NAME,

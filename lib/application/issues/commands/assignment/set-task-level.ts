@@ -1,15 +1,19 @@
 /** Owns a managed task lifecycle operation or its pure transition decision. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { validateRoleLevel } from "../../../../roles/index.js";
-import { withIssueOrchestrationLock } from "../../../../state/index.js";
+import {
+  log as auditLog,
+  withIssueOrchestrationLock,
+} from "../../../../state/index.js";
 import { resolveProject } from "../../../projects/context/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { writeIssueRuntimeState } from "../../runtime/index.js";
 import { TASK_EVENT } from "../const.js";
 import type { TaskLifecycleTarget } from "../prerequisites/index.js";
-import { readTaskLifecycleContext } from "../prerequisites/index.js";
-import { resolveHoldQueueTarget } from "../prerequisites/index.js";
+import {
+  readTaskLifecycleContext,
+  resolveHoldQueueTarget,
+} from "../prerequisites/index.js";
 import type { SetTaskLevelInput, SetTaskLevelResult } from "./types.js";
 
 /** Serialize an explicit level change with issue lifecycle transitions.

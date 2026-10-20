@@ -39,6 +39,32 @@ contracts exposed to other layers only through `lib/state/index.ts`.
   through attachment saves back into archive records. Parent attachment paths, constants
   and the common lock remain shared internal mechanics of that attachment capability.
 
+## Diagnostic Audit Journal
+
+`audit` owns best-effort NDJSON storage at `devclaw/log/audit.log`, exposed as `log`
+and `AuditEntry` through the state root. Callers own event names and payload meaning;
+the repository owns the `ts` and `event` envelope fields. The shared log directory
+name belongs to state/paths because workspace initialization also creates it.
+Payloads with custom top-level JSON serializers are dropped rather than allowing
+the serializer to replace the diagnostic envelope.
+
+Read, append and retention are one process-owned locked update. Atomic replacement
+publishes at most the latest 50 nonempty records in commit order, preserving the
+prior journal if reading or publication fails. Only ENOENT permits starting an empty
+journal. All serialization, lock and filesystem errors are suppressed, including
+initial directory creation and cleanup. Successful promise resolution is not proof
+that a record was persisted. Contention can delay a call up to the configured lock
+wait; no logging operation invokes another state repository while holding this lock.
+
+The general journal is bounded diagnostic history, not an immutable append-only
+ledger and never authoritative state for issue ownership or recovery. The separate
+archive-retention journal retains its existing required-write and retention contract.
+Concurrent-write guarantees require cooperative writers using this API on the same
+host; old direct append/truncation writers must be stopped during upgrade.
+The full test command includes independent-process audit contention/retention checks
+before running the Node suites; audit tests also cover initialization, serialization,
+read/publication failure, retry and unknown lock evidence.
+
 ## Lock Ownership and Recovery
 
 Locks are nonempty directories containing one immutable, uniquely named ownership

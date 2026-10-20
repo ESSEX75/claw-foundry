@@ -1,6 +1,5 @@
 /** Applies diagnosed worker actions after locking and re-reading ownership and issue state. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { DEFAULT_WORKFLOW, findStateKeyByLabel, getActiveLabel, getRevertLabel, releasedWorkerSlot, sameSlotReservation } from "../../../../domain/index.js";
 import { AGENT_TURN_STATUS, submitAgentTurn } from "../../../../integrations/index.js";
 import { getErrorMessage } from "../../../../shared/errors/index.js";
@@ -8,6 +7,7 @@ import {
   getProject,
   getRoleWorker,
   loadConfig,
+  log as auditLog,
   readIssueStateStore,
   readProjects,
   updateIssueRuntimeRecord,

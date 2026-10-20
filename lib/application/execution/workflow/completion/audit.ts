@@ -1,10 +1,14 @@
 /** Records completion rejection evidence without masking validation failures. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { getActiveLabel, type IssueRuntimeState } from "../../../../domain/index.js";
-import { readIssueStateStore } from "../../../../state/index.js";
-import { COMPLETION_AUDIT_EVENT } from "./const.js";
-import { WORKER_REJECTION_REASON } from "./const.js";
+import {
+  log as auditLog,
+  readIssueStateStore,
+} from "../../../../state/index.js";
+import {
+  COMPLETION_AUDIT_EVENT,
+  WORKER_REJECTION_REASON,
+} from "./const.js";
 import type { MissingWorkerAuditInput } from "./types.js";
 
 /** Record actionable local observations for a rejected finish request.

@@ -1,7 +1,7 @@
 /** Delivers optional review events only to the issue's persisted exact endpoint. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { getErrorMessage } from "../../../../shared/errors/index.js";
+import { log as auditLog } from "../../../../state/index.js";
 import { notify, resolveIssueNotificationEndpoint } from "../../../notifications/index.js";
 import { REVIEW_NOTIFICATION_ERROR } from "./const.js";
 import type { ReviewNotificationInput } from "./types.js";

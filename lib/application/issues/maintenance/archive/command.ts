@@ -1,9 +1,9 @@
 /** Archives a fresh eligible issue under its orchestration lock and the archive-first state transaction. */
 
-import { log as auditLog } from "../../../../audit.js";
 import {
   type ArchivedIssueRecord,
   ATTACHMENT_DISPOSITION,
+  hasProjectWorkerSlot,
   ISSUE_ARCHIVE_REASON,
   ISSUE_INTEGRITY_STATUS,
   type IssueArchiveReason,
@@ -12,9 +12,16 @@ import {
   STATE_TYPE,
   type WorkflowConfig,
 } from "../../../../domain/index.js";
-import { hasProjectWorkerSlot } from "../../../../domain/index.js";
-import { archiveIssueState, readIssueArchiveStore, readIssueStateStore, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../../state/index.js";
-import { loadConfig, readOptionalProjects } from "../../../../state/index.js";
+import {
+  archiveIssueState,
+  loadConfig,
+  log as auditLog,
+  readIssueArchiveStore,
+  readIssueStateStore,
+  readOptionalProjects,
+  readWorkerDeliveryResolution,
+  withIssueOrchestrationLock,
+} from "../../../../state/index.js";
 import { ARCHIVE_BLOCK_REASON, ARCHIVE_EVENT } from "./const.js";
 import { hashIssueState } from "./identity.js";
 import type { ArchiveIssueInput, ArchiveIssueResult } from "./types.js";

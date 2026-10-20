@@ -1,9 +1,9 @@
 /** Resumes provider, slot, and issue effects authorized by a durable operator decision. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { WORKER_DELIVERY_RESOLUTION, type WorkflowConfig } from "../../../../domain/index.js";
 import type { IssueProvider } from "../../../../integrations/index.js";
 import {
+  log as auditLog,
   readIssueStateStore,
   readProjects,
   updateIssueRuntimeRecord,

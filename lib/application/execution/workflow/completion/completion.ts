@@ -6,13 +6,13 @@
 
 import { isDeepStrictEqual } from "node:util";
 
-import { log as auditLog } from "../../../../audit.js";
 import { COMPLETION_RESULT, DEFAULT_ROLES, findStateByLabel, resolveIssueClosedAt, sameWorkerRun, STATE_TYPE, type WorkflowConfig } from "../../../../domain/index.js";
 import {
   getProject,
   getRoleWorker,
   isIssueCreationReady,
   loadConfig,
+  log as auditLog,
   readIssueStateStore,
   readProjects,
   readWorkerDeliveryResolution,
@@ -21,9 +21,11 @@ import {
 import { reconcileManagedLabelsLocked } from "../../../issues/projection/index.js";
 import { confirmReviewSummaryDelivery } from "../../feedback/index.js";
 import { planCompletion, planMergeFailure } from "../planning/index.js";
-import { releaseTransitionWorkerLocked } from "../transitions/index.js";
-import { archiveTerminalIssueLocked } from "../transitions/index.js";
-import { commitWorkflowTransitionLocked } from "../transitions/index.js";
+import {
+  archiveTerminalIssueLocked,
+  commitWorkflowTransitionLocked,
+  releaseTransitionWorkerLocked,
+} from "../transitions/index.js";
 import { resumeCompletionArchive } from "./completion-archive.js";
 import { notifyCompletion } from "./completion-notifications.js";
 import { COMPLETION_EFFECT_AUDIT, COMPLETION_OWNER } from "./const.js";

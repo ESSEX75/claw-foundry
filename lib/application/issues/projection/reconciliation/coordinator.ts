@@ -1,10 +1,14 @@
 /** Coordinates issue locking, fresh projection reads, provider changes, and integrity recording. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { getStateLabels, ISSUE_INTEGRITY_STATUS, type IssueProjectionState, UNVERIFIED_INTEGRITY_ERROR, type WorkflowConfig } from "../../../../domain/index.js";
 import { diffIssueProjection } from "../../../../projection/index.js";
 import { getErrorMessage } from "../../../../shared/errors/index.js";
-import { readIssueStateStore, updateIssueStateStore, withIssueOrchestrationLock } from "../../../../state/index.js";
+import {
+  log as auditLog,
+  readIssueStateStore,
+  updateIssueStateStore,
+  withIssueOrchestrationLock,
+} from "../../../../state/index.js";
 import { applyManagedLabelDiff } from "./apply.js";
 import { PROJECTION_EVENT, PROJECTION_FAILURE_PREFIX } from "./const.js";
 import type { ManagedProjectionResult, ReconcileManagedLabelsInput } from "./types.js";
@@ -39,7 +43,7 @@ export async function reconcileManagedLabelsLocked(
   const stateLabels = getStateLabels(input.workflow);
   const roles = input.roles ?? configuredWorkflowRoles(input.workflow);
 
-  let result: Omit<ManagedProjectionResult, "integrity" | "auditError">;
+  let result: Omit<ManagedProjectionResult, "integrity">;
 
   try {
     const issue = await input.provider.getIssue(input.issueId);
@@ -67,27 +71,22 @@ export async function reconcileManagedLabelsLocked(
     throw error;
   }
 
-  // A persistence failure is not evidence of a provider mismatch; audit has its own outcome.
+  // Integrity persistence remains authoritative; diagnostic storage never authorizes a repair outcome.
   const integrity = await setProjectionIntegrity(input);
-  let auditError: string | undefined;
 
-  try {
-    await auditLog(input.workspaceDir, PROJECTION_EVENT.RECONCILED, {
-      projectSlug: input.projectSlug,
-      issueId: input.issueId,
-      owner: input.owner,
-      before: result.before,
-      expected: result.diff.expectedManagedLabels,
-      missingManagedLabels: result.diff.missingManagedLabels,
-      unexpectedManagedLabels: result.diff.unexpectedManagedLabels,
-      integrityStatus: integrity.integrityStatus,
-      integrityErrors: integrity.integrityErrors,
-    });
-  } catch (error) {
-    auditError = getErrorMessage(error);
-  }
+  await auditLog(input.workspaceDir, PROJECTION_EVENT.RECONCILED, {
+    projectSlug: input.projectSlug,
+    issueId: input.issueId,
+    owner: input.owner,
+    before: result.before,
+    expected: result.diff.expectedManagedLabels,
+    missingManagedLabels: result.diff.missingManagedLabels,
+    unexpectedManagedLabels: result.diff.unexpectedManagedLabels,
+    integrityStatus: integrity.integrityStatus,
+    integrityErrors: integrity.integrityErrors,
+  });
 
-  return { ...result, integrity, ...(auditError ? { auditError } : {}) };
+  return { ...result, integrity };
 }
 
 /**

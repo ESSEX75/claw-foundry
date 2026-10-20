@@ -1,9 +1,9 @@
 /** Owns optional worker session budget reset decisions and audit; gateway observations never establish worker ownership. */
 
-import { log as auditLog } from "../../../audit.js";
 import type { RunCommand } from "../../../context.js";
 import { fetchGatewaySessions } from "../../../integrations/index.js";
 import type { ResolvedTimeouts } from "../../../state/index.js";
+import { log as auditLog } from "../../../state/index.js";
 import { WORKER_AUDIT_EVENT } from "./const.js";
 
 /**

@@ -1,8 +1,8 @@
 /** Adapts shared ordered effects to completion diagnostics and result observations. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { ACTION, type CompletionRule } from "../../../../domain/index.js";
 import { getErrorMessage } from "../../../../shared/errors/index.js";
+import { log as auditLog } from "../../../../state/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../effects/index.js";
 import { COMPLETION_EFFECT_AUDIT } from "./const.js";
 import type { CompletionActions, CompletionInput } from "./types.js";

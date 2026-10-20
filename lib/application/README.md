@@ -329,3 +329,7 @@ execution/workflow; exact runtime destination checks to projects/routing; bindin
 to workspace/bindings. Persistence and locks always stay in state.
 
 Task creation, discussion and manual attachments also return structured facts. Their tool adapters own readiness/repair guidance and command acknowledgements; provider comments, worker prompts and notification bodies remain application-owned effect content.
+
+General diagnostic logging uses the state audit API and suppresses storage failures.
+Projection reconciliation returns verified provider/local integrity facts without
+an audit-error field or any implication that the diagnostic journal was persisted.

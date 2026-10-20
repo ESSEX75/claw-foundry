@@ -9,10 +9,12 @@ import { jsonResult, type OpenClawPluginToolContext, type OpenClawPluginToolFact
 import { z } from "zod";
 
 import { ALL_TASK_STATES, listManagedTasks, resolveProject, resolveProvider } from "../../../../application/index.js";
-import { log as auditLog } from "../../../../audit.js";
 import type { PluginContext } from "../../../../context.js";
 import { STATE_TYPE } from "../../../../domain/index.js";
-import { loadConfig } from "../../../../state/index.js";
+import {
+  loadConfig,
+  log as auditLog,
+} from "../../../../state/index.js";
 import { requireWorkspaceDir, resolveChannelId } from "../../../context/index.js";
 import { channelIdInput, toolInputParameters } from "../../../validation/index.js";
 import { TASK_LIST_TOOL_NAME } from "./const.js";

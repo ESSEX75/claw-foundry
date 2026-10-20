@@ -1,6 +1,5 @@
 /** Builds completion events from committed state and records terminal delivery evidence. */
 
-import { log as auditLog } from "../../../../audit.js";
 import {
   COMPLETION_RESULT,
   DEFAULT_ROLES,
@@ -13,7 +12,10 @@ import {
 } from "../../../../domain/index.js";
 import { PR_STATE } from "../../../../integrations/index.js";
 import { getErrorMessage } from "../../../../shared/errors/index.js";
-import { reservePipelineNotification } from "../../../../state/index.js";
+import {
+  log as auditLog,
+  reservePipelineNotification,
+} from "../../../../state/index.js";
 import {
   getNotificationConfig,
   NOTIFICATION_BLOCK_REASON,

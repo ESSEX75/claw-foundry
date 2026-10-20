@@ -1,7 +1,9 @@
 /** Coordinates worker completion after unambiguous slot selection and mandatory PR checks. */
 
-import { log as auditLog } from "../../../../audit.js";
-import { resolveRepoPath } from "../../../../state/index.js";
+import {
+  log as auditLog,
+  resolveRepoPath,
+} from "../../../../state/index.js";
 import { resolveProvider } from "../../../projects/context/index.js";
 import { executeCompletion } from "./completion.js";
 import { COMPLETION_AUDIT_EVENT } from "./const.js";

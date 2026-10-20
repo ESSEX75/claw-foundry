@@ -1,7 +1,7 @@
 /** Maps typed notification outcomes to the existing audit event contract. */
 
-import { log as auditLog } from "../../audit.js";
 import { MESSAGE_DELIVERY_STATUS } from "../../integrations/index.js";
+import { log as auditLog } from "../../state/index.js";
 import type { RouteDiagnostic } from "../projects/routing/index.js";
 import { NOTIFICATION_AUDIT, NOTIFICATION_AUDIT_OUTCOME } from "./const.js";
 import type { NotificationDeliveryResult, NotificationTarget, NotifyEvent } from "./types.js";

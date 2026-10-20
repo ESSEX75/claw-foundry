@@ -2,12 +2,15 @@
  * Tick runner — main heartbeat loop that processes each project.
  */
 
-import { log as auditLog } from "../../../audit.js";
 import { EXECUTION_MODE } from "../../../domain/index.js";
 import { loadInstanceName } from "../../../instance.js";
 import { createProvider } from "../../../integrations/index.js";
 import { getErrorMessage } from "../../../shared/errors/index.js";
-import { loadConfig, readProjects } from "../../../state/index.js";
+import {
+  loadConfig,
+  log as auditLog,
+  readProjects,
+} from "../../../state/index.js";
 import { projectTick } from "../scheduling/index.js";
 import { performHealthPass } from "../workers/index.js";
 import { performReviewPass, performReviewSkipPass, testSkipPass } from "../workflow/index.js";

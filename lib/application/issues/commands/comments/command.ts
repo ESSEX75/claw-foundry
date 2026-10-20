@@ -1,9 +1,12 @@
 /** Owns configured comment attribution, provider publication and best-effort acknowledgement. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { getFallbackEmoji } from "../../../../roles/index.js";
 import { getErrorMessage } from "../../../../shared/errors/index.js";
-import { isConfiguredRoleId, loadConfig } from "../../../../state/index.js";
+import {
+  isConfiguredRoleId,
+  loadConfig,
+  log as auditLog,
+} from "../../../../state/index.js";
 import { EYES_EMOJI } from "../../../execution/feedback/index.js";
 import { resolveProject, resolveProvider } from "../../../projects/context/index.js";
 import { TASK_COMMENT_EVENT, TASK_COMMENT_PREVIEW_LENGTH } from "./const.js";

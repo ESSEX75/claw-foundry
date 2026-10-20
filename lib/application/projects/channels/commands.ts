@@ -1,7 +1,11 @@
 /** Owns locked channel linking and removal while adapters format the committed results. */
 
-import { log as auditLog } from "../../../audit.js";
-import { parseNotificationEndpoint, readProjects, updateProjects } from "../../../state/index.js";
+import {
+  log as auditLog,
+  parseNotificationEndpoint,
+  readProjects,
+  updateProjects,
+} from "../../../state/index.js";
 import { PROJECT_AUDIT_EVENT } from "../const.js";
 import { selectProject } from "../context/index.js";
 import { validateDestinationAvailability, validateProjectRoute } from "../routing/index.js";

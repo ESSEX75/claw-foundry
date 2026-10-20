@@ -1,10 +1,14 @@
 /** Owns a managed task lifecycle operation or its pure transition decision. */
 
-import { log as auditLog } from "../../../../audit.js";
-import { withIssueOrchestrationLock } from "../../../../state/index.js";
+import {
+  log as auditLog,
+  withIssueOrchestrationLock,
+} from "../../../../state/index.js";
 import { resolveProject } from "../../../projects/context/index.js";
-import { transitionWorkflowLabel } from "../../projection/index.js";
-import { reconcileManagedLabelsLocked } from "../../projection/index.js";
+import {
+  reconcileManagedLabelsLocked,
+  transitionWorkflowLabel,
+} from "../../projection/index.js";
 import { writeIssueRuntimeState } from "../../runtime/index.js";
 import { TASK_EVENT } from "../const.js";
 import type { TaskLifecycleTarget } from "../prerequisites/index.js";

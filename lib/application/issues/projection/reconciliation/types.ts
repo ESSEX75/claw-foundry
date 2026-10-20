@@ -20,8 +20,6 @@ export type ManagedProjectionResult = {
   changed: boolean;
   /** Overall local integrity after label verification; independent errors may remain. */
   integrity: IssueProjectionState;
-  /** Propagated audit failure, independent of verified provider labels; absence is not a durable audit receipt. */
-  auditError?: string;
 };
 
 /** Inputs for a locked, fresh-state projection pass. */

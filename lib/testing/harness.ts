@@ -399,8 +399,9 @@ export async function createTestHarness(opts?: HarnessOptions): Promise<TestHarn
       return { agentsMdStripped: bootstrapFiles[0].missing && bootstrapFiles[0].content === "",
         agentsMdContent: bootstrapFiles[0].content };
     },
+    /** Remove the temporary fixture despite transient directory races from optional background effects. */
     async cleanup() {
-      await fs.rm(workspaceDir, { recursive: true, force: true });
+      await fs.rm(workspaceDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 25 });
     },
   };
 }

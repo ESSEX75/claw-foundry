@@ -1,11 +1,15 @@
 /** Verifies provider identity and managed projections while preserving independent local blockers. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, STATE_TYPE } from "../../../../domain/index.js";
 import { isProviderIssueLookupError, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../../integrations/index.js";
 import { extractIssueMetadata, metadataMatches } from "../../../../projection/index.js";
 import { getErrorMessage } from "../../../../shared/errors/index.js";
-import { isIssueCreationReady, readIssueStateStore, withIssueOrchestrationLock } from "../../../../state/index.js";
+import {
+  isIssueCreationReady,
+  log as auditLog,
+  readIssueStateStore,
+  withIssueOrchestrationLock,
+} from "../../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../reconciliation/index.js";
 import {
   HEARTBEAT_MISSING_CONFIRMATIONS,

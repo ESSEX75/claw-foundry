@@ -1,6 +1,6 @@
 /** Writes worker dispatch audit records without owning dispatch decisions. */
 
-import { log as auditLog } from "../../../../audit.js";
+import { log as auditLog } from "../../../../state/index.js";
 import { WORKER_AUDIT_EVENT } from "../const.js";
 import type { AuditDispatchOptions } from "./types.js";
 

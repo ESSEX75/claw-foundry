@@ -1,6 +1,5 @@
 /** Coordinates provider provisioning, locked registration and resumable create-only scaffolding. */
 
-import { log as auditLog } from "../../../audit.js";
 import { emptyRoleWorkerState, type Project, type RoleWorkerState } from "../../../domain/index.js";
 import { createProvider } from "../../../integrations/index.js";
 import { getErrorMessage } from "../../../shared/errors/index.js";
@@ -8,6 +7,7 @@ import {
   getConfiguredRoleIds,
   getLevelMaxWorkers,
   loadConfig,
+  log as auditLog,
   parseNotificationEndpoint,
   parseProjectSlug,
   readProjects,

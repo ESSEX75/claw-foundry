@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { getAllRoleIds } from "../../../roles/index.js";
-import { DATA_DIR, PROJECTS_DIRECTORY_NAME, PROJECTS_FILE_NAME, WORKFLOW_FILE_NAME } from "../../paths.js";
+import { DATA_DIR, LOG_DIRECTORY_NAME, PROJECTS_DIRECTORY_NAME, PROJECTS_FILE_NAME, WORKFLOW_FILE_NAME } from "../../paths.js";
 import type { WorkspaceWriteResult } from "../documents/index.js";
 import { copyIfMissing, fileExists, writeIfMissing } from "../documents/index.js";
 import {
@@ -18,7 +18,6 @@ import {
   TOOLS_FILE_NAME,
   USER_FILE_NAME,
 } from "../resources/index.js";
-import { LOG_DIRECTORY_NAME } from "./const.js";
 
 /**
  * Create the current managed workspace structure and defaults without overwriting existing files.

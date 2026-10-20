@@ -1,8 +1,12 @@
 /** Coordinates explicit manual health scope, one gateway observation and independent project inspections. */
 
-import { log as auditLog } from "../../../../audit.js";
 import { fetchGatewaySessions } from "../../../../integrations/index.js";
-import { loadConfig, parseProjectSlug, readProjects } from "../../../../state/index.js";
+import {
+  loadConfig,
+  log as auditLog,
+  parseProjectSlug,
+  readProjects,
+} from "../../../../state/index.js";
 import { resolveProvider } from "../../../projects/context/index.js";
 import { WORKER_HEALTH_AUDIT } from "./const.js";
 import { healthInspectionFailure } from "./inspection-failure.js";

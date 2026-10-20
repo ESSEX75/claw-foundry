@@ -3,11 +3,22 @@
  * Each apply holds the issue lock from local mutation through provider reconciliation.
  */
 
-import { log as auditLog } from "../../../../audit.js";
-import { type IssueRuntimeState, type Project, STATE_TYPE, type WorkflowConfig } from "../../../../domain/index.js";
-import { hasProjectWorkerSlot } from "../../../../domain/index.js";
+import {
+  hasProjectWorkerSlot,
+  type IssueRuntimeState,
+  type Project,
+  STATE_TYPE,
+  type WorkflowConfig,
+} from "../../../../domain/index.js";
 import { createProvider, type IssueProvider } from "../../../../integrations/index.js";
-import { loadConfig, readIssueStateStore, readProjects, updateIssueStateStore, withIssueOrchestrationLock } from "../../../../state/index.js";
+import {
+  loadConfig,
+  log as auditLog,
+  readIssueStateStore,
+  readProjects,
+  updateIssueStateStore,
+  withIssueOrchestrationLock,
+} from "../../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { POLICY_EVENT, POLICY_SKIP_REASON } from "./const.js";
 import type { IssuePolicyMigrationChange, IssuePolicyMigrationResult, MigrationOptions, PolicyChangePlan } from "./types.js";

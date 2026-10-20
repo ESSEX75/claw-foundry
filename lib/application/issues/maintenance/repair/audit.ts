@@ -2,7 +2,7 @@
  * Records repair lifecycle events with stable issue and correlation identities.
  */
 
-import { log as auditLog } from "../../../../audit.js";
+import { log as auditLog } from "../../../../state/index.js";
 import type { IssueRepairResult, RepairEvent, RepairManagedIssueInput } from "./types.js";
 
 /** Record one repair checkpoint after its preceding effect.

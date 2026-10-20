@@ -6,10 +6,12 @@
  * executing the SKIP event's configured actions (e.g. closeIssue).
  */
 
-import { log as auditLog } from "../../../../audit.js";
 import { DEFAULT_ROLES, ROUTING_LABELS, STATE_TYPE, TEST_POLICY, TEST_ROUTING_FIELD, WORKFLOW_EVENT } from "../../../../domain/index.js";
-import { executeTransitionEffects } from "../effects/index.js";
-import { MERGE_EFFECT_OUTCOME } from "../effects/index.js";
+import { log as auditLog } from "../../../../state/index.js";
+import {
+  executeTransitionEffects,
+  MERGE_EFFECT_OUTCOME,
+} from "../effects/index.js";
 import { planWorkflowEvent } from "../planning/index.js";
 import { executeAutomaticTransition } from "../transitions/index.js";
 import { TEST_SKIP_AUDIT_EVENT, TEST_SKIP_TRANSITION_OWNER } from "./const.js";

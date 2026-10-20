@@ -1,10 +1,17 @@
 /** Persists evidence and escalation for an unresolved worker-turn submission. */
 
-import { log as auditLog } from "../../../../audit.js";
 import type { WorkerDeliveryState } from "../../../../domain/index.js";
 import { sameWorkerRun, WORKER_DELIVERY_STATUS } from "../../../../domain/index.js";
 import { fetchGatewaySessions, isSessionAlive } from "../../../../integrations/index.js";
-import { getProject, getRoleWorker, readIssueStateStore, readProjects, readWorkerDeliveryResolution, updateSlot } from "../../../../state/index.js";
+import {
+  getProject,
+  getRoleWorker,
+  log as auditLog,
+  readIssueStateStore,
+  readProjects,
+  readWorkerDeliveryResolution,
+  updateSlot,
+} from "../../../../state/index.js";
 import { WORKER_AUDIT_EVENT } from "../const.js";
 import { recordIssueDelivery, recordSlotDelivery } from "../delivery-state.js";
 import { DELIVERY_ATTENTION_AFTER_MS, DELIVERY_INSPECTION_TIMEOUT_MS } from "./const.js";

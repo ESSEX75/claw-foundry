@@ -6,7 +6,6 @@
 
 import { randomUUID } from "node:crypto";
 
-import { log as auditLog } from "../../../../audit.js";
 import type { WorkerDeliveryState } from "../../../../domain/index.js";
 import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, resolveQueuePickup, WORKER_DELIVERY_STATUS } from "../../../../domain/index.js";
 import { AGENT_TURN_STATUS, deleteWorkerSession, ensureSessionModel } from "../../../../integrations/index.js";
@@ -17,6 +16,7 @@ import {
   getRoleWorker,
   isIssueCreationReady,
   loadConfig,
+  log as auditLog,
   readIssueStateStore,
   readProjects,
   readWorkerDeliveryResolution,

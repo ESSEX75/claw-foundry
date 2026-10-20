@@ -4,6 +4,7 @@
  */
 
 export * from "./attachments/index.js";
+export * from "./audit/index.js";
 export * from "./config/index.js";
 export * from "./issues/index.js";
 export { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "./paths.js";

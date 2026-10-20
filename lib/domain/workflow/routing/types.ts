@@ -1,6 +1,6 @@
 /** Defines review/test policies and type-safe selectors of authoritative issue fields. */
 
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import {
   REVIEW_POLICY,
   REVIEW_ROUTING_FIELD,

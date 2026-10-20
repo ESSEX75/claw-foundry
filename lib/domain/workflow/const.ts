@@ -2,7 +2,7 @@
  * Defines canonical built-in workflow identifiers and provider-visible metadata.
  */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 
 /** Known internal workflow state keys used across the pipeline. */
 export const WORKFLOW_STATE_KEYS = {

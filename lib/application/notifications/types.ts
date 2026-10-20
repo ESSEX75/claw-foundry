@@ -5,7 +5,7 @@ import type { NotificationChannel, REVIEW_POLICY, ReviewPolicy } from "../../dom
 import type { WorkerSessionAction } from "../../domain/index.js";
 import type { CreatedIssueReference } from "../../domain/index.js";
 import type { MessageDeliveryOutcome, NotificationChannelRuntime } from "../../integrations/index.js";
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import type { RouteConfig } from "../projects/routing/index.js";
 import type { NOTIFICATION_BLOCKED, NOTIFICATION_EVENT, NOTIFICATION_MERGE_ACTOR } from "./const.js";
 

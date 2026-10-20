@@ -1,7 +1,7 @@
 /** Builds deterministic doctor findings from loaded routing and archive observations. */
 
-import { parseDuration } from "../../duration/index.js";
 import { listConfiguredAgents } from "../../integrations/index.js";
+import { parseDuration } from "../../shared/duration/index.js";
 import type { ProjectsData, ResolvedConfig } from "../../state/index.js";
 import { inspectConfiguredProjectRoutes } from "../projects/routing/index.js";
 import { DEVCLAW_AGENT_TOOLS } from "../workspace/permissions/index.js";

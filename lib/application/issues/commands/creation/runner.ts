@@ -3,8 +3,8 @@
  */
 
 import { ISSUE_INTEGRITY_STATUS } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { composeIssueCreationBody } from "../../../../projection/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import type { IssueCreationOperation } from "../../../../state/index.js";
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "../../../../state/index.js";
 import { initializeIssueRuntimeState } from "../../runtime/index.js";

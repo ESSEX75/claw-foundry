@@ -7,8 +7,8 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { getErrorMessage,hasErrorCode } from "../../../errors/index.js";
-import { sha256Hex } from "../../../hashing/index.js";
+import { getErrorMessage,hasErrorCode } from "../../../shared/errors/index.js";
+import { sha256Hex } from "../../../shared/hashing/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { LOCK_FILE_SUFFIX, withFileLock, writeJsonAtomic } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";

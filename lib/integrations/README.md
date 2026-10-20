@@ -99,7 +99,7 @@ Routing owns the single `AttachmentMessageRoute` contract used by incoming hooks
 application consumers, plus the topic separator used by incoming parsing and outgoing
 peer framing. Topic-removal TODOs remain with the shared framing and hook validation.
 SDK event normalization remains in hooks; application selects and authorizes projects.
-Generic diagnostics use `lib/errors`; provider error classification and delivery
+Generic diagnostics use `lib/shared/errors`; provider error classification and delivery
 uncertainty remain adapter responsibilities rather than shared formatter behavior.
 
 The agents API exposes its canonical `ConfiguredAgent` result type for read-only

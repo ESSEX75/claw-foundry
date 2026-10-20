@@ -6,8 +6,8 @@ import type { RunCommand } from "../../../../context.js";
 import type { IssueIntegrityStatus, IssueRuntimeState, Project, WorkflowConfig } from "../../../../domain/index.js";
 import type { Issue, IssueProvider, ProviderRateLimitStatus } from "../../../../integrations/index.js";
 import type { ProjectionDiff, ProjectionMetadata } from "../../../../projection/index.js";
+import type { ValueOf } from "../../../../shared/types.js";
 import type { ResolvedRoleConfig } from "../../../../state/index.js";
-import type { ValueOf } from "../../../../types.js";
 import type {
   ISSUE_REPAIR_ERROR,
   ISSUE_REPAIR_SOURCE,

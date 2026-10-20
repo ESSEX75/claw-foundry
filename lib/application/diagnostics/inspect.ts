@@ -1,6 +1,6 @@
 /** Coordinates read-only doctor observations while isolating per-project archive failures. */
 
-import { getErrorMessage } from "../../errors/index.js";
+import { getErrorMessage } from "../../shared/errors/index.js";
 import { loadConfig, readProjects } from "../../state/index.js";
 import { getIssueArchiveStatus } from "../issues/maintenance/index.js";
 import { resolveProjectToolOwners } from "../workspace/permissions/index.js";

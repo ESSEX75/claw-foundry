@@ -1,9 +1,37 @@
-/** Pure adapter boundary policy shared by the architecture checker and regression tests. */
+/** Pure package and adapter boundary policy shared by the architecture checker and regression tests. */
 
 /** Tool adapters whose setup effects must pass through shared application commands. */
 const APPLICATION_ADAPTERS = new Set([
   "lib/tools/adapters/setup/setup.ts", "lib/tools/adapters/setup/config.ts", "lib/tools/adapters/setup/onboard.ts",
 ]);
+
+/** Enforce independent shared ownership and capability APIs on either platform.
+ * @param source - Repository-relative importing file.
+ * @param target - Resolved local import target, absent for external modules.
+ */
+export function checkSharedApiBoundary(source: string, target: string | undefined): string | null {
+  if (target === undefined) return null;
+  const importer = source.replaceAll("\\", "/");
+  const imported = target.replaceAll("\\", "/");
+  const root = "lib/shared/";
+
+  if (importer.startsWith(root) && !imported.startsWith(root)) {
+    return "shared primitives must not depend on other repository layers or plugin composition";
+  }
+  if (!imported.startsWith(root)) return null;
+  const relative = imported.slice(root.length);
+
+  if (["types.ts", "const.ts"].includes(relative)) return null;
+  if (!relative.includes("/")) return "shared has no aggregate root API";
+  const capability = root + relative.split("/")[0];
+
+  if (importer.startsWith(`${capability}/`)) {
+    return imported === `${capability}/index.ts`
+      ? "shared capabilities must not import their own barrel" : null;
+  }
+  return imported === `${capability}/index.ts`
+    ? null : "shared consumers must use the target capability entrypoint";
+}
 
 /** Detect direct persistence dependencies in adapters migrated to shared application commands.
  * @param source - Repository-relative source path, with either platform separator.

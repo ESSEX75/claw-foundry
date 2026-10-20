@@ -4,7 +4,7 @@ import type { RunCommand } from "../../../../context.js";
 import type { ActiveIssueWorker } from "../../../../domain/index.js";
 import type { Issue, IssueProvider } from "../../../../integrations/index.js";
 import type { TaskComplexity } from "../../../../roles/index.js";
-import type { ValueOf } from "../../../../types.js";
+import type { ValueOf } from "../../../../shared/types.js";
 import type { DispatchOpts, DispatchResult } from "../../../execution/workers/index.js";
 import type { CreatedManagedTask } from "../creation/index.js";
 import type { RESEARCH_STATUS } from "./const.js";

@@ -2,8 +2,8 @@
 
 import { log as auditLog } from "../../../../audit.js";
 import { DEFAULT_ROLES, getInitialStateLabel, STATE_TYPE } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { composeManagedIssueBody } from "../../../../projection/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { withIssueOrchestrationLock } from "../../../../state/index.js";
 import { EYES_EMOJI } from "../../../execution/feedback/index.js";
 import { resolveProject } from "../../../projects/context/index.js";

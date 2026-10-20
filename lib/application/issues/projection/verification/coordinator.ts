@@ -2,9 +2,9 @@
 
 import { log as auditLog } from "../../../../audit.js";
 import { ISSUE_ARCHIVE_REASON, ISSUE_INTEGRITY_STATUS, STATE_TYPE } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { isProviderIssueLookupError, PROVIDER_ISSUE_LOOKUP_ERROR } from "../../../../integrations/index.js";
 import { extractIssueMetadata, metadataMatches } from "../../../../projection/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { isIssueCreationReady, readIssueStateStore, withIssueOrchestrationLock } from "../../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../reconciliation/index.js";
 import {

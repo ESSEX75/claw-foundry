@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { PROVIDER_ERROR_NAME, PROVIDER_HTTP_STATUS, PROVIDER_HTTP_STATUS_PATTERN, PROVIDER_OPERATION_ERROR } from "./const.js";
 import type { ProviderTransportFailure } from "./types.js";
 

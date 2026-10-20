@@ -1,8 +1,8 @@
 /** Runs independent agents over fresh workspace state and aggregates tick results. */
 
 import type { RunCommand } from "../../../../context.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { fetchGatewaySessions } from "../../../../integrations/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { initializeWorkspaceFiles } from "../../../../state/index.js";
 import type { NotificationRuntime } from "../../../notifications/index.js";
 import type { HeartbeatConfig } from "../configuration/index.js";

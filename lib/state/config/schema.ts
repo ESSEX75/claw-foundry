@@ -15,7 +15,7 @@ import {
   type TransitionTarget,
   WORKFLOW_EVENT,
 } from "../../domain/index.js";
-import { DURATION_PATTERN } from "../../duration/index.js";
+import { DURATION_PATTERN } from "../../shared/duration/index.js";
 import type { DevClawConfig, LevelOverride } from "./types.js";
 
 /** Pattern accepted for configuration-owned identifiers. */

@@ -3,7 +3,7 @@
  * Application sagas use these codes instead of inferring recovery safety from CLI text.
  */
 
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { PROVIDER_ERROR_NAME } from "./const.js";
 import { normalizeProviderFailure } from "./failures.js";
 import type { ProviderOperationErrorCode, ProviderOperationErrorOptions } from "./types.js";

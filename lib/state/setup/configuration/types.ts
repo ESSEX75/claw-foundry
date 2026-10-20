@@ -1,6 +1,6 @@
 /** Defines explicit configuration reset scopes and read-only documents. */
 
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { DEFAULTS_SCOPE } from "./const.js";
 
 /** Explicit subset of packaged defaults selected for replacement. */

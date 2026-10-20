@@ -11,8 +11,8 @@ import {
   REVIEW_POLICY,
   STATE_TYPE,
 } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { PR_STATE } from "../../../../integrations/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { reservePipelineNotification } from "../../../../state/index.js";
 import {
   getNotificationConfig,

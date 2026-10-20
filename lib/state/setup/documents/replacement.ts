@@ -3,7 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { hasErrorCode } from "../../../errors/index.js";
+import { hasErrorCode } from "../../../shared/errors/index.js";
 import { LOCK_FILE_SUFFIX, withFileLock, writeFileAtomic } from "../../persistence/index.js";
 import { BACKUP_FILE_SUFFIX, DOCUMENT_LOCK_OPTIONS } from "./const.js";
 

@@ -1,6 +1,6 @@
 /** Owns one timer lifecycle and serializes composition-injected heartbeat ticks. */
 
-import { getErrorMessage } from "../../../../errors/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { MILLISECONDS_PER_SECOND,resolveHeartbeatConfig } from "../configuration/index.js";
 import { discoverAgents } from "./agent-discovery.js";
 import { logTickResult, processAllAgents } from "./agent-runner.js";

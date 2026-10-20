@@ -1,7 +1,7 @@
 /** Executes one CLI request and preserves abnormal process completion as unknown mutation evidence. */
 
 import type { RunCommand } from "../../../context.js";
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { isCompleteCommandOutput, isCompletedCommand } from "../../process/index.js";
 import { normalizeProviderFailure, PROVIDER_OPERATION_ERROR, ProviderTransportError } from "../errors/index.js";
 import { PROVIDER_TRANSPORT_POLICY } from "./const.js";

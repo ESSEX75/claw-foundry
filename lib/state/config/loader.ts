@@ -2,7 +2,7 @@
 
 import path from "node:path";
 
-import { getErrorMessage } from "../../errors/index.js";
+import { getErrorMessage } from "../../shared/errors/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../paths.js";
 import { parseProjectSlug } from "../projects/index.js";
 import { readYamlFile } from "./boundary.js";

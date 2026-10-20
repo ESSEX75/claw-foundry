@@ -4,7 +4,7 @@
 
 import fs from "node:fs/promises";
 
-import { getErrorMessage,hasErrorCode } from "../../errors/index.js";
+import { getErrorMessage,hasErrorCode } from "../../shared/errors/index.js";
 import { FILESYSTEM_ERROR_CODE, LOCK_FILE_SUFFIX, STATE_TEXT_ENCODING, withFileLock, writeJsonAtomic } from "../persistence/index.js";
 import { PROJECTS_LOCK_OPTIONS } from "./const.js";
 import { projectsPath } from "./paths.js";

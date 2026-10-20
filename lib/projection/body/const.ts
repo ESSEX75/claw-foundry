@@ -1,6 +1,6 @@
 /** Defines the managed HTML-comment protocol shared by body parsing and rendering. */
 
-import { DEVCLAW_PLUGIN_ID } from "../../const.js";
+import { DEVCLAW_PLUGIN_ID } from "../../shared/const.js";
 
 /** Reserved identity block identifier. */
 export const ISSUE_BODY_METADATA_ID = `${DEVCLAW_PLUGIN_ID}:issue-metadata`;

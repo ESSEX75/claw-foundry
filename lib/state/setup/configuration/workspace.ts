@@ -3,7 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { hasErrorCode } from "../../../errors/index.js";
+import { hasErrorCode } from "../../../shared/errors/index.js";
 import { DATA_DIR, WORKFLOW_FILE_NAME } from "../../paths.js";
 import { FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
 import type { WorkspaceWriteResult } from "../documents/index.js";

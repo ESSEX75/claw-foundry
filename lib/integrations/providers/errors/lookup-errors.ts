@@ -3,7 +3,7 @@
  * Application code consumes codes and never infers destructive meaning from error text.
  */
 
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { PROVIDER_ERROR_NAME, PROVIDER_ISSUE_LOOKUP_ERROR, PROVIDER_OPERATION_ERROR } from "./const.js";
 import { normalizeProviderFailure } from "./failures.js";
 import type { ProviderIssueLookupErrorCode, ProviderLookupErrorOptions } from "./types.js";

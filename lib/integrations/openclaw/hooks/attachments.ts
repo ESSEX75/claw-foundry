@@ -1,6 +1,6 @@
 /** Registers SDK media capture and passes complete normalized routing to application orchestration. */
 
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { listConfiguredAgents, resolveConfiguredAgentWorkspace } from "../agents/index.js";
 import { extractMediaAttachments } from "../media/index.js";
 import { normalizeAttachmentRoute } from "./attachment-route.js";

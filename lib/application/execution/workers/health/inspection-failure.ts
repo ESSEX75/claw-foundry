@@ -1,7 +1,7 @@
 /** Formats operational inspection failures without suppressing other projects or roles. */
 
 import type { Project } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { HEALTH_ISSUE_SEVERITY, HEALTH_ISSUE_TYPE } from "./const.js";
 import type { HealthFix } from "./types.js";
 

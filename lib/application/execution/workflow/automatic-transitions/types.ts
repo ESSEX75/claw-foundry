@@ -5,7 +5,7 @@ import type { Project, WorkflowConfig } from "../../../../domain/index.js";
 import type { IssueRuntimeState, WorkflowPolicyRouting } from "../../../../domain/index.js";
 import type { IssueProvider } from "../../../../integrations/index.js";
 import type { Issue, IssueReader } from "../../../../integrations/index.js";
-import type { ValueOf } from "../../../../types.js";
+import type { ValueOf } from "../../../../shared/types.js";
 import type { NotificationConfig, NotificationRuntime, NotifyEvent } from "../../../notifications/index.js";
 import type { TransitionEffectsResult } from "../effects/index.js";
 import type { REVIEW_OUTCOME, REVIEW_TRANSITION_REASON } from "./const.js";

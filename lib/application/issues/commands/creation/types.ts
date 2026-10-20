@@ -4,8 +4,8 @@
 
 import type { IssueProviderId, NotifyBindingRef, Project, WorkflowConfig } from "../../../../domain/index.js";
 import type { Issue, IssueReader, IssueWriter, LabelProjector, ProviderRateLimitReader } from "../../../../integrations/index.js";
+import type { ValueOf } from "../../../../shared/types.js";
 import type { IssueCreationFailure } from "../../../../state/index.js";
-import type { ValueOf } from "../../../../types.js";
 import type { CREATION_RESULT_INTEGRITY, CREATION_RESULT_STATUS } from "./const.js";
 
 /** Provider operations required by creation, projection read-back, and quota preflight. */

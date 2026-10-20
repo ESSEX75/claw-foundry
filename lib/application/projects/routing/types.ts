@@ -1,7 +1,7 @@
 /** Owns contracts for project-routing. */
 
 import type { NotificationEndpoint, Project } from "../../../domain/index.js";
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { ROUTE_DIAGNOSTIC_CODE } from "./const.js";
 
 /** Configured agent identity used by route inspection. */

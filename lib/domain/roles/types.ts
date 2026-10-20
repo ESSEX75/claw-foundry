@@ -1,6 +1,6 @@
 /** Defines shared role and level contracts consumed by configuration and selection. */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import { DEFAULT_LEVELS, DEFAULT_ROLES } from "./const.js";
 
 /** Built-in role identifier; runtime role membership comes from resolved configuration. */

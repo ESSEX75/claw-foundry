@@ -1,7 +1,7 @@
 /** Applies validated setup plans shared by CLI and tools. */
 
-import { getErrorMessage } from "../../../errors/index.js";
 import { provisionAgentResources, provisionConfiguredAgentResources, registerAgentConfiguration, resolveNewAgentResources } from "../../../integrations/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { initializeWorkspaceFiles, refreshSystemInstructionFiles, resetDefaults, scaffoldWorkspace, writeWorkspaceModels } from "../../../state/index.js";
 import { ensureChannelBinding } from "../bindings/index.js";
 import { writePluginConfig } from "../configuration/index.js";

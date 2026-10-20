@@ -1,6 +1,6 @@
 /** Executes project passes in order while retaining partial results and failure details. */
 
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { HEARTBEAT_PASS_FAILURE_POLICY } from "./const.js";
 import type { HeartbeatPass, HeartbeatPassFailurePolicy, HeartbeatPassReport } from "./types.js";
 

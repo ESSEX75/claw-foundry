@@ -1,7 +1,34 @@
-/** Verifies forbidden setup adapter dependencies across POSIX and Windows paths. */
+/** Verifies package ownership and adapter dependency boundaries across POSIX and Windows paths. */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkToolsApiBoundary } from "../../scripts/architecture-rules.js";
+import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkSharedApiBoundary, checkToolsApiBoundary } from "../../scripts/architecture-rules.js";
+
+it("keeps shared primitives independent and enforces their capability APIs on both platforms", () => {
+  for (const separator of ["/", "\\"]) {
+    const check = (source: string, target: string) => checkSharedApiBoundary(source.replaceAll("/", separator), target.replaceAll("/", separator));
+    const formatter = "lib/shared/errors/message.ts";
+
+    for (const target of ["index.ts", "lib/context.ts", "lib/domain/index.ts", "lib/state/index.ts", "lib/application/index.ts", "lib/integrations/index.ts", "lib/tools/index.ts", "lib/cli/index.ts", "lib/testing/index.ts"]) {
+      assert.ok(check(formatter, target), target);
+    }
+    assert.equal(checkSharedApiBoundary(formatter, undefined), null);
+    assert.equal(check(formatter, "lib/shared/errors/types.ts"), null);
+    assert.equal(check(formatter, "lib/shared/hashing/index.ts"), null);
+    assert.ok(check(formatter, "lib/shared/errors/index.ts"));
+    assert.ok(check(formatter, "lib/shared/hashing/const.ts"));
+    for (const source of ["index.ts", "lib/domain/workflow/types.ts", "lib/state/config/schema.ts", "lib/application/diagnostics/report.ts"]) {
+      assert.equal(check(source, "lib/shared/types.ts"), null);
+      assert.equal(check(source, "lib/shared/const.ts"), null);
+      assert.ok(check(source, "lib/shared/index.ts"));
+      for (const capability of ["errors", "hashing", "duration"]) {
+        assert.equal(check(source, `lib/shared/${capability}/index.ts`), null);
+        assert.ok(check(source, `lib/shared/${capability}/const.ts`));
+        assert.ok(check(source, `lib/shared/${capability}/nested/index.ts`));
+      }
+    }
+    assert.equal(check("lib/application/diagnostics/report.ts", "lib/state/index.ts"), null);
+  }
+});
 
 describe("setup architecture boundaries", () => {
   it("rejects state and filesystem imports in all migrated adapters", () => {

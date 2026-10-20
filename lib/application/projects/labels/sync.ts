@@ -1,8 +1,8 @@
 /** Resolves persisted project providers and synchronizes independent label catalogs. */
 
 import { log as auditLog } from "../../../audit.js";
-import { getErrorMessage } from "../../../errors/index.js";
 import { createProvider } from "../../../integrations/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { loadConfig, readProjects } from "../../../state/index.js";
 import { provisionLabelCatalog } from "./catalog.js";
 import { SYNC_LABELS_EVENT } from "./const.js";

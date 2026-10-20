@@ -6,8 +6,8 @@
  */
 
 import { countActiveSlots, EXECUTION_MODE, reconcileSlots, resolveQueuePickup } from "../../../domain/index.js";
-import { getErrorMessage } from "../../../errors/index.js";
 import { createProvider, isProviderIssueLookupError } from "../../../integrations/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { getConfiguredRoleIds, getLevelMaxWorkers, getProject, getRoleWorker, loadConfig, readProjects,withIssueOrchestrationLock } from "../../../state/index.js";
 import { dispatchTaskLocked } from "../workers/index.js";
 import { QUEUE_PLAN, QUEUE_REASON } from "./const.js";

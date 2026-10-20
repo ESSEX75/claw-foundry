@@ -8,8 +8,8 @@
 
 import { log as auditLog } from "../../../../audit.js";
 import { REVIEW_CHECK, REVIEW_POLICY, REVIEW_ROUTING_FIELD, type TransitionAction, WORKFLOW_EVENT } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { PR_STATE } from "../../../../integrations/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { observePrStatusWithReceipts } from "../../feedback/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../effects/index.js";
 import { planWorkflowEvent } from "../planning/index.js";

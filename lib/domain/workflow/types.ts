@@ -2,7 +2,7 @@
  * workflow/types.ts — Domain types for workflow statecharts and resolved transitions.
  */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import type { RoleId } from "../roles/index.js";
 import {
   ACTION,

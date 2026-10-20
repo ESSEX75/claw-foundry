@@ -1,8 +1,8 @@
 /** Resolves configured agent workspaces and their owned managed projects. */
 
-import { getErrorMessage } from "../../../../errors/index.js";
 import type { AgentRegistryConfig } from "../../../../integrations/index.js";
 import { listConfiguredAgents, resolveConfiguredAgentWorkspace } from "../../../../integrations/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { inspectManagedWorkspace } from "../../../../state/index.js";
 import { HEARTBEAT_AGENT_ID } from "./const.js";
 import type { AgentDiscoveryResult } from "./types.js";

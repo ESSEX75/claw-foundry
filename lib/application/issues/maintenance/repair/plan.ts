@@ -17,8 +17,8 @@ import {
   type ReviewPolicy,
   type TestPolicy,
 } from "../../../../domain/index.js";
-import { sha256Hex } from "../../../../hashing/index.js";
 import { diffIssueProjection, expectedManagedLabels, extractIssueMetadata, metadataMatches } from "../../../../projection/index.js";
+import { sha256Hex } from "../../../../shared/hashing/index.js";
 import type { ResolvedRoleConfig } from "../../../../state/index.js";
 import { countManagedLabelMutationRequests } from "../../projection/index.js";
 import { ISSUE_REPAIR_ERROR, ISSUE_REPAIR_SOURCE,REPAIR_ACTION, REPAIR_LOCAL_FIELDS, REPAIR_METADATA_ACTION, REPAIR_MODE, REPAIR_STATUS, REPAIR_WARNING } from "./const.js";

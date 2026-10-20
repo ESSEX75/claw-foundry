@@ -1,6 +1,6 @@
 /** Contracts owned by setup onboarding. */
 
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { ONBOARDING_MODE } from "./const.js";
 
 /** Selected onboarding scenario. */

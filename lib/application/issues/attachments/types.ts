@@ -3,7 +3,7 @@
 import type { RunCommand } from "../../../context.js";
 import type { Project } from "../../../domain/index.js";
 import type { IssueProvider, MediaAttachmentInfo } from "../../../integrations/index.js";
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { ATTACHMENT_ACTION } from "./const.js";
 
 /** Shared command for automatic and manual attachment uploads. */

@@ -5,7 +5,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { getErrorMessage,hasErrorCode } from "../../../errors/index.js";
+import { getErrorMessage,hasErrorCode } from "../../../shared/errors/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { writeJsonAtomic } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";

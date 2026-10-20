@@ -3,8 +3,8 @@
  */
 
 import { REVIEW_POLICY, STATE_TYPE, TEST_POLICY, type WorkflowConfig } from "../../../../domain/index.js";
-import { sha256Hex } from "../../../../hashing/index.js";
 import { expectedManagedLabels, stripManagedIssueBody } from "../../../../projection/index.js";
+import { sha256Hex } from "../../../../shared/hashing/index.js";
 import type { IssueCreationOperation } from "../../../../state/index.js";
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS, newIssueCreationIdentity, updateIssueCreationStore, withIssueCreationLock } from "../../../../state/index.js";
 import { buildInitialIssueRuntimeState } from "../../runtime/index.js";

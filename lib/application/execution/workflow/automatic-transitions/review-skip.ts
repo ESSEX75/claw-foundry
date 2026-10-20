@@ -9,7 +9,7 @@
 
 import { log as auditLog } from "../../../../audit.js";
 import { DEFAULT_ROLES, REVIEW_POLICY, REVIEW_ROUTING_FIELD, ROUTING_LABELS, STATE_TYPE, WORKFLOW_EVENT } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../effects/index.js";
 import { planWorkflowEvent } from "../planning/index.js";
 import { executeAutomaticTransition } from "../transitions/index.js";

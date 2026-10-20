@@ -1,7 +1,7 @@
 /** Selects local bulk ownership candidates and retains independent task failures. */
 
 import { STATE_TYPE } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { readIssueStateStore } from "../../../../state/index.js";
 import { claimManagedTask } from "./claim-task.js";
 import type { ClaimManagedTasksInput, ClaimManagedTasksResult } from "./types.js";

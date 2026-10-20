@@ -1,8 +1,8 @@
 /** Classifies persisted creation recovery eligibility without consuming the mutation budget. */
 
+import type { ValueOf } from "../../../../shared/types.js";
 import type { IssueCreationOperation } from "../../../../state/index.js";
 import { ISSUE_CREATION_STATUS } from "../../../../state/index.js";
-import type { ValueOf } from "../../../../types.js";
 import { CREATION_RECOVERY_ELIGIBILITY } from "./const.js";
 
 /** Select automatic recovery only for unfinished retryable operations outside backoff.

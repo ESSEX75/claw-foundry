@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 
 import YAML from "yaml";
 
-import { getErrorMessage,hasErrorCode } from "../../errors/index.js";
+import { getErrorMessage,hasErrorCode } from "../../shared/errors/index.js";
 
 /**
  * Read and parse one optional YAML configuration file while preserving its value as unknown.

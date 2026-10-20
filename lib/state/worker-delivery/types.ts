@@ -1,7 +1,7 @@
 /** Defines durable operator decisions for one exact worker submission. */
 
 import type { WORKER_DELIVERY_RESOLUTION } from "../../domain/index.js";
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 
 /** Recovery intent retained until both local ownership views have settled. */
 export type WorkerDeliveryResolution = {

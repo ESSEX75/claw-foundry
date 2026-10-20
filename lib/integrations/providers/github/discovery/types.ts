@@ -2,7 +2,7 @@
 
 import type { z } from "zod";
 
-import type { ValueOf } from "../../../../types.js";
+import type { ValueOf } from "../../../../shared/types.js";
 import type { GITHUB_DISCOVERY_STATE } from "./const.js";
 import type { GhPullRequestSchema } from "./schema.js";
 

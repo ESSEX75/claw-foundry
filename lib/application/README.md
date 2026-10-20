@@ -46,7 +46,7 @@ Local issue state is authoritative; provider-state import requires explicit
 initialization or repair. Run `npm run arch:check:strict` after boundary changes.
 
 Layer-independent error diagnostics, byte hashing and duration grammar belong to
-`lib/errors`, `lib/hashing` and `lib/duration`. Application retains typed error
+`lib/shared/errors`, `lib/shared/hashing` and `lib/shared/duration`. Application retains typed error
 classification, payload field selection/serialization, retention policy and retry
 decisions. Hash extraction preserves the exact persisted digest inputs and encoding.
 Normalized incoming route identity and topic framing come from the OpenClaw routing

@@ -3,7 +3,7 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 
 import type { SCOPE_STATUS } from "../../../integrations/index.js";
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { SCOPE_PREFLIGHT_STATUS } from "./const.js";
 
 /** Nonblocking permission preflight outcome. */

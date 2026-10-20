@@ -1,7 +1,7 @@
 /** Owns a managed task lifecycle operation or its pure transition decision. */
 
 import { findSlotByIssue, ISSUE_INTEGRITY_STATUS, STATE_TYPE } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { isIssueCreationReady, readIssueStateStore, readProjects, readWorkerDeliveryResolution, withIssueOrchestrationLock } from "../../../../state/index.js";
 import { reconcileManagedLabelsLocked } from "../../projection/index.js";
 import { writeIssueRuntimeState } from "../../runtime/index.js";

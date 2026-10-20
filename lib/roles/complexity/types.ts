@@ -1,6 +1,6 @@
 /** Owns the complexity categories and decisions independent of role configuration. */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import type { TASK_COMPLEXITY } from "./const.js";
 
 /** Supported explicit task-complexity signals, derived from their canonical identifiers. */

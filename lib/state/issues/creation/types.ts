@@ -3,7 +3,7 @@
  */
 
 import type { IssueProviderId, NotifyBindingRef, ReviewPolicy, TestPolicy } from "../../../domain/index.js";
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "./const.js";
 
 /** Stable identifiers allocated once when a creation intent is first persisted. */

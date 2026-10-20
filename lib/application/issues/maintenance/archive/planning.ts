@@ -1,7 +1,7 @@
 /** Pure retention eligibility and bounded policy validation. */
 
 import { type ArchivedIssueRecord, ISSUE_ARCHIVE_REASON } from "../../../../domain/index.js";
-import { parseDuration } from "../../../../duration/index.js";
+import { parseDuration } from "../../../../shared/duration/index.js";
 import type { ArchiveExpiryInput } from "./types.js";
 
 /** Reject negative, fractional, or unbounded mutation budgets.

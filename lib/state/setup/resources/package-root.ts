@@ -5,7 +5,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { getErrorMessage, hasErrorCode } from "../../../errors/index.js";
+import { getErrorMessage, hasErrorCode } from "../../../shared/errors/index.js";
 import {
   DEFAULTS_DIRECTORY_NAME,
   DEVCLAW_PACKAGE_NAME,

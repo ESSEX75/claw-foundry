@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { RoleId } from "../../../domain/index.js";
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import {
   AGENTS_FILE_NAME,
   HEARTBEAT_FILE_NAME,

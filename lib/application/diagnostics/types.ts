@@ -2,7 +2,7 @@
 
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import type { DOCTOR_SEVERITY } from "./const.js";
 
 /** Severity derived from the doctor-owned registry without widening its value set. */

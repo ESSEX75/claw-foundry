@@ -1,6 +1,6 @@
 /** Sends through OpenClaw once; never retries a possibly delivered message through another path. */
 
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { isCompletedCommand } from "../../process/index.js";
 import { MESSAGE_COMMAND, MESSAGE_DELIVERY_PATH, MESSAGE_DELIVERY_STATUS, MESSAGE_TIMEOUT_MS } from "./const.js";
 import { hasTextSender } from "./guards.js";

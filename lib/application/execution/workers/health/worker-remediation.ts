@@ -2,8 +2,8 @@
 
 import { log as auditLog } from "../../../../audit.js";
 import { DEFAULT_WORKFLOW, findStateKeyByLabel, getActiveLabel, getRevertLabel, releasedWorkerSlot, sameSlotReservation } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { AGENT_TURN_STATUS, submitAgentTurn } from "../../../../integrations/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import {
   getProject,
   getRoleWorker,

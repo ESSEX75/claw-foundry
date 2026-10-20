@@ -2,7 +2,7 @@
 
 import { log as auditLog } from "../../../../audit.js";
 import { ACTION, type CompletionRule } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { executeTransitionEffects, MERGE_EFFECT_OUTCOME } from "../effects/index.js";
 import { COMPLETION_EFFECT_AUDIT } from "./const.js";
 import type { CompletionActions, CompletionInput } from "./types.js";

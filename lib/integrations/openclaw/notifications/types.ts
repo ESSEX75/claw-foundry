@@ -2,7 +2,7 @@
 
 import type { RunCommand } from "../../../context.js";
 import type { NotificationChannel } from "../../../domain/index.js";
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { MESSAGE_DELIVERY_PATH, MESSAGE_DELIVERY_STATUS } from "./const.js";
 
 /** Runtime channel loader; application owns route validation before sending. */

@@ -1,8 +1,8 @@
 /** Filters and persists delivered review-summary evidence in the authoritative local issue record. */
 
 import type { ReviewSummaryReceipt } from "../../../domain/index.js";
-import { sha256Hex } from "../../../hashing/index.js";
 import { PR_COMMENT_KIND, PR_STATE, PROVIDER_REVIEW_STATE, type PrStatus } from "../../../integrations/index.js";
+import { sha256Hex } from "../../../shared/hashing/index.js";
 import { readIssueStateStore, updateIssueRuntimeRecord } from "../../../state/index.js";
 import type { FeedbackProvider, PrFeedback, ReviewIssueContext } from "./types.js";
 

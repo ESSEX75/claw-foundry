@@ -2,7 +2,7 @@
  * Owns normalized provider observations and capability contracts consumed by application and adapters.
  */
 
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { PR_COMMENT_KIND, PROVIDER_COLLECTION_STATE } from "./const.js";
 import { PR_STATE } from "./const.js";
 

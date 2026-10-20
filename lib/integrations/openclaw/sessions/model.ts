@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import type { RunCommand } from "../../../context.js";
-import { getErrorMessage } from "../../../errors/index.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { isCompleteCommandOutput,isCompletedCommand } from "../../process/index.js";
 import { GATEWAY_COMMAND, SESSION_PATCH_METHOD } from "./const.js";
 

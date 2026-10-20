@@ -3,7 +3,7 @@
 import type { RunCommand } from "../../../context.js";
 import type { Project } from "../../../domain/index.js";
 import type { IssueProvider, SessionLookup } from "../../../integrations/index.js";
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { NotificationRuntime } from "../../notifications/index.js";
 import type { QueueSkipReason } from "../scheduling/index.js";
 import type { HealthFix, HealthIssue } from "../workers/index.js";

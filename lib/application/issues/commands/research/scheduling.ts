@@ -2,9 +2,9 @@
 
 import type { ExecutionMode } from "../../../../domain/index.js";
 import { findAvailableWorkerSlot, ISSUE_INTEGRITY_STATUS, WORKER_DELIVERY_STATUS, workerExecutionBlock } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import type { Issue } from "../../../../integrations/index.js";
 import { AGENT_TURN_STATUS } from "../../../../integrations/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { getRoleWorker, loadConfig, readIssueStateStore, readProjects, withIssueOrchestrationLock } from "../../../../state/index.js";
 import { dispatchTaskLocked } from "../../../execution/workers/index.js";
 import type { CreatedManagedTask } from "../creation/index.js";

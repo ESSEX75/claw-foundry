@@ -3,7 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { hasErrorCode } from "../../errors/index.js";
+import { hasErrorCode } from "../../shared/errors/index.js";
 import { withIssueStoreLock } from "../issues/persistence/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../paths.js";
 import { writeJsonAtomic } from "../persistence/index.js";

@@ -2,7 +2,7 @@
 
 import fs from "node:fs/promises";
 
-import { sha256Hex } from "../../../hashing/index.js";
+import { sha256Hex } from "../../../shared/hashing/index.js";
 import { ATTACHMENTS_INDEX } from "../const.js";
 import { withAttachmentLock } from "../lock.js";
 import { attachmentFilePath, inspectAttachmentDirectory, inspectAttachmentFile } from "../paths.js";

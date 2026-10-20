@@ -3,7 +3,7 @@
 import type { Project, WorkflowConfig } from "../../../../domain/index.js";
 import type { ISSUE_ARCHIVE_REASON } from "../../../../domain/index.js";
 import type { ProjectionDiff } from "../../../../projection/index.js";
-import type { ValueOf } from "../../../../types.js";
+import type { ValueOf } from "../../../../shared/types.js";
 import type { ProjectionProvider } from "../reconciliation/index.js";
 import type { PROJECTION_INTEGRITY_ACTION } from "./const.js";
 

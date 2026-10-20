@@ -3,8 +3,8 @@
 import type { RunCommand } from "../../../../context.js";
 import type { Project, WorkflowConfig } from "../../../../domain/index.js";
 import type { IssueProvider, SessionLookup } from "../../../../integrations/index.js";
+import type { ValueOf } from "../../../../shared/types.js";
 import type { ResolvedConfig } from "../../../../state/index.js";
-import type { ValueOf } from "../../../../types.js";
 import type { HEALTH_ACTION, HEALTH_ISSUE_SEVERITY, HEALTH_ISSUE_TYPE } from "./const.js";
 
 /** Dependencies for read-only diagnosis and explicit worker remediation. */

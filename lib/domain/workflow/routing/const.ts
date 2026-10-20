@@ -1,6 +1,6 @@
 /** Owns saved workflow policy identifiers and their provider-label protocol. */
 
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 
 /** Managed workflow policy label namespaces shared by rendering, parsing, and provider effects. */
 export const POLICY_LABEL_PREFIX = {

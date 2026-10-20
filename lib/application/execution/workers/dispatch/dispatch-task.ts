@@ -9,9 +9,9 @@ import { randomUUID } from "node:crypto";
 import { log as auditLog } from "../../../../audit.js";
 import type { WorkerDeliveryState } from "../../../../domain/index.js";
 import { emptySlot, ISSUE_INTEGRITY_STATUS, NOTIFICATION_CHANNEL, resolveQueuePickup, WORKER_DELIVERY_STATUS } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { AGENT_TURN_STATUS, deleteWorkerSession, ensureSessionModel } from "../../../../integrations/index.js";
 import { getFallbackEmoji } from "../../../../roles/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import {
   getProject,
   getRoleWorker,

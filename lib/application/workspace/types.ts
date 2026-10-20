@@ -3,7 +3,7 @@
 import type { RunCommand } from "../../context.js";
 import type { ExecutionMode } from "../../domain/index.js";
 import type { AgentConfigurationRuntime } from "../../integrations/index.js";
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import type { SetupNotificationChannel } from "./bindings/types.js";
 import type { SETUP_APPLY_STEP, SETUP_OPERATION, SETUP_RECOVERY_ACTION } from "./const.js";
 import type { ScopePreflightResult } from "./permissions/types.js";

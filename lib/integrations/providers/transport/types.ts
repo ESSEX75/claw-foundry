@@ -3,7 +3,7 @@
 import type { z } from "zod";
 
 import type { RunCommand } from "../../../context.js";
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { PROVIDER_CLI, PROVIDER_COMMAND_MODE } from "./const.js";
 
 /** Replay safety explicitly selected for a provider CLI operation. */

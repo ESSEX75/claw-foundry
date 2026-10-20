@@ -7,7 +7,7 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname,join } from "node:path";
 
-import { hasErrorCode } from "./errors/index.js";
+import { hasErrorCode } from "./shared/errors/index.js";
 import { DATA_DIR } from "./state/index.js";
 
 const MAX_LOG_LINES = 50;

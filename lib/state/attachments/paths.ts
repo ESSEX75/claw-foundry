@@ -3,7 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { hasErrorCode } from "../../errors/index.js";
+import { hasErrorCode } from "../../shared/errors/index.js";
 import { DATA_DIR } from "../paths.js";
 import { LOCK_FILE_SUFFIX } from "../persistence/index.js";
 import { parseProjectSlug } from "../projects/index.js";

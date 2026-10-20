@@ -2,7 +2,7 @@
  * Defines pure notification endpoint and binding contracts shared across DevClaw layers.
  */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import { NOTIFICATION_CHANNEL } from "./const.js";
 
 /** Supported notification channel or messaging platform identifier. */

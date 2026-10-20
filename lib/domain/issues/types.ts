@@ -2,7 +2,7 @@
  * issues/types.ts — Runtime state for DevClaw-managed provider issues.
  */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import type { NotifyBindingRef } from "../notifications/index.js";
 import type { WorkerDeliveryState, WorkerRunIdentity } from "../workers/index.js";
 import type { ReviewPolicy, TestPolicy, TransitionAction } from "../workflow/index.js";

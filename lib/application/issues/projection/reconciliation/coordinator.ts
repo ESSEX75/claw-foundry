@@ -2,8 +2,8 @@
 
 import { log as auditLog } from "../../../../audit.js";
 import { getStateLabels, ISSUE_INTEGRITY_STATUS, type IssueProjectionState, UNVERIFIED_INTEGRITY_ERROR, type WorkflowConfig } from "../../../../domain/index.js";
-import { getErrorMessage } from "../../../../errors/index.js";
 import { diffIssueProjection } from "../../../../projection/index.js";
+import { getErrorMessage } from "../../../../shared/errors/index.js";
 import { readIssueStateStore, updateIssueStateStore, withIssueOrchestrationLock } from "../../../../state/index.js";
 import { applyManagedLabelDiff } from "./apply.js";
 import { PROJECTION_EVENT, PROJECTION_FAILURE_PREFIX } from "./const.js";

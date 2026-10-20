@@ -7,7 +7,7 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { hasErrorCode } from "../../errors/index.js";
+import { hasErrorCode } from "../../shared/errors/index.js";
 import { LOCK_CLAIM_SUFFIX, LOCK_RECORD_EXTENSION } from "./const.js";
 import type { FileLockOptions, FileLockRecord } from "./types.js";
 

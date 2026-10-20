@@ -101,7 +101,7 @@ Denied empty-directory removal (EPERM/EACCES, including Windows handle races) do
 not authorize acquisition. Acquisition backs off until removal succeeds or its timeout
 expires. After release has removed its exact token, cleanup may leave an ownerless
 empty directory for the next acquisition to remove; other ownership evidence remains
-untouched. EPERM/EACCES while reading a marker also permits only bounded waiting,
+untouched. EPERM/EACCES while enumerating ownership or reading a marker permits only bounded waiting,
 never acquisition or recovery without validated ownership. Invalid marker contents
 and errors removing the ownership token stay strict.
 

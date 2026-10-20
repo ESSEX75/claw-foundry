@@ -9,7 +9,7 @@ import { createProvider, isProviderIssueLookupError } from "../../../../integrat
 import { seedIssueRuntimeState } from "../../../../testing/index.js";
 import { readIssueArchiveStore, readIssueStateStore } from "../../../../state/index.js";
 import { renderIssueMetadata } from "../../../../projection/index.js";
-import { TestProvider } from "../../../../testing/test-provider.js";
+import { TestProvider } from "../../../../testing/index.js";
 import { ACTION, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, WORKFLOW_EVENT, type Project } from "../../../../domain/index.js";
 import { DEFAULT_WORKFLOW } from "../../../../domain/index.js";
 import { projectionIntegrityPass } from "../../../issues/projection/index.js";

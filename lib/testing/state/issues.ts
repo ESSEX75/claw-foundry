@@ -2,10 +2,11 @@
  * Seeds validated DevClaw stores through their locked public update boundaries for tests.
  */
 
-import { initializeIssueRuntimeState, type IssueStateInitializeInput, writeIssueRuntimeState } from "../application/index.js";
-import { type ActiveIssueWorker, emptySlot, type IssueRuntimeState, STATE_TYPE } from "../domain/index.js";
-import type { IssueArchiveStore, IssueStateStore } from "../state/index.js";
-import { getRoleWorker, loadConfig, readIssueStateStore, updateIssueArchiveStore, updateIssueRuntimeRecord, updateIssueStateStore, updateProjects } from "../state/index.js";
+import { initializeIssueRuntimeState, type IssueStateInitializeInput, writeIssueRuntimeState } from "../../application/index.js";
+import { type ActiveIssueWorker, emptySlot, type IssueRuntimeState, STATE_TYPE } from "../../domain/index.js";
+import type { IssueArchiveStore, IssueStateStore } from "../../state/index.js";
+import { getRoleWorker, loadConfig, readIssueStateStore, updateIssueArchiveStore, updateIssueRuntimeRecord, updateIssueStateStore, updateProjects } from "../../state/index.js";
+import { PREFERRED_WORKER_LEVEL, WORKER_SESSION_PREFIX } from "./const.js";
 
 /**
  * Build an empty active issue store for one test project.
@@ -71,7 +72,7 @@ export async function bindWorkerForTesting(workspaceDir: string, projectSlug: st
   if (active?.type !== STATE_TYPE.ACTIVE || active.label !== state.workflowLabel) throw new Error("Worker fixtures require an exact configured active state.");
   const role = active.role;
   const level = state.assignedRole === role && state.assignedLevel ? state.assignedLevel
-    : config.roles[role]?.levels.medior ? "medior" : Object.keys(config.roles[role]?.levels ?? {})[0];
+    : config.roles[role]?.levels[PREFERRED_WORKER_LEVEL] ? PREFERRED_WORKER_LEVEL : Object.keys(config.roles[role]?.levels ?? {})[0];
 
   if (!level) throw new Error("Worker fixture role has no configured levels.");
   const worker = await updateProjects(workspaceDir, current => {
@@ -84,7 +85,7 @@ export async function bindWorkerForTesting(workspaceDir: string, projectSlug: st
     const occupied = slots.findIndex(slot => slot.issueId === issueId);
     const slotIndex = occupied >= 0 ? occupied : slots.length;
     const slot = slots[slotIndex] ?? emptySlot();
-    const selected = { ...slot, active: true, issueId, sessionKey: slot.sessionKey ?? `fixture:${projectSlug}:${role}:${issueId}`,
+    const selected = { ...slot, active: true, issueId, sessionKey: slot.sessionKey ?? `${WORKER_SESSION_PREFIX}:${projectSlug}:${role}:${issueId}`,
       startTime: slot.startTime ?? new Date().toISOString() };
 
     slots[slotIndex] = selected;

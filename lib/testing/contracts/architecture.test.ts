@@ -1,7 +1,7 @@
 /** Verifies package ownership and adapter dependency boundaries across POSIX and Windows paths. */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkSharedApiBoundary, checkToolsApiBoundary } from "../../scripts/architecture-rules.js";
+import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkSharedApiBoundary, checkToolsApiBoundary } from "../../../scripts/architecture-rules.js";
 
 it("keeps shared primitives independent and enforces their capability APIs on both platforms", () => {
   for (const separator of ["/", "\\"]) {

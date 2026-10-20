@@ -3,22 +3,22 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
 
-import type { RunCommand } from "../context.js";
-import { GitHubProvider } from "../integrations/index.js";
-import { GitLabProvider } from "../integrations/index.js";
-import { isProviderOperationError } from "../integrations/index.js";
+import type { RunCommand } from "../../../context.js";
+import { isProviderOperationError } from "../../../integrations/index.js";
+import { completedCommand } from "../../commands/index.js";
+import type { ScenarioProvider } from "./types.js";
 
 /** Register single-submission and confirmed-identity scenarios for issue comments.
  * @param Provider - Concrete facade whose public behavior is exercised.
  */
-export function registerCommentCreationTests(Provider: typeof GitHubProvider | typeof GitLabProvider): void {
+export function registerCommentCreationTests(Provider: ScenarioProvider): void {
   it(`${Provider.name} never replays a comment after a lost response`, async () => {
     let submissions = 0;
     const runCommand: RunCommand = async () => {
       submissions++;
       if (submissions === 1) throw new Error("timeout after server created comment");
 
-      return { stdout: '{"id":7}', stderr: "", code: 0, signal: null, killed: false, termination: "exit" };
+      return completedCommand('{"id":7}');
     };
     const provider = new Provider({ repoPath: ".", runCommand });
 
@@ -32,7 +32,7 @@ export function registerCommentCreationTests(Provider: typeof GitHubProvider | t
       const runCommand: RunCommand = async () => {
         submissions++;
 
-        return { stdout, stderr: "", code: 0, signal: null, killed: false, termination: "exit" };
+        return completedCommand(stdout);
       };
       const provider = new Provider({ repoPath: ".", runCommand });
 
@@ -47,7 +47,7 @@ export function registerCommentCreationTests(Provider: typeof GitHubProvider | t
     const runCommand: RunCommand = async argv => {
       calls.push([...argv]);
 
-      return { stdout: '{"id":7}', stderr: "", code: 0, signal: null, killed: false, termination: "exit" };
+      return completedCommand('{"id":7}');
     };
 
     assert.equal(await new Provider({ repoPath: ".", runCommand }).addComment(42, "feedback"), 7);

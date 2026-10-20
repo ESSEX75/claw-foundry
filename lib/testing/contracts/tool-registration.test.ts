@@ -3,8 +3,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { z } from "zod";
-import type { PluginContext } from "../context.js";
-import { toolRegistry } from "../tools/index.js";
+import type { PluginContext } from "../../context.js";
+import { toolRegistry } from "../../tools/index.js";
 
 /** Stable public tool names consumed by installed OpenClaw configurations. */
 const EXPECTED_NAMES = [

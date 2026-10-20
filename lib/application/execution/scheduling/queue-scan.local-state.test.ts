@@ -6,7 +6,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { createEmptyIssueStateStoreForTesting as emptyIssueStateStore, replaceIssueStateStoreForTesting as writeIssueStateStore } from "../../../testing/index.js";
-import { TestProvider } from "../../../testing/test-provider.js";
+import { TestProvider } from "../../../testing/index.js";
 import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "../../../domain/index.js";
 import { DEFAULT_WORKFLOW } from "../../../domain/index.js";
 import { findNextIssueForRole } from "./scan.js";

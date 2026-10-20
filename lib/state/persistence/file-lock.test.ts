@@ -83,6 +83,29 @@ describe("withFileLock", () => {
   });
 
   for (const code of ["EPERM", "EACCES"]) {
+    it(`preserves a live owner and waits when directory enumeration returns ${code}`, async t => {
+      const lockPath = await createLockPath();
+      const readdir = fs.readdir.bind(fs);
+      let entered = false;
+
+      await withFileLock(lockPath, LOCK_OPTIONS, async () => {
+        const originalEntries = await readdir(lockPath);
+        const deniedRead = t.mock.method(fs, "readdir", async (target: string) => {
+          if (target === lockPath) throw Object.assign(new Error("directory enumeration denied"), { code });
+          return readdir(target);
+        });
+
+        try {
+          await assert.rejects(withFileLock(lockPath, { retryMs: 5, staleMs: 0, timeoutMs: 40 }, () => { entered = true; }), /Timed out/);
+          assert.equal(entered, false);
+          assert.deepEqual(await readdir(lockPath), originalEntries);
+        } finally {
+          deniedRead.mock.restore();
+        }
+      });
+      assert.equal(await withFileLock(lockPath, LOCK_OPTIONS, () => "recovered"), "recovered");
+    });
+
     it(`waits without entering or removing ownership when marker reads return ${code}`, async t => {
       const lockPath = await createLockPath();
       const readFile = fs.readFile.bind(fs);

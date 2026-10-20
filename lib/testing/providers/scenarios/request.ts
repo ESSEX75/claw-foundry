@@ -3,10 +3,11 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
 
-import type { RunCommand } from "../context.js";
-import { GitHubProvider } from "../integrations/index.js";
-import { GitLabProvider } from "../integrations/index.js";
-import { PR_STATE } from "../integrations/index.js";
+import type { RunCommand } from "../../../context.js";
+import { GitHubProvider } from "../../../integrations/index.js";
+import { PR_STATE } from "../../../integrations/index.js";
+import { completedCommand } from "../../commands/index.js";
+import type { ScenarioProvider } from "./types.js";
 
 /** Construct complete GitHub PR observations without overriding private adapter methods.
  * @param number - Provider PR identity.
@@ -44,14 +45,14 @@ export function createPullRequestTransport(rows: ReturnType<typeof createPullReq
     else if (argv[1] === "pr" || argv[1] === "mr") stdout = argv[2] === "diff" ? `diff ${argv[3]}` : "";
     const paginated = argv.includes("--slurp") && endpoint !== "graphql";
 
-    return { stdout: stdout ?? JSON.stringify(paginated ? [data] : data), stderr: "", code: 0, signal: null, killed: false, termination: "exit" };
+    return completedCommand(stdout ?? JSON.stringify(paginated ? [data] : data));
   };
 }
 
 /** Register consistent PR/MR selection across status, feedback, diff, and merge.
  * @param Provider - Concrete facade whose public behavior is exercised.
  */
-export function registerPullRequestSelectionTests(Provider: typeof GitHubProvider | typeof GitLabProvider): void {
+export function registerPullRequestSelectionTests(Provider: ScenarioProvider): void {
   it(`${Provider.name} distinguishes missing, closed and merged PRs`, async () => {
     for (const state of [undefined, "CLOSED", "MERGED"]) {
       const provider = new Provider({ repoPath: ".", runCommand: createPullRequestTransport(state ? [createPullRequestFixture(7, state)] : []) });

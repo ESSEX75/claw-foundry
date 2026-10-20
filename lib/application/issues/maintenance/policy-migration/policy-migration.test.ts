@@ -10,7 +10,7 @@ import {
   createEmptyIssueStateStoreForTesting as emptyIssueStateStore,
   replaceIssueStateStoreForTesting as writeIssueStateStore,
 } from "../../../../testing/index.js";
-import { TestProvider } from "../../../../testing/test-provider.js";
+import { TestProvider } from "../../../../testing/index.js";
 import { migrateIssuePolicies } from "./command.js";
 
 /** Build a local issue ready for policy migration tests.

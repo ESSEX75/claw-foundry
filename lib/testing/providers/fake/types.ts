@@ -1,6 +1,21 @@
 /** Owns provider fake call records used by behavioral tests; mirrors supported external capability payloads. */
 
-import type { CreateIssueInput, StateLabel } from "../integrations/index.js";
+import type { CreateIssueInput, Issue, IssueProvider, StateLabel } from "../../../integrations/index.js";
+
+/** Explicit fake issue identity plus optional provider snapshot fields. */
+export type IssueSeed = Partial<Issue> & Pick<Issue, "iid">;
+
+/** List filter contract inherited directly from the production provider boundary. */
+export type IssueListOptions = NonNullable<Parameters<IssueProvider["listIssues"]>[0]>;
+
+/** Supported issue edits inherited from the production provider boundary. */
+export type IssueUpdates = Parameters<IssueProvider["editIssue"]>[1];
+
+/** Attachment payload contract inherited from the production provider boundary. */
+export type AttachmentUpload = Parameters<IssueProvider["uploadAttachment"]>[1];
+
+/** Narrowed invocation evidence selected by its actual provider method. */
+export type ProviderCallFor<M extends ProviderCall["method"]> = Extract<ProviderCall, { method: M }>;
 
 /** Recorded ensureLabel capability invocation, independent of workflow selection. */
 type EnsureLabelCall = {
@@ -186,6 +201,8 @@ type GetPrDiffCall = {
   args: {
     /** Provider-local issue identity whose effect or observation is recorded. */
     issueId: number;
+    /** Exact observed request supplied by the caller. */
+    prUrl?: string;
   };
 };
 
@@ -197,6 +214,8 @@ type GetPrReviewCommentsCall = {
   args: {
     /** Provider-local issue identity whose effect or observation is recorded. */
     issueId: number;
+    /** Exact observed request supplied by the caller. */
+    prUrl?: string;
   };
 };
 

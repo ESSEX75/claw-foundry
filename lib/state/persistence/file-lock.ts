@@ -116,7 +116,16 @@ async function recoverAbandonedLock(lockPath: string, staleMs: number): Promise<
       throw new Error(`State lock requires operator repair (expected an ownership directory): ${lockPath}`);
     }
 
-    const entries = await fs.readdir(lockPath);
+    let entries: string[];
+
+    try {
+      entries = await fs.readdir(lockPath);
+    } catch (error) {
+      // Windows can deny enumerating a directory while its owner is removing it.
+      // No readable entries means no permission to recover or acquire ownership.
+      if (hasErrorCode(error) && ["EPERM", "EACCES"].includes(error.code)) return false;
+      throw error;
+    }
 
     if (entries.length === 0) {
       return await removeEmptyDirectory(lockPath);

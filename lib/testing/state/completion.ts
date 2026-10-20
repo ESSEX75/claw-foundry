@@ -1,7 +1,7 @@
 /** Captures explicit fixture ownership before exercising the real completion use case. */
 
-import { type CompletionInput, executeCompletion } from "../application/index.js";
-import { readIssueStateStore } from "../state/index.js";
+import { type CompletionInput, executeCompletion } from "../../application/index.js";
+import { readIssueStateStore } from "../../state/index.js";
 
 /** Fixture callers may capture current ownership or supply an earlier exact frame for races. */
 type CompletionFixtureInput = Omit<CompletionInput, "expectedWorker"> & Partial<Pick<CompletionInput, "expectedWorker">>;

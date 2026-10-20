@@ -13,7 +13,7 @@ import {
   replaceIssueArchiveStoreForTesting as writeIssueArchiveStore,
   replaceIssueStateStoreForTesting as writeIssueStateStore,
 } from "../../../../testing/index.js";
-import { TestProvider } from "../../../../testing/test-provider.js";
+import { TestProvider } from "../../../../testing/index.js";
 import { deleteManagedIssue } from "../deletion/index.js";
 import { archiveManagedIssue } from "./command.js";
 import { getIssueArchiveStatus } from "./queries.js";

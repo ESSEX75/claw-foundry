@@ -3,14 +3,15 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
 
-import type { ProviderAdapterOptions } from "../integrations/index.js";
-import { GitHubProvider } from "../integrations/index.js";
-import { GitLabProvider } from "../integrations/index.js";
+import type { ProviderAdapterOptions } from "../../../integrations/index.js";
+import { GitHubProvider } from "../../../integrations/index.js";
+import { completedCommand } from "../../commands/index.js";
+import type { ScenarioProvider } from "./types.js";
 
 /** Register facade ownership checks against mutation of caller dependencies.
  * @param Provider - Concrete facade whose public behavior is exercised.
  */
-export function registerProviderCompositionTests(Provider: typeof GitHubProvider | typeof GitLabProvider): void {
+export function registerProviderCompositionTests(Provider: ScenarioProvider): void {
   it(`${Provider.name} retains its repository and transport snapshot after caller options change`, async () => {
     let originalCalls = 0;
     let replacementCalls = 0;
@@ -21,7 +22,7 @@ export function registerProviderCompositionTests(Provider: typeof GitHubProvider
         ? { number: 1, title: "Original", body: "", labels: [], state: "OPEN", url: "https://github.test/team/repo/issues/1" }
         : { iid: 1, title: "Original", description: "", labels: [], state: "opened", web_url: "https://gitlab.test/team/repo/issues/1" });
 
-      return { stdout, stderr: "", code: 0, signal: null, killed: false, termination: "exit" };
+      return completedCommand(stdout);
     } };
     const provider = new Provider(options);
 

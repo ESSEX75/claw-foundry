@@ -7,7 +7,7 @@ import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, type Issu
 import { extractIssueMetadata, renderIssueMetadata } from "../../../projection/index.js";
 import { readIssueStateStore } from "../../../state/index.js";
 import { createTestHarness, createEmptyIssueStateStoreForTesting as emptyIssueStateStore, replaceIssueStateStoreForTesting as writeIssueStateStore } from "../../../testing/index.js";
-import { TestProvider } from "../../../testing/test-provider.js";
+import { TestProvider } from "../../../testing/index.js";
 import { ISSUE_REPAIR_ERROR, ISSUE_REPAIR_SOURCE, isIssueRepairFailure, repairManagedIssue } from "./repair/index.js";
 
 /** Build authoritative runtime state with explicit test overrides.

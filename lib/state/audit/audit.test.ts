@@ -9,7 +9,7 @@ import { it } from "node:test";
 import { log } from "../index.js";
 import { DATA_DIR, LOG_DIRECTORY_NAME } from "../paths.js";
 import { LOCK_FILE_SUFFIX } from "../persistence/index.js";
-import { AUDIT_FILE_NAME, MAX_AUDIT_RECORDS } from "./const.js";
+import { AUDIT_FILE_NAME } from "./const.js";
 import type { AuditEntry } from "./types.js";
 
 /** Validate records read from disk rather than asserting an untrusted JSON shape.
@@ -58,7 +58,7 @@ it("creates the existing journal location and reserves timestamp and event ident
   assert.deepEqual(await fs.readdir(path.dirname(file)), [AUDIT_FILE_NAME]);
 });
 
-it("retains the latest 50 records when publishing into an oversized journal", async t => {
+it("preserves existing records beyond the former 50-line limit", async t => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
@@ -67,12 +67,12 @@ it("retains the latest 50 records when publishing into an oversized journal", as
   await log(workspace, "new", {});
   const records = await entries(file);
 
-  assert.equal(records.length, MAX_AUDIT_RECORDS);
-  assert.deepEqual(records.slice(0, -1).map(entry => entry.sequence), Array.from({ length: 49 }, (_, index) => index + 6));
+  assert.equal(records.length, 56);
+  assert.deepEqual(records.slice(0, -1).map(entry => entry.sequence), Array.from({ length: 55 }, (_, index) => index));
   assert.equal(records.at(-1)?.event, "new");
 });
 
-it("preserves concurrent new records while expiring only the oldest retained records", async t => {
+it("preserves every concurrent record below the byte rotation limit", async t => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
@@ -81,9 +81,9 @@ it("preserves concurrent new records while expiring only the oldest retained rec
   await Promise.all(Array.from({ length: 20 }, (_, sequence) => log(workspace, "parallel", { sequence })));
   const records = await entries(file);
 
-  assert.equal(records.length, 50);
+  assert.equal(records.length, 65);
   assert.deepEqual(new Set(records.filter(entry => entry.event === "parallel").map(entry => entry.sequence)), new Set(Array.from({ length: 20 }, (_, i) => i)));
-  assert.deepEqual(records.filter(entry => entry.event === "seed").map(entry => entry.sequence), Array.from({ length: 30 }, (_, i) => i + 15));
+  assert.deepEqual(records.filter(entry => entry.event === "seed").map(entry => entry.sequence), Array.from({ length: 45 }, (_, i) => i));
   assert.deepEqual(await fs.readdir(path.dirname(file)), [AUDIT_FILE_NAME]);
 });
 

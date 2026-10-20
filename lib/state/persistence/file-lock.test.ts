@@ -82,6 +82,84 @@ describe("withFileLock", () => {
     assert.deepEqual(await fs.readdir(path.dirname(lockPath)), []);
   });
 
+  for (const code of ["EPERM", "EACCES"]) {
+    it(`waits without entering or removing ownership when marker reads return ${code}`, async t => {
+      const lockPath = await createLockPath();
+      const readFile = fs.readFile.bind(fs);
+      let attempts = 0;
+      let entered = false;
+
+      await withFileLock(lockPath, LOCK_OPTIONS, async () => {
+        const originalEntries = await fs.readdir(lockPath);
+        const deniedRead = t.mock.method(fs, "readFile", async (...args: Parameters<typeof fs.readFile>) => {
+          if (args[0] === path.join(lockPath, originalEntries[0]!)) {
+            attempts++;
+            throw Object.assign(new Error("marker access denied"), { code });
+          }
+          return readFile(...args);
+        });
+
+        try {
+          await assert.rejects(withFileLock(lockPath, { retryMs: 5, staleMs: 0, timeoutMs: 40 }, () => { entered = true; }), /Timed out/);
+          assert.ok(attempts > 1);
+          assert.equal(entered, false);
+          assert.deepEqual(await fs.readdir(lockPath), originalEntries);
+        } finally {
+          deniedRead.mock.restore();
+        }
+      });
+      assert.equal(await withFileLock(lockPath, LOCK_OPTIONS, () => "recovered"), "recovered");
+    });
+  }
+
+  it("backs off and retries denied removal of an empty ownership directory", async t => {
+    const lockPath = await createLockPath();
+    const rmdir = fs.rmdir.bind(fs);
+    let denied = false;
+
+    await fs.mkdir(lockPath);
+    t.mock.method(fs, "rmdir", async (target: string) => {
+      if (target === lockPath && !denied) {
+        denied = true;
+        throw Object.assign(new Error("directory handle still open"), { code: "EPERM" });
+      }
+      return rmdir(target);
+    });
+    assert.equal(await withFileLock(lockPath, LOCK_OPTIONS, () => "acquired"), "acquired");
+    assert.equal(denied, true);
+    assert.deepEqual(await fs.readdir(path.dirname(lockPath)), []);
+  });
+
+  it("does not enter the operation when an empty lock directory remains inaccessible", async t => {
+    const lockPath = await createLockPath();
+    const rmdir = fs.rmdir.bind(fs);
+    let entered = false;
+
+    await fs.mkdir(lockPath);
+    t.mock.method(fs, "rmdir", async (target: string) => {
+      if (target === lockPath) throw Object.assign(new Error("access denied"), { code: "EACCES" });
+      return rmdir(target);
+    });
+    await assert.rejects(withFileLock(lockPath, { retryMs: 5, staleMs: 0, timeoutMs: 30 }, () => { entered = true; }), /Timed out/);
+    assert.equal(entered, false);
+    assert.deepEqual(await fs.readdir(lockPath), []);
+  });
+
+  it("defers empty-directory cleanup after releasing its token and allows a later acquisition", async t => {
+    const lockPath = await createLockPath();
+    const rmdir = fs.rmdir.bind(fs);
+    const failure = t.mock.method(fs, "rmdir", async (target: string) => {
+      if (target === lockPath) throw Object.assign(new Error("directory handle still open"), { code: "EPERM" });
+      return rmdir(target);
+    });
+
+    assert.equal(await withFileLock(lockPath, LOCK_OPTIONS, () => "committed"), "committed");
+    assert.deepEqual(await fs.readdir(lockPath), []);
+    failure.mock.restore();
+    assert.equal(await withFileLock(lockPath, LOCK_OPTIONS, () => "next"), "next");
+    assert.deepEqual(await fs.readdir(path.dirname(lockPath)), []);
+  });
+
   it("recovers only a confirmed dead local owner", async t => {
     const lockPath = await createLockPath();
 

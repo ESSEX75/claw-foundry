@@ -1,4 +1,4 @@
-/** Verifies audit retention with independent processes before the main Node test runner starts. */
+/** Verifies audit rotation with independent processes before the main Node test runner starts. */
 
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
@@ -27,7 +27,7 @@ it("isolated audit writer", async () => {
 });
 `;
 
-/** Prove that both writers' new records survive retention in one shared journal. */
+/** Prove that both writers' records survive one byte-limit rotation of a shared journal. */
 export async function verifyAuditProcessWriters() {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-process-"));
   const actorFile = path.join(workspace, "actor.mjs");
@@ -35,9 +35,13 @@ export async function verifyAuditProcessWriters() {
 
   try {
     await fs.mkdir(path.dirname(file), { recursive: true });
-    await fs.writeFile(file, Array.from({ length: 45 }, (_, sequence) => JSON.stringify({
-      ts: "2026-10-20T00:00:00.000Z", event: "seed", sequence,
-    })).join("\n") + "\n");
+    const seed = { ts: "2026-10-20T00:00:00.000Z", event: "seed", padding: "" };
+    const overhead = Buffer.byteLength(JSON.stringify(seed) + "\n", "utf8");
+
+    seed.padding = "x".repeat(10 * 1024 * 1024 - overhead);
+    const original = JSON.stringify(seed) + "\n";
+
+    await fs.writeFile(file, original);
     await fs.writeFile(actorFile, ACTOR_SOURCE);
     const outcomes = await Promise.allSettled([runActor(actorFile, workspace, "first"), runActor(actorFile, workspace, "second")]);
 
@@ -45,7 +49,7 @@ export async function verifyAuditProcessWriters() {
     const records = (await fs.readFile(file, "utf8")).trim().split("\n");
     const identities = new Set();
 
-    assert.equal(records.length, 50);
+    assert.equal(records.length, 10);
     for (const line of records) {
       const value = JSON.parse(line);
 
@@ -55,8 +59,10 @@ export async function verifyAuditProcessWriters() {
       assert.equal(typeof value.sequence, "number");
       identities.add(`${value.actor}:${value.sequence}`);
     }
+
     assert.deepEqual(identities, new Set(["first", "second"].flatMap(actor => Array.from({ length: 5 }, (_, sequence) => `${actor}:${sequence}`))));
-    assert.deepEqual(await fs.readdir(path.dirname(file)), ["audit.log"]);
+    assert.equal(await fs.readFile(path.join(path.dirname(file), "audit.0000000000000001.log"), "utf8"), original);
+    assert.deepEqual((await fs.readdir(path.dirname(file))).sort(), ["audit.0000000000000001.log", "audit.log"]);
   } finally {
     await fs.rm(workspace, { recursive: true, force: true });
   }
@@ -76,5 +82,5 @@ async function runActor(file, workspace, actor) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   await verifyAuditProcessWriters();
-  console.log("Audit process checks passed (concurrent retention).");
+  console.log("Audit process checks passed (concurrent rotation).");
 }

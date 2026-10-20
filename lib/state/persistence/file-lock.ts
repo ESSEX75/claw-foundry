@@ -119,9 +119,7 @@ async function recoverAbandonedLock(lockPath: string, staleMs: number): Promise<
     const entries = await fs.readdir(lockPath);
 
     if (entries.length === 0) {
-      await removeEmptyDirectory(lockPath);
-
-      return true;
+      return await removeEmptyDirectory(lockPath);
     }
 
     if (entries.length !== 1) throw new Error(`Invalid state lock ownership directory: ${lockPath}`);
@@ -130,7 +128,18 @@ async function recoverAbandonedLock(lockPath: string, staleMs: number): Promise<
     const marker = await fs.lstat(entryPath);
 
     if (marker.isSymbolicLink() || !marker.isFile()) throw new Error(`Invalid state lock marker: ${entryPath}`);
-    const raw: unknown = JSON.parse(await fs.readFile(entryPath, "utf-8"));
+    let content: string;
+
+    try {
+      content = await fs.readFile(entryPath, "utf-8");
+    } catch (error) {
+      // Windows can deny opening a marker while its owner is deleting it.
+      // Unreadable ownership permits waiting only, never recovery or acquisition.
+      if (hasErrorCode(error) && ["EPERM", "EACCES"].includes(error.code)) return false;
+      throw error;
+    }
+
+    const raw: unknown = JSON.parse(content);
     const record = FileLockRecordSchema.parse(raw);
 
     if (entry !== `${record.token}${LOCK_RECORD_EXTENSION}`) throw new Error(`State lock token mismatch: ${lockPath}`);
@@ -174,14 +183,20 @@ async function removeOwnership(lockPath: string, token: string): Promise<void> {
 }
 
 /**
- * Leave replacement ownership intact even after delayed recovery.
+ * Remove an empty directory without touching replacement ownership. A denied or
+ * contended removal returns false so acquisition retries with its normal backoff;
+ * release may leave an ownerless directory after its unique marker is removed.
  * @param directory - Directory which may already have disappeared or been republished.
  */
-async function removeEmptyDirectory(directory: string): Promise<void> {
+async function removeEmptyDirectory(directory: string): Promise<boolean> {
   try {
     await fs.rmdir(directory);
+
+    return true;
   } catch (error) {
-    if (!hasErrorCode(error) || !["ENOENT", "ENOTEMPTY", "EEXIST"].includes(error.code)) throw error;
+    if (hasErrorCode(error, "ENOENT")) return true;
+    if (hasErrorCode(error) && ["ENOTEMPTY", "EEXIST", "EPERM", "EACCES"].includes(error.code)) return false;
+    throw error;
   }
 }
 

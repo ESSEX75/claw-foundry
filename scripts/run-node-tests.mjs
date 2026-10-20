@@ -8,13 +8,13 @@ import process from "node:process";
 import { run } from "node:test";
 import { spec } from "node:test/reporters";
 
-import { verifyStateProcessLocks } from "./state-lock-tests.mjs";
 import { verifyAuditProcessWriters } from "./audit-process-tests.mjs";
+import { verifyStateProcessLocks } from "./state-lock-tests.mjs";
 
 await verifyStateProcessLocks();
 console.log("State process-lock checks passed (contention, event-loop pause, owner exit).");
 await verifyAuditProcessWriters();
-console.log("Audit process checks passed (concurrent retention).");
+console.log("Audit process checks passed (concurrent rotation).");
 
 const root = process.cwd();
 const testFiles = [];

@@ -1,17 +1,18 @@
 /** Persists a bounded, best-effort diagnostic journal without controlling workflow recovery. */
 
-import fs from "node:fs/promises";
 import path from "node:path";
 
-import { hasErrorCode } from "../../shared/errors/index.js";
 import { DATA_DIR, LOG_DIRECTORY_NAME } from "../paths.js";
-import { FILESYSTEM_ERROR_CODE, LOCK_FILE_SUFFIX, STATE_TEXT_ENCODING, withFileLock, writeFileAtomic } from "../persistence/index.js";
-import { AUDIT_FILE_NAME, AUDIT_LOCK_OPTIONS, MAX_AUDIT_RECORDS } from "./const.js";
+import { LOCK_FILE_SUFFIX, withFileLock, writeFileAtomic } from "../persistence/index.js";
+import { AUDIT_FILE_NAME, AUDIT_LOCK_OPTIONS, MAX_AUDIT_BYTES } from "./const.js";
+import { readAuditText } from "./files.js";
+import { pruneAuditArchives, recoverAuditRotation, rotateAuditLog } from "./rotation.js";
 import type { AuditEntry } from "./types.js";
+import { reportAuditFailure } from "./warnings.js";
 
 /**
- * Add one diagnostic record and retain the latest 50 records under a process-owned lock.
- * Atomic publication preserves the prior journal if reading or replacement fails.
+ * Add one diagnostic record, rotating at 10 MiB and retaining five completed archives.
+ * Atomic publication and a persisted rotation plan preserve history across interrupted rotation.
  * All serialization, lock and filesystem failures are suppressed; resolution does not
  * prove persistence. Records are diagnostic only, never authoritative recovery evidence.
  * @param workspaceDir - Workspace owning the DevClaw diagnostic journal.
@@ -22,33 +23,27 @@ export async function log(workspaceDir: string, event: string, data: Record<stri
   try {
     const entry: AuditEntry = { ...data, ts: new Date().toISOString(), event };
 
-    if (typeof entry["toJSON"] === "function") return;
+    if (typeof entry["toJSON"] === "function") throw new Error("Custom root audit serializers are unsupported.");
     const serialized = JSON.stringify(entry);
+    const record = `${serialized}\n`;
+
+    if (Buffer.byteLength(record, "utf8") > MAX_AUDIT_BYTES) throw new Error("Audit record exceeds the 10 MiB byte limit.");
     const filePath = path.join(workspaceDir, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
     await withFileLock(`${filePath}${LOCK_FILE_SUFFIX}`, AUDIT_LOCK_OPTIONS, async () => {
-      const lines = await readAuditLines(filePath);
-      const retained = [...lines.slice(-(MAX_AUDIT_RECORDS - 1)), serialized];
+      await recoverAuditRotation(filePath);
+      const current = await readAuditText(filePath) ?? "";
+      const separator = current.length > 0 && !current.endsWith("\n") ? "\n" : "";
 
-      await writeFileAtomic(filePath, `${retained.join("\n")}\n`);
+      if (Buffer.byteLength(current + separator, "utf8") + Buffer.byteLength(record, "utf8") > MAX_AUDIT_BYTES) {
+        await rotateAuditLog(filePath, current, serialized);
+      } else {
+        await writeFileAtomic(filePath, current + separator + record);
+      }
+
+      await pruneAuditArchives(filePath);
     });
-  } catch {
-    // Diagnostics must not change the outcome of the operation being observed.
-  }
-}
-
-/**
- * Preserve existing records, treating only confirmed absence as an empty journal.
- * Other read failures abort publication rather than overwrite an unreadable journal.
- * @param filePath - Journal whose lock is already held by the caller.
- */
-async function readAuditLines(filePath: string): Promise<string[]> {
-  try {
-    const content = await fs.readFile(filePath, STATE_TEXT_ENCODING);
-
-    return content.split("\n").filter(line => line.length > 0);
   } catch (error) {
-    if (hasErrorCode(error, FILESYSTEM_ERROR_CODE.NOT_FOUND)) return [];
-    throw error;
+    reportAuditFailure(workspaceDir, event, error);
   }
 }

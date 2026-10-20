@@ -48,22 +48,47 @@ name belongs to state/paths because workspace initialization also creates it.
 Payloads with custom top-level JSON serializers are dropped rather than allowing
 the serializer to replace the diagnostic envelope.
 
-Read, append and retention are one process-owned locked update. Atomic replacement
-publishes at most the latest 50 nonempty records in commit order, preserving the
-prior journal if reading or publication fails. Only ENOENT permits starting an empty
-journal. All serialization, lock and filesystem errors are suppressed, including
-initial directory creation and cleanup. Successful promise resolution is not proof
-that a record was persisted. Contention can delay a call up to the configured lock
-wait; no logging operation invokes another state repository while holding this lock.
+Read, append, rotation and retention are one process-owned locked update. The active
+file admits complete UTF-8 records up to 10 MiB, with no record-count limit. Before
+the next record would exceed that limit, the complete current file becomes a numbered
+archive and the new record starts the active journal. Individual records larger than
+10 MiB are rejected with a warning, without altering history. Existing oversized logs
+are archived intact on the next accepted write, without splitting or truncating them.
+
+Five completed archives are retained alongside the active file. Canonical archives
+use increasing 16-digit sequences (audit.0000000000000001.log, etc.), independent of
+wall-clock ordering. Unrelated files are preserved; linked or malformed resources
+are never followed or deleted, and invalid UTF-8 is not normalized. Only ENOENT permits
+starting a new journal. Atomic replacement keeps the prior file intact if normal
+publication fails.
+
+Rotation first persists audit.rotation.json with the exact source digest, next archive
+sequence and replacement record. It atomically publishes the archive before replacing
+the active file. The next locked writer resumes this exact plan; source/archive drift
+or malformed intent blocks writes rather than guessing or overwriting history. Excess
+archives are removed only after the plan is settled. Interrupted cleanup may retain
+more than five archives until a later successful write retries it. An interrupted call
+can be persisted during recovery; no exactly-once receipt is promised to callers.
+Temporary copies and unpublished lock claims can increase transient disk use; unknown
+leftovers are not recursively deleted by archive retention.
+
+All serialization, lock, filesystem and logger errors remain non-fatal. Plugin
+composition injects the host logger through configureAuditWarnings; standalone callers
+use console.warn. Warning attempts are limited to one per minute per process, across
+all workspaces and failure kinds, without dumping payloads or writing back to this
+journal. Slow asynchronous sinks are not awaited and rejected sink promises are handled.
+Reconfiguration resets that window. Successful log resolution still
+does not prove persistence. Contention may wait up to the configured lock timeout;
+the audit lock never acquires another state repository's lock.
 
 The general journal is bounded diagnostic history, not an immutable append-only
 ledger and never authoritative state for issue ownership or recovery. The separate
 archive-retention journal retains its existing required-write and retention contract.
 Concurrent-write guarantees require cooperative writers using this API on the same
 host; old direct append/truncation writers must be stopped during upgrade.
-The full test command includes independent-process audit contention/retention checks
-before running the Node suites; audit tests also cover initialization, serialization,
-read/publication failure, retry and unknown lock evidence.
+The full test command includes independent-process audit contention/rotation checks
+before running the Node suites; audit tests also cover byte limits, archive retention,
+interrupted publication/recovery, warning throttling, retry and unknown lock evidence.
 
 ## Lock Ownership and Recovery
 
@@ -71,6 +96,14 @@ Locks are nonempty directories containing one immutable, uniquely named ownershi
 marker. A prepared sibling directory is renamed into place only after the marker
 has been written. Cleanup unlinks only the observed token and uses non-recursive
 `rmdir`; delayed cleanup cannot remove a replacement owner's nonempty directory.
+
+Denied empty-directory removal (EPERM/EACCES, including Windows handle races) does
+not authorize acquisition. Acquisition backs off until removal succeeds or its timeout
+expires. After release has removed its exact token, cleanup may leave an ownerless
+empty directory for the next acquisition to remove; other ownership evidence remains
+untouched. EPERM/EACCES while reading a marker also permits only bounded waiting,
+never acquisition or recovery without validated ownership. Invalid marker contents
+and errors removing the ownership token stay strict.
 
 Lock age only controls when to inspect process liveness. A live local process never
 expires, even after an event-loop pause. Recovery requires the same hostname and an

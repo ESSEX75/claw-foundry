@@ -4,11 +4,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { ATTACHMENT_DISPOSITION } from "../../../domain/index.js";
-import { purgeIssueAttachments } from "../../attachments/purge.js";
-import type { AttachmentPurgeManifestEntry } from "../../attachments/types.js";
+import type { AttachmentPurgeManifestEntry } from "../../attachments/cleanup/index.js";
+import { purgeIssueAttachments } from "../../attachments/cleanup/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
-import { parseProjectSlug } from "../../projects/schema.js";
-import { readIssueStateStore } from "../active/repository.js";
+import { parseProjectSlug } from "../../projects/index.js";
+import { readIssueStateStore } from "../active/index.js";
 import { ARCHIVE_RETENTION_AUDIT_FILE_NAME } from "../const.js";
 import { withIssueStoreLock } from "../persistence/index.js";
 import { issueArchiveKey } from "./identity.js";

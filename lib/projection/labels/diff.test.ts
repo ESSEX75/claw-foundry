@@ -3,7 +3,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, type IssueRuntimeState } from "../../domain/index.js";
+import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, REVIEW_POLICY, TEST_POLICY, type IssueRuntimeState } from "../../domain/index.js";
 import { isManagedLabel } from "./classification.js";
 import { diffIssueProjection } from "./diff.js";
 import { expectedManagedLabels } from "./render.js";
@@ -37,6 +37,28 @@ function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
 }
 
 describe("projection labels", () => {
+  it("renders every saved policy pair and diagnoses provider edits without mutating local truth", () => {
+    for (const reviewPolicy of Object.values(REVIEW_POLICY)) {
+      for (const testPolicy of Object.values(TEST_POLICY)) {
+        const local = state({ reviewPolicy, testPolicy });
+        const snapshot = structuredClone(local);
+        const labels = expectedManagedLabels(local);
+
+        assert.ok(labels.includes(`review:${reviewPolicy}`));
+        assert.ok(labels.includes(`test:${testPolicy}`));
+        assert.ok(labels.includes("owner:main"));
+        const options = { stateLabels: ["To Do", "Doing"], roles: ["developer"] };
+        const synchronized = diffIssueProjection({ state: local, actualLabels: labels, options });
+
+        assert.deepEqual(synchronized.missingManagedLabels, []);
+        assert.deepEqual(synchronized.unexpectedManagedLabels, []);
+        const drift = diffIssueProjection({ state: local, actualLabels: ["Doing", "review:manual"], options });
+
+        assert.ok(drift.missingManagedLabels.includes("To Do"));
+        assert.deepEqual(local, snapshot);
+      }
+    }
+  });
   it("preserves plugin-prefixed labels that have no configured or local meaning", () => {
     const local = state();
     const expected = expectedManagedLabels(local);

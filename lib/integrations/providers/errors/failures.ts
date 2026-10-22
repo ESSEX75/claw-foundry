@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { PROVIDER_ERROR_NAME, PROVIDER_HTTP_STATUS, PROVIDER_HTTP_STATUS_PATTERN, PROVIDER_OPERATION_ERROR } from "./const.js";
 import type { ProviderTransportFailure } from "./types.js";
 
@@ -31,7 +32,7 @@ export function normalizeProviderFailure(error: unknown): ProviderTransportFailu
     return { code: PROVIDER_OPERATION_ERROR.UNKNOWN, retryable: false, outcomeUnknown: true };
   }
 
-  const message = error instanceof Error ? error.message : String(error);
+  const message = getErrorMessage(error);
   const text = message.toLowerCase();
 
   if (/timeout|timed out|etimedout|network|dns|connection reset|econnreset|econnrefused|enotfound|eai_again|socket hang up|lost response/.test(text)) {

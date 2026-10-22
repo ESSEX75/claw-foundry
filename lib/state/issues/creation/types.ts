@@ -2,14 +2,23 @@
  * Defines persisted contracts for resumable managed-issue creation operations.
  */
 
-import type {
-  IssueCreationErrorCode,
-  IssueCreationStatus,
-  IssueProviderId,
-  NotifyBindingRef,
-  ReviewPolicy,
-  TestPolicy,
-} from "../../../domain/index.js";
+import type { IssueProviderId, NotifyBindingRef, ReviewPolicy, TestPolicy } from "../../../domain/index.js";
+import type { ValueOf } from "../../../shared/types.js";
+import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "./const.js";
+
+/** Stable identifiers allocated once when a creation intent is first persisted. */
+export type IssueCreationIdentity = {
+  /** Identity of the resumable creation operation. */
+  operationId: string;
+  /** Identity correlating audit observations, never an authority for runtime state. */
+  auditCorrelationId: string;
+};
+
+/** Durable stage of a resumable managed-issue creation operation. */
+export type IssueCreationStatus = ValueOf<typeof ISSUE_CREATION_STATUS>;
+
+/** Stable failure identifier persisted with a managed-issue creation operation. */
+export type IssueCreationErrorCode = ValueOf<typeof ISSUE_CREATION_ERROR>;
 
 /** Persisted input required to resume issue creation. */
 type IssueCreationInput = {

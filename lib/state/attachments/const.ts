@@ -13,6 +13,3 @@ export const ATTACHMENTS_LOCK_OPTIONS: FileLockOptions = { retryMs: 25, staleMs:
 
 /** Filename characters allowed in persisted attachment paths. */
 export const SAFE_ATTACHMENT_NAME = /^[a-zA-Z0-9._-]+$/;
-
-/** Integrity hash retained by cleanup audit callers. */
-export const ATTACHMENT_HASH_ALGORITHM = "sha256";

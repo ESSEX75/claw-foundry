@@ -9,7 +9,7 @@ export default defineConfig(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   {
-    ignores: ['dist/', 'node_modules/', 'coverage/', 'defaults/', '**/*.test.ts'],
+    ignores: ['dist/', 'node_modules/', 'coverage/', 'defaults/', '**/*.test.ts', 'scripts/'],
   },
   {
     files: ['**/*.ts', '**/*.js', '**/*.mjs'],

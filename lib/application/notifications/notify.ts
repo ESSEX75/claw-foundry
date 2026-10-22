@@ -4,7 +4,8 @@ import { randomUUID } from "node:crypto";
 
 import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import { deliverNotificationMessage, MESSAGE_DELIVERY_PATH } from "../../integrations/index.js";
-import { inspectProjectRoute } from "../setup/index.js";
+import { getErrorMessage } from "../../shared/errors/index.js";
+import { inspectProjectRoute } from "../projects/routing/index.js";
 import { auditNotificationOutcome } from "./audit.js";
 import { NOTIFICATION_AUDIT_OUTCOME, NOTIFICATION_BLOCK_REASON, NOTIFICATION_BLOCKED, NOTIFICATION_EVENT_TYPES } from "./const.js";
 import { renderNotificationMessage } from "./render.js";
@@ -51,7 +52,7 @@ export async function notify(event: NotifyEvent, opts: NotifyOptions): Promise<N
       return { status: NOTIFICATION_BLOCKED, delivered: false, reason: diagnostics.map((item) => item.message).join("; ") };
     }
   } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
+    const reason = getErrorMessage(error);
 
     await auditNotificationOutcome(opts.workspaceDir, event, {
       kind: NOTIFICATION_AUDIT_OUTCOME.CONFIGURATION_ERROR, reason, target: targetData,

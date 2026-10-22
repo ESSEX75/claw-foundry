@@ -3,7 +3,7 @@
  */
 
 import type { ArchivedIssueRecord } from "../../../domain/index.js";
-import type { AttachmentPurgeCheckpoint } from "../../attachments/types.js";
+import type { AttachmentPurgeCheckpoint } from "../../attachments/cleanup/index.js";
 
 /** Conditional cleanup request against the exact archive snapshot selected by application policy. */
 export type ArchiveRetentionMutation = {

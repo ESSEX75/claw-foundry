@@ -3,7 +3,7 @@
  */
 
 import type { SlotState, WorkerDeliveryState, WorkflowConfig } from "../../domain/index.js";
-import { emptySlot, findFreeSlot, findSlotByIssue, workerExecutionBlock } from "../../domain/index.js";
+import { emptySlot, findAvailableWorkerSlot, findSlotByIssue, releasedWorkerSlot, workerExecutionBlock } from "../../domain/index.js";
 import { updateProjects } from "./repository.js";
 import type { ProjectsData } from "./types.js";
 
@@ -119,11 +119,11 @@ export async function activateWorker(
 
     rw.levels[params.level] = slots;
 
-    const freeSlot = findFreeSlot(rw, params.level);
+    const capacity = params.maxWorkers ?? Math.max(slots.length, 1);
+    const freeSlot = findAvailableWorkerSlot(rw, params.level, capacity);
     const ownedSlot = slots.findIndex((slot) => slot.issueId === params.issueId);
     const idx = params.slotIndex
-      ?? (ownedSlot >= 0 ? ownedSlot : freeSlot)
-      ?? (slots.length === 0 ? 0 : null);
+      ?? (ownedSlot >= 0 ? ownedSlot : freeSlot);
 
     if (idx === null) {
       throw new Error(`No free ${role}:${params.level} worker slot exists for project ${projectSlug}.`);
@@ -145,6 +145,10 @@ export async function activateWorker(
       throw new Error(
         `Worker slot ${role}:${params.level}:${idx} is already assigned to issue #${currentSlot.issueId ?? "unknown"}.`,
       );
+    }
+
+    if (currentSlot.delivery) {
+      throw new Error(`Worker slot ${role}:${params.level}:${idx} has unresolved delivery evidence.`);
     }
 
     slots[idx] = {
@@ -213,15 +217,7 @@ export async function deactivateWorker(
           );
         }
 
-        slots[idx] = {
-          active: false,
-          issueId: null,
-          sessionKey: slot.sessionKey,
-          startTime: null,
-          previousLabel: null,
-          name: slot.name,
-          lastIssueId: slot.issueId,
-        };
+        slots[idx] = releasedWorkerSlot(slot, slot.issueId);
       }
     }
 

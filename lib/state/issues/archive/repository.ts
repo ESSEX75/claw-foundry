@@ -5,9 +5,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { getErrorMessage,hasErrorCode } from "../../../shared/errors/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
-import { isErrnoException, writeJsonAtomic } from "../../persistence/index.js";
-import { parseProjectSlug } from "../../projects/schema.js";
+import { writeJsonAtomic } from "../../persistence/index.js";
+import { parseProjectSlug } from "../../projects/index.js";
 import { ARCHIVED_ISSUES_FILE_NAME } from "../const.js";
 import { withIssueStoreLock } from "../persistence/index.js";
 import { parseIssueArchiveStore } from "./schema.js";
@@ -50,7 +51,7 @@ export async function readIssueArchiveStore(workspaceDir: string, projectSlug: s
   try {
     return parseIssueArchiveStore(JSON.parse(await fs.readFile(filePath, "utf-8")), projectSlug);
   } catch (error) {
-    if (!isErrnoException(error) || error.code !== "ENOENT") throw contextualStoreError(filePath, error);
+    if (!hasErrorCode(error, "ENOENT")) throw contextualStoreError(filePath, error);
 
     return emptyIssueArchiveStore(projectSlug);
   }
@@ -99,7 +100,7 @@ export async function updateIssueArchiveStore<T>(
  * @param error - Original filesystem, JSON, or schema failure.
  */
 function contextualStoreError(filePath: string, error: unknown): Error {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = getErrorMessage(error);
 
   return new Error(`Cannot read issue archive ${filePath}: ${message}`, { cause: error });
 }

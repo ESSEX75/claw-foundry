@@ -61,3 +61,15 @@ export type Project = {
   /** Worker state per role (developer, tester, architect, etc.). Shared across all channels. */
   workers: Record<string, RoleWorkerState>;
 };
+
+/** Project reservation observation; only issue runtime state can establish active ownership. */
+export type ProjectIssueReservation = {
+  /** Role containing the reservation. */
+  role: string;
+  /** Level containing the reservation. */
+  level: string;
+  /** Exact slot within the level. */
+  slotIndex: number;
+  /** Persisted reservation, including incomplete or inactive evidence. */
+  slot: SlotState;
+};

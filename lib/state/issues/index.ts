@@ -1,15 +1,7 @@
 /** Collects the supported issue persistence API for the root state entrypoint. */
 
-export type { IssueStateStore } from "./active/index.js";
-export {
-  reservePipelineNotification,
-  settlePipelineNotification,
-  updateIssueRuntimeRecord,
-  writeIssueRoleLevel,
-} from "./active/index.js";
-export { readIssueStateStore, updateIssueStateStore } from "./active/index.js";
-export type { IssueArchiveStore } from "./archive/index.js";
-export { applyArchiveRetention, archiveIssueState, readIssueArchiveStore, resetIssueStores, updateIssueArchiveStore } from "./archive/index.js";
+export * from "./active/index.js";
+export * from "./archive/index.js";
 export { PIPELINE_NOTIFICATION_ATTEMPT_LEASE_MS } from "./const.js";
 export * from "./creation/index.js";
-export { withIssueOrchestrationLock } from "./orchestration/index.js";
+export * from "./orchestration/index.js";

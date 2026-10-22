@@ -1,11 +1,16 @@
 /** Rechecks safely retryable terminal notifications while preserving uncertain delivery evidence. */
 
-import { log as auditLog } from "../../audit.js";
 import type { RunCommand } from "../../context.js";
 import { ISSUE_INTEGRITY_STATUS, PIPELINE_NOTIFICATION_STATUS, type Project } from "../../domain/index.js";
 import type { IssueReader } from "../../integrations/index.js";
 import { MESSAGE_DELIVERY_STATUS } from "../../integrations/index.js";
-import { PIPELINE_NOTIFICATION_ATTEMPT_LEASE_MS, readIssueStateStore, reservePipelineNotification } from "../../state/index.js";
+import { getErrorMessage } from "../../shared/errors/index.js";
+import {
+  log as auditLog,
+  PIPELINE_NOTIFICATION_ATTEMPT_LEASE_MS,
+  readIssueStateStore,
+  reservePipelineNotification,
+} from "../../state/index.js";
 import { NOTIFICATION_AUDIT, NOTIFICATION_BLOCK_REASON, NOTIFICATION_BLOCKED, NOTIFICATION_EVENT } from "./const.js";
 import { getNotificationConfig, notify } from "./notify.js";
 import { recordPipelineNotificationOutcome } from "./record-outcome.js";
@@ -81,7 +86,7 @@ export async function retryPendingPipelineNotifications(
     } catch (error) {
       // An unexpected orchestration exception is not proof that transport did not run.
       outcome = { status: deliveryStarted ? MESSAGE_DELIVERY_STATUS.UNKNOWN : NOTIFICATION_BLOCKED, delivered: false,
-        reason: error instanceof Error ? error.message : String(error) };
+        reason: getErrorMessage(error) };
     }
 
     try {
@@ -91,7 +96,7 @@ export async function retryPendingPipelineNotifications(
     } catch (error) {
       await auditLog(workspaceDir, NOTIFICATION_AUDIT.RETRY_FAILED, {
         projectSlug: project.slug, issueId: state.issueId, eventKey,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       }).catch(() => {});
     }
   }

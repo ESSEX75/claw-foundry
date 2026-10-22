@@ -68,6 +68,26 @@ function issue(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
 }
 
 describe("issue state store", () => {
+  it("rejects invalid notification timestamps on writes and preserves corrupt reads for explicit repair", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-invalid-time-"));
+    const filePath = issueStatePath(tmpDir, "devclaw");
+    const state = issue({ pipelineNotification: { eventKey: "done", status: "retryable", attemptedAt: "broken" } });
+
+    try {
+      await writeIssueStateStore(tmpDir, "devclaw", { projectSlug: "devclaw", issues: { "123": issue() } });
+      const previous = await fs.readFile(filePath, "utf8");
+
+      await assert.rejects(writeIssueStateStore(tmpDir, "devclaw", { projectSlug: "devclaw", issues: { "123": state } }), /attemptedAt/);
+      assert.equal(await fs.readFile(filePath, "utf8"), previous);
+      const corrupt = JSON.stringify({ projectSlug: "devclaw", issues: { "123": state } });
+
+      await fs.writeFile(filePath, corrupt);
+      await assert.rejects(reservePipelineNotification(tmpDir, "devclaw", 123, "done"), /Cannot read active issue store.*attemptedAt/s);
+      assert.equal(await fs.readFile(filePath, "utf8"), corrupt);
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+  });
   it("keeps a missing creation store in memory until a locked update persists it", async () => {
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issue-creations-"));
     const filePath = path.join(
@@ -372,6 +392,10 @@ describe("issue state store", () => {
       sourceSnapshotHash: "a".repeat(64),
     };
 
+    assert.throws(() => parseIssueArchiveStore({
+      projectSlug: "devclaw", issues: { "github:devclaw:123": { ...record, archivedAt: "invalid" } },
+    }, "devclaw"), /archivedAt/);
+
     assert.throws(
       () => parseIssueArchiveStore({
         projectSlug: "devclaw",
@@ -418,6 +442,10 @@ describe("issue state store", () => {
       attempts: 0,
       auditCorrelationId: "22222222-2222-4222-8222-222222222222",
     };
+
+    assert.throws(() => parseIssueCreationStore({
+      projectSlug: "devclaw", operations: { "request-123": { ...operation, retryAfter: "invalid" } },
+    }, "devclaw"), /retryAfter/);
 
     assert.throws(
       () => parseIssueCreationStore({

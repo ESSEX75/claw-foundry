@@ -11,6 +11,9 @@ import {
   type WorkflowConfig,
 } from "./index.js";
 
+/** Build a minimal completion graph with optional destination presentation metadata.
+ * @param targetDescription - Description used instead of the destination label when present.
+ */
 function createWorkflow(targetDescription?: string): WorkflowConfig {
   return {
     initial: "queued",

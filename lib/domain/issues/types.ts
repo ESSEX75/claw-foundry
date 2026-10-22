@@ -2,15 +2,13 @@
  * issues/types.ts — Runtime state for DevClaw-managed provider issues.
  */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import type { NotifyBindingRef } from "../notifications/index.js";
 import type { WorkerDeliveryState, WorkerRunIdentity } from "../workers/index.js";
 import type { ReviewPolicy, TestPolicy, TransitionAction } from "../workflow/index.js";
 import {
   ATTACHMENT_DISPOSITION,
   ISSUE_ARCHIVE_REASON,
-  ISSUE_CREATION_ERROR,
-  ISSUE_CREATION_STATUS,
   ISSUE_INTEGRITY_STATUS,
   ISSUE_PROVIDER,
   PIPELINE_NOTIFICATION_STATUS,
@@ -27,12 +25,6 @@ export type IssueArchiveReason = ValueOf<typeof ISSUE_ARCHIVE_REASON>;
 
 /** Retention state of files associated with an archived issue. */
 export type AttachmentDisposition = ValueOf<typeof ATTACHMENT_DISPOSITION>;
-
-/** Durable managed-issue creation stage. */
-export type IssueCreationStatus = ValueOf<typeof ISSUE_CREATION_STATUS>;
-
-/** Stable managed-issue creation failure code. */
-export type IssueCreationErrorCode = ValueOf<typeof ISSUE_CREATION_ERROR>;
 
 /** Consecutive provider-missing confirmations retained between heartbeat ticks. */
 export type ProviderMissingState = {
@@ -73,7 +65,7 @@ export type PendingReviewSummaryDelivery = {
   /** Immutable submission identity selected before the gateway turn. */
   operationId: string;
   /** Exact worker frame that owns this context, independent of reusable session identity alone. */
-  worker: Pick<ActiveIssueWorker, "role" | "level" | "slotIndex" | "sessionKey" | "startedAt">;
+  worker: WorkerRunIdentity;
   /** Full summary fingerprints included in that submission, never presumed delivered while pending. */
   receipts: ReviewSummaryReceipt[];
 };
@@ -132,7 +124,7 @@ export type IssueRuntimeState = IssueProjectionState & {
   assignedRole: string | null;
   /** Worker level currently assigned for the selected role. */
   assignedLevel: string | null;
-  /** User name of the currently assigned human owner. */
+  /** DevClaw instance identity owning this issue; independent of provider assignees. */
   owner: string | null;
   /** Override review policy for this issue. */
   reviewPolicy: ReviewPolicy | null;
@@ -190,4 +182,15 @@ export type ArchivedIssueRecord = {
   attachmentDisposition: AttachmentDisposition;
   /** SHA-256 of the active runtime snapshot used to create this record. */
   sourceSnapshotHash: string;
+};
+
+
+/** Provider-local issue reference shared by completion facts and their notifications. */
+export type CreatedIssueReference = {
+  /** Provider-local task issue identifier. */
+  id: number;
+  /** New task title. */
+  title: string;
+  /** Link to the task issue. */
+  url: string;
 };

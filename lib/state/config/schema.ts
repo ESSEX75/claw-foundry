@@ -15,7 +15,8 @@ import {
   type TransitionTarget,
   WORKFLOW_EVENT,
 } from "../../domain/index.js";
-import type { DevClawConfig } from "./types.js";
+import { DURATION_PATTERN } from "../../shared/duration/index.js";
+import type { DevClawConfig, LevelOverride } from "./types.js";
 
 /** Pattern accepted for configuration-owned identifiers. */
 const IDENTIFIER_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
@@ -179,7 +180,7 @@ const InstanceConfigSchema = z.object({
 }).strict().optional();
 
 /** Schema for bounded duration strings accepted by archive maintenance. */
-const DurationSchema = z.string().regex(/^\d+(?:ms|s|m|h|d)$/, "must be a duration such as 90d, 12h, or 0d");
+const DurationSchema = z.string().regex(DURATION_PATTERN, "must be a duration such as 90d, 12h, or 0d");
 
 /** Strict optional schema for archive retention and heartbeat limits. */
 const IssueArchiveMaintenanceSchema = z.object({
@@ -216,24 +217,12 @@ export function parseResolvedWorkflowConfig(workflow: unknown): WorkflowConfig {
   return ResolvedWorkflowConfigSchema.parse(workflow);
 }
 
-/** Minimal level contract required for cross-reference integrity validation. */
-type RoleIntegrityLevelInput = {
-  /** Relative capability rank that must be present and unique within the role. */
-  rank?: number;
-  /** Model identifier required for an active level. */
-  model?: string;
-  /** Optional concurrency override retained for structural compatibility. */
-  maxWorkers?: number;
-  /** Optional announcement emoji retained for structural compatibility. */
-  emoji?: string;
-};
-
 /** Role definitions accepted by post-merge integrity validation. */
 type RoleIntegrityInput = Record<string, false | {
   /** Whether orchestration may dispatch to the role. */
   enabled?: boolean;
   /** Complete or removed levels keyed by configured identifier. */
-  levels?: Readonly<Record<string, false | RoleIntegrityLevelInput>>;
+  levels?: Readonly<Record<string, false | LevelOverride>>;
   /** Level selected when no explicit complexity signal exists. */
   defaultLevel?: string;
   /** Completion results mapped to workflow events. */
@@ -263,7 +252,7 @@ export function validateRoleIntegrity(
       continue;
     }
 
-    const activeLevels: Array<[string, RoleIntegrityLevelInput]> = [];
+    const activeLevels: Array<[string, LevelOverride]> = [];
 
     for (const [level, definition] of Object.entries(role.levels ?? {})) {
       if (definition !== false) activeLevels.push([level, definition]);

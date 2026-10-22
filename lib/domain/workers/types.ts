@@ -1,6 +1,6 @@
 /** Shared issue and slot contract for an unresolved worker submission. */
 
-import type { ValueOf } from "../../types.js";
+import type { ValueOf } from "../../shared/types.js";
 import { WORKER_DELIVERY_STATUS, WORKER_SESSION_ACTION } from "./const.js";
 
 /** Durable evidence that a worker-turn submission has no confirmed outcome. */

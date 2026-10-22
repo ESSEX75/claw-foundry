@@ -2,19 +2,18 @@
  * Defines the built-in workflow state machine used as the base configuration layer.
  */
 
+import { DEFAULT_ROLES } from "../roles/index.js";
 import {
   ACTION,
-  DEFAULT_ROLES,
   EXECUTION_MODE,
   REVIEW_CHECK,
-  REVIEW_POLICY,
   STATE_TYPE,
-  TEST_POLICY,
   WORKFLOW_EVENT,
   WORKFLOW_STATE_COLORS,
   WORKFLOW_STATE_KEYS,
   WORKFLOW_STATE_LABELS,
 } from "./const.js";
+import { REVIEW_POLICY, TEST_POLICY } from "./routing/index.js";
 import type { BuiltInWorkflowConfig } from "./types.js";
 
 /** Built-in workflow graph inherited by workspace and project overrides. */

@@ -4,27 +4,51 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { DEFAULT_ROLES, type RoleDefinition, type RoleId } from "../roles/index.js";
 import {
-  DEFAULT_ROLES,
   DEFAULT_WORKFLOW,
   detectRoleFromLabel,
   findStateKeyByLabel,
   getActiveLabel,
   getCompletionRule,
+  getProjectedStateLabel,
   getRevertLabel,
+  hasTestPhase,
   STATE_TYPE,
   WORKFLOW_EVENT,
-  WORKFLOW_STATE_COLORS,
   WORKFLOW_STATE_KEYS,
   WORKFLOW_STATE_LABELS,
-  type RoleDefinition,
-  type RoleId,
   type BuiltInWorkflowConfig,
   type WorkflowDefinition,
   type WorkflowConfig,
   type WorkflowLabel,
   type WorkflowStateKey,
 } from "./index.js";
+import { WORKFLOW_STATE_COLORS } from "./const.js";
+
+describe("built-in test phase", () => {
+  it("recognizes tester queues and active states without inferring custom QA roles", () => {
+    for (const type of [STATE_TYPE.QUEUE, STATE_TYPE.ACTIVE]) {
+      const workflow: WorkflowConfig = { initial: "qa", states: {
+        qa: { type, role: "tester", label: "QA", color: "#111111" },
+      } };
+
+      assert.equal(hasTestPhase(workflow), true);
+      workflow.states.qa = { type, role: "security", label: "QA", color: "#111111" };
+      assert.equal(hasTestPhase(workflow), false);
+    }
+    assert.equal(hasTestPhase({ initial: "hold", states: {
+      hold: { type: STATE_TYPE.HOLD, label: "Hold", color: "#111111" },
+    } }), false);
+  });
+});
+
+describe("projected workflow labels", () => {
+  it("reports the first configured match without treating conflicting observations as local truth", () => {
+    assert.equal(getProjectedStateLabel(["Doing", "To Do"], DEFAULT_WORKFLOW), "To Do");
+    assert.equal(getProjectedStateLabel(["unmanaged"], DEFAULT_WORKFLOW), null);
+  });
+});
 
 describe("getRevertLabel", () => {
   it("matches an object-form PICKUP transition target", () => {

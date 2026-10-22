@@ -1,13 +1,12 @@
 /** Exposes supported workspace setup and instruction-loading capabilities to the state package. */
 
-export { scaffoldProjectOverrides } from "./project-overrides.js";
-export { loadRoleInstructions } from "./role-instructions.js";
-export type { DefaultsScope, RoleInstructionsResult } from "./types.js";
-export { writeWorkspaceModels } from "./workflow-models.js";
-export { readWorkflowDocuments, readWorkspaceAgentInstructions, resetWorkspaceConfiguration } from "./workspace-config.js";
+export type { DefaultsScope } from "./configuration/index.js";
 export {
-  initializeWorkspaceFiles,
-  refreshSystemInstructionFiles,
+  readWorkflowDocuments,
   resetDefaults,
-  scaffoldWorkspace,
-} from "./workspace-files.js";
+  resetWorkspaceConfiguration,
+  writeWorkspaceModels,
+} from "./configuration/index.js";
+export type { RoleInstructionsResult } from "./instructions/index.js";
+export { loadRoleInstructions, readWorkspaceAgentInstructions, refreshSystemInstructionFiles } from "./instructions/index.js";
+export { initializeWorkspaceFiles, scaffoldProjectOverrides, scaffoldWorkspace } from "./workspace/index.js";

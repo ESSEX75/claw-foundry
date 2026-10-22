@@ -13,9 +13,10 @@ import {
 } from "./lib/application/index.js";
 // Infrastructure
 import { registerCli } from "./lib/cli/index.js";
-import { DEVCLAW_PLUGIN_ID } from "./lib/const.js";
 import { createPluginContext } from "./lib/context.js";
 import { registerAttachmentHook, registerBootstrapHook } from "./lib/integrations/index.js";
+import { DEVCLAW_PLUGIN_ID } from "./lib/shared/const.js";
+import { configureAuditWarnings } from "./lib/state/index.js";
 import { toolRegistry } from "./lib/tools/index.js";
 
 const plugin = {
@@ -73,6 +74,8 @@ const plugin = {
    */
   register(api: OpenClawPluginApi) {
     const ctx = createPluginContext(api);
+
+    configureAuditWarnings(message => ctx.logger.warn(message));
 
     for (const entry of toolRegistry) {
       api.registerTool(entry.factory(ctx), { names: [...entry.names] });

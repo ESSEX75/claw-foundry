@@ -2,7 +2,7 @@
 
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { getCompletionEmoji, getCompletionRule } from "./completion.js";
+import { getCompletionRule } from "./completion.js";
 import { WORKFLOW_EVENT } from "./const.js";
 import { DEFAULT_WORKFLOW } from "./defaults.js";
 import { getActiveLabel, getQueueLabels, getStateLabels, hasWorkflowStates } from "./queries.js";
@@ -61,10 +61,6 @@ describe("architect workflow — To Research / Researching states", () => {
     assert.strictEqual(rule.to, "Refining");
   });
 
-  it("should still have completion emoji for architect results", () => {
-    assert.strictEqual(getCompletionEmoji("done"), "\u2705");
-    assert.strictEqual(getCompletionEmoji("blocked"), "\u{1f6ab}");
-  });
 
   it("should NOT have To Design or Designing in state labels", () => {
     const labels = new Set<string>(getStateLabels(DEFAULT_WORKFLOW));

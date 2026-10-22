@@ -1,6 +1,6 @@
 /** Owns normalized failure evidence and typed provider operation/lookup error contracts. */
 
-import type { ValueOf } from "../../../types.js";
+import type { ValueOf } from "../../../shared/types.js";
 import type { PROVIDER_ISSUE_LOOKUP_ERROR, PROVIDER_OPERATION_ERROR } from "./const.js";
 
 /** Stable transport category reused by mutation errors. */

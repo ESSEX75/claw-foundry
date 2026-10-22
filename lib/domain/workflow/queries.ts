@@ -2,9 +2,10 @@
  * workflow/queries.ts — Pure query functions over workflow configuration.
  */
 
-import { DEFAULT_ROLES, STATE_TYPE, WORKFLOW_EVENT } from "./const.js";
+import { DEFAULT_ROLES } from "../roles/index.js";
+import { FEEDBACK_EVENTS, STATE_TYPE, WORKFLOW_EVENT } from "./const.js";
 import { isWorkflowEvent } from "./guards.js";
-import { type StateDefinition, type WorkflowDefinition, type WorkflowEvent } from "./types.js";
+import { type StateDefinition, type WorkflowDefinition } from "./types.js";
 
 /**
  * Return workflow states without losing generic identifier types.
@@ -42,13 +43,14 @@ export function getStateLabels<
 }
 
 /**
- * Find the current workflow state label on an issue.
- * Pure utility — no provider dependency.
+ * Inspect projected labels for diagnostics or explicit import preparation.
+ * Returns the first match in configuration order, even when labels conflict.
+ * This observation never authorizes a managed workflow transition or ownership.
  *
  * @param labels - Provider-visible issue labels to inspect.
  * @param workflow - Workflow defining recognized state labels.
  */
-export function getCurrentStateLabel<
+export function getProjectedStateLabel<
   TRoleId extends string,
   TStateKey extends string,
   TLabel extends string,
@@ -268,16 +270,6 @@ export function hasWorkflowStates<
   return getWorkflowStates(workflow).some((state) => state.role === role);
 }
 
-/** Workflow events that indicate review/test feedback. */
-const FEEDBACK_EVENTS: Set<WorkflowEvent> = new Set([
-  WORKFLOW_EVENT.CHANGES_REQUESTED,
-  WORKFLOW_EVENT.MERGE_CONFLICT,
-  WORKFLOW_EVENT.MERGE_FAILED,
-  WORKFLOW_EVENT.REJECT,
-  WORKFLOW_EVENT.FAIL,
-  WORKFLOW_EVENT.PR_CLOSED,
-]);
-
 /**
  * Check if a label's state is a "feedback" state — one that issues land in
  * after review rejection, test failure, or merge conflict.
@@ -367,9 +359,9 @@ export function producesReviewableWork<
 //TODO: The behavior of the tester, reviewer, etc. is hard-coded.
 
 /**
- * Check if the workflow has a test phase (any queue state with role=tester).
+ * Check for a built-in tester queue or active state, independently of test policy.
  *
- * @param workflow - Workflow to inspect for the built-in tester queue.
+ * @param workflow - Workflow to inspect; custom role names do not imply a test capability.
  */
 export function hasTestPhase<
   TRoleId extends string,
@@ -377,6 +369,6 @@ export function hasTestPhase<
   TLabel extends string,
 >(workflow: WorkflowDefinition<TRoleId, TStateKey, TLabel>): boolean {
   return getWorkflowStates(workflow).some(
-    (s) => s.role === DEFAULT_ROLES.TESTER && s.type === STATE_TYPE.QUEUE,
+    (s) => s.role === DEFAULT_ROLES.TESTER && (s.type === STATE_TYPE.QUEUE || s.type === STATE_TYPE.ACTIVE),
   );
 }

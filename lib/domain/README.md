@@ -10,11 +10,48 @@ CLI state.
 Domain may define the semantic issue and project records used by persistence,
 but store envelopes and resumable operation records belong to
 `lib/state`.
+Creation-operation stages and failure identifiers belong to `state/issues/creation`
+alongside their persisted operation contract; they are not issue workflow states.
 
 Package ownership is explicit: `notifications` owns messaging endpoints and
 notification routing labels, `issues` owns provider IDs and issue ownership,
 `projects` owns project and worker-slot structures, `workers` owns shared worker
-delivery status, and `workflow` owns state machine semantics and workflow routing.
+delivery status, `roles` owns shared role/level identifiers and contracts, and
+`workflow` owns state machine semantics and workflow routing.
+
+## Responsibilities and internal APIs
+
+The root contains only this contract and the aggregate public entrypoint. The
+small `issues`, `projects`, `workers` and `notifications` packages remain flat:
+their records, constants and focused operations share one semantic owner.
+
+`domain/roles` defines built-in role/level identifiers, membership guards and shared
+role/level contracts. It has no workflow dependency. The separate `lib/roles`
+package continues to own built-in definitions, complexity, level selection and
+model resolution; domain never imports it.
+
+Workflow separates these responsibilities:
+
+- Root `const.ts`, `types.ts` and `guards.ts` own graph/event/action/result contracts.
+  `defaults.ts`, `queries.ts`, `transitions.ts`, `completion.ts` and `lifecycle.ts`
+  form the cohesive graph API. `presentation.ts` privately owns completion emoji
+  tables and exposes only the presentation function.
+- `workflow/routing` owns saved policies, local field selectors, routing protocol
+  identifiers, membership guards and policy-to-label builders. It does not depend
+  on the graph or the label catalog.
+- `workflow/labels` owns catalog entry types, colors and catalog generation. It
+  consumes the roles and routing APIs. Private color tables stay outside its API;
+  application-facing fallback/step colors remain supported exports.
+
+Each child API is explicit; workflow aggregates routing and labels with `export *`.
+Sibling capabilities import their owner's entrypoint, never the ancestor workflow
+barrel. Root workflow implementations may consume child APIs directly. Role
+contracts are exported by `domain/roles`, not re-exported by workflow.
+
+Tests stay beside their owner. Initial-state tests belong to the graph; policy
+label tests belong to routing; catalog tests belong to labels. Shared records and
+private tables are not exported solely to shorten test imports. Workflow state
+colors remain internal to the root graph's defaults and tests.
 
 Workflow owns saved policy selectors and their local issue-field identifiers shared
 by candidate selection and transition rechecks.
@@ -22,6 +59,9 @@ by candidate selection and transition rechecks.
 Workflow owns policy-label prefixes shared by projection rendering, repair parsing,
 and application label effects. Issue semantics own the diagnostic used to preserve
 a non-OK integrity status when its original diagnostic owner is unknown.
+Review/test routing builders share exhaustive domain mappings with catalog rendering
+and explicit projection import. Test-phase inspection means any queue or active state
+of the built-in tester, independently of policy; custom role names imply no QA capability.
 
 Worker slot and active issue records share a durable delivery marker so both
 local ownership views can represent an unconfirmed worker turn.
@@ -31,6 +71,8 @@ local ownership views can represent an unconfirmed worker turn.
 Projects own pure available-slot selection and sequential execution exclusions. Both
 preview planning and locked state reservation use these rules; slot references requiring
 reconciliation are never recycled merely because their active flag is false.
+Inactive slots retaining delivery evidence are likewise unavailable until explicitly
+released. Reconciliation retains these reservations even outside configured capacity.
 
 - Do not import from `lib/application`, `lib/state`, `lib/integrations`,
   `lib/tools`, or `lib/cli`.
@@ -56,6 +98,8 @@ outside `lib/domain`.
 - Keep YAML parsing, Zod boundary schemas, persistence, migrations, locks, provider calls, audit logging, and runtime orchestration outside this layer.
 - Derive closed domain value unions from their canonical constant registries through `ValueOf`.
 - Keep narrow built-in identifiers distinct from extensible identifiers validated from resolved runtime configuration.
+- Built-in completion guards do not validate configured custom results. Projected-label
+  inspection returns a diagnostic first match, never authoritative managed state.
 
 Issue semantics own terminal-notification states: pending, attempting, delivered, blocked,
 retryable, and unknown. Attempt timestamps identify the owned send, while persisted
@@ -81,7 +125,18 @@ Issue semantics own completion receipts bound to the exact worker run and result
 Workflow owns pure ordered lifecycle metadata resolution. Application supplies timestamps
 and successfully processed actions; provider observations never determine local closedAt.
 Completion receipts retain that processed sequence for accurate same-run replay.
+Workflow also resolves configured edges by canonical source key and event, retaining
+destination keys, labels and descriptions. Application owns result validation,
+transition authorization, provider effects and persistence of the selected edge.
 
 Workers also own the shared session-action registry and its derived type, used by dispatch and notifications without application implementation imports.
 
 Project slot semantics expose exact run and reservation comparisons alongside the shared released-slot transformation. Callers retain active, delivery-token and release authorization policy.
+
+Projects also own pure project reservation lookup and workspace exclusivity queries.
+Reservation lookup returns a slot observation, including incomplete/inactive evidence,
+not an authoritative active issue worker. Application owns comparison and authorization.
+Workflow exposes canonical queue PICKUP validation shared by scheduling, research and
+dispatch; only an active destination of the same configured role is valid. Issue semantics
+own CreatedIssueReference, the provider-local id/title/url reference shared by completion
+and notifications, independently of creation saga results or notification transport.

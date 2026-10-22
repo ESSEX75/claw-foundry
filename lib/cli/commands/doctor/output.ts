@@ -1,11 +1,11 @@
 /** Renders the complete read-only application doctor report for terminal operators. */
 
-import { DOCTOR_SEVERITY, type RoutingDoctorReport } from "../../../application/index.js";
+import { DOCTOR_SEVERITY, type WorkspaceDiagnosticsReport } from "../../../application/index.js";
 
 /** Display routing, tool isolation and archive diagnostics without deriving new health state.
  * @param report - Application-owned diagnostic evidence and counters.
  */
-export function printDoctorReport(report: RoutingDoctorReport): void {
+export function printDoctorReport(report: WorkspaceDiagnosticsReport): void {
   console.log("DevClaw doctor — routing and isolation");
   for (const finding of report.findings) {
     console.log(`${finding.severity === DOCTOR_SEVERITY.ERROR ? "ERROR" : "OK"} [${finding.code}] ${finding.message}`);

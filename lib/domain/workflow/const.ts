@@ -2,6 +2,8 @@
  * Defines canonical built-in workflow identifiers and provider-visible metadata.
  */
 
+import type { ValueOf } from "../../shared/types.js";
+
 /** Known internal workflow state keys used across the pipeline. */
 export const WORKFLOW_STATE_KEYS = {
   /** Initial state where requirements are being formulated. */
@@ -30,48 +32,6 @@ export const WORKFLOW_STATE_KEYS = {
   TO_RESEARCH: "toResearch",
   /** Architect/researcher is actively designing and researching the task. */
   RESEARCHING: "researching",
-} as const;
-
-/** Managed workflow policy label namespaces shared by rendering, parsing, and provider effects. */
-export const POLICY_LABEL_PREFIX = {
-  REVIEW: "review:",
-  TEST: "test:",
-} as const;
-
-/** Routing labels applied to issues to delegate tests or reviews. */
-export const ROUTING_LABELS = {
-  /** Require human code review. */
-  REVIEW_HUMAN: "review:human",
-  /** Delegate code review to an AI reviewer agent. */
-  REVIEW_AGENT: "review:agent",
-  /** Skip code review step. */
-  REVIEW_SKIP: "review:skip",
-  /** Skip testing step. */
-  TEST_SKIP: "test:skip",
-  /** Delegate testing to an AI QA agent. */
-  TEST_AGENT: "test:agent",
-} as const;
-
-/** Default built-in roles for the worker pipeline. */
-export const DEFAULT_ROLES = {
-  /** Developer role responsible for writing code and resolving issues. */
-  DEVELOPER: "developer",
-  /** Reviewer role responsible for inspecting pull requests. */
-  REVIEWER: "reviewer",
-  /** Tester role responsible for verifying builds and test suites. */
-  TESTER: "tester",
-  /** Architect role responsible for research and system design. */
-  ARCHITECT: "architect",
-} as const;
-
-/** Built-in worker level identifiers shared by role definitions. */
-export const DEFAULT_LEVELS = {
-  /** Entry-level worker tier. */
-  JUNIOR: "junior",
-  /** Mid-level worker tier. */
-  MEDIOR: "medior",
-  /** Senior-level worker tier. */
-  SENIOR: "senior",
 } as const;
 
 /** Display labels for states on the provider issue trackers. */
@@ -112,24 +72,6 @@ export const WORKFLOW_STATE_COLORS = {
 export const EXECUTION_MODE = {
   PARALLEL: "parallel",
   SEQUENTIAL: "sequential",
-} as const;
-
-/** Review policy for PR review after developer completion. */
-export const REVIEW_POLICY = {
-  /** Code review delegated to human engineer. */
-  HUMAN: "human",
-  /** Code review delegated to AI agent. */
-  AGENT: "agent",
-  /** Code review skipped. */
-  SKIP: "skip",
-} as const;
-
-/** Test policy for automated testing after review. */
-export const TEST_POLICY = {
-  /** Automated testing skipped. */
-  SKIP: "skip",
-  /** Automated testing delegated to AI agent. */
-  AGENT: "agent",
 } as const;
 
 /** Built-in transition actions with handler implementations. */
@@ -218,40 +160,12 @@ export const STATE_TYPE = {
   TERMINAL: "terminal",
 } as const;
 
-/** Default colors per role for role:level labels. */
-export const ROLE_LABEL_COLORS = {
-  /** Green label color for developer role. */
-  DEVELOPER: "#0e8a16",
-  /** Purple label color for tester role. */
-  TESTER: "#5319e7",
-  /** Blue label color for architect role. */
-  ARCHITECT: "#0075ca",
-  /** Orange label color for reviewer role. */
-  REVIEWER: "#d93f0b",
-} as const;
-
-/** Color used for workflow step routing labels. */
-export const STEP_ROUTING_COLOR = "#d93f0b";
-
-/** Default fallback color for unknown roles. */
-export const DEFAULT_ROLE_LABEL_COLOR = "#cccccc";
-
-/** Emoji displayed for known worker completion results. */
-export const RESULT_EMOJI = {
-  [COMPLETION_RESULT.DONE]: "✅",
-  [COMPLETION_RESULT.PASS]: "🎉",
-  [COMPLETION_RESULT.FAIL]: "❌",
-  [COMPLETION_RESULT.REFINE]: "🤔",
-  [COMPLETION_RESULT.BLOCKED]: "🚫",
-  [COMPLETION_RESULT.APPROVE]: "✅",
-  [COMPLETION_RESULT.REJECT]: "❌",
-} as const;
-
-/** Fallback emoji displayed for an unknown completion result. */
-export const DEFAULT_RESULT_EMOJI = "📋";
-
-/** Saved review-policy field used for local workflow selection and rechecks. */
-export const REVIEW_ROUTING_FIELD = "reviewPolicy";
-
-/** Saved test-policy field used for local workflow selection and rechecks. */
-export const TEST_ROUTING_FIELD = "testPolicy";
+/** Incoming events identifying a configured feedback destination. */
+export const FEEDBACK_EVENTS: ReadonlySet<ValueOf<typeof WORKFLOW_EVENT>> = new Set([
+  WORKFLOW_EVENT.CHANGES_REQUESTED,
+  WORKFLOW_EVENT.MERGE_CONFLICT,
+  WORKFLOW_EVENT.MERGE_FAILED,
+  WORKFLOW_EVENT.REJECT,
+  WORKFLOW_EVENT.FAIL,
+  WORKFLOW_EVENT.PR_CLOSED,
+]);

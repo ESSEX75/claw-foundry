@@ -15,12 +15,12 @@ Unknown arguments and non-boolean confirmation flags are rejected without coerci
 ## Boundary Rules
 
 - Keep OpenClaw tool context handling here.
-- Manual health calls application/heartbeat. An omitted project slug explicitly selects
+- Manual health calls application/execution/workers. An omitted project slug explicitly selects
   all registered projects; unknown scopes fail and never become a successful empty scan.
 - Move reusable business behavior into `lib/application/*`.
 - Do not access provider or state internals directly when an application use case
   exists.
-- Project label catalog synchronization calls application/labels; the application validates
+- Project label catalog synchronization calls application/projects/labels; the application validates
   exact scope and provisions definitions using persisted provider identity. Issue projection
   reconciliation remains a separate operation.
 - Register public tool factories in `lib/tools/registration`.
@@ -30,7 +30,7 @@ Unknown arguments and non-boolean confirmation flags are rejected without coerci
 - Creation adapters must call the shared durable use case and report pending or
   manual-repair states honestly; only a `ready` operation is successful.
 - Research requires a stable caller idempotency key and optionally an explicit queue
-  state key. It calls application/tasks and reports creation and delivery separately,
+  state key. It calls application/issues/commands and reports creation and delivery separately,
   including exact unresolved submission IDs; a retry never blindly resends a worker turn.
 - Channel-only task adapters reject ambiguous destinations. Adapters with a full
   account/channel/conversation/thread identity use application project context
@@ -40,7 +40,7 @@ Unknown arguments and non-boolean confirmation flags are rejected without coerci
 
 Use `npm run arch:check:strict` after adding or changing tool factories.
 
-Setup, configuration, and onboarding tools call application/setup. They must not
+Setup, configuration, and onboarding tools call application/workspace. They must not
 read or write filesystem state directly. Setup dry-run applies to every operation,
 including reset and instruction refresh.
 
@@ -64,18 +64,18 @@ the supported factory, name and registration exports.
 | `registration` | Fixed public names and SDK factory composition, with no widened unknown factory result. |
 | `context` | Explicit conversation input and SDK workspace resolution; no project/provider decisions. |
 | `validation` | Shared nonblank text, conversation and safe issue ID schemas, and SDK schema generation. |
-| `adapters/setup` | Setup, onboarding and configuration operations through application/setup. |
+| `adapters/setup` | Setup, onboarding and configuration operations through application/workspace. |
 | `adapters/projects` | Registration and formatting of local project information. |
 | `adapters/channels` | Exact endpoint linking, unlinking and listing. |
-| `adapters/health` | Manual inspection scope and application/heartbeat result formatting. |
-| `adapters/labels` | Label-definition provisioning through application/labels. |
+| `adapters/health` | Manual inspection scope and application/execution/workers result formatting. |
+| `adapters/labels` | Label-definition provisioning through application/projects/labels. |
 | `adapters/guidance` | Topic protocol/schema, SDK selection, and pure reference content. |
 | `adapters/issues` | Explicit repair, policy migration and deletion adapters. |
 | `adapters/tasks/creation` | Durable task creation and resumable research requests. |
 | `adapters/tasks/lifecycle` | Approval, prepared level, ownership and user-content edits. |
 | `adapters/tasks/discussion` | Comment input and application discussion results. |
 | `adapters/tasks/queries` | Local-state-first task browsing and dashboard formatting. |
-| `adapters/tasks/attachments` | Manual attachment commands through application/tasks. |
+| `adapters/tasks/attachments` | Manual attachment commands through application/issues/attachments. |
 | `adapters/worker` | Worker completion boundary and application result formatting. |
 
 Adapters keep private input schemas beside their execution boundary. Shared schemas
@@ -85,7 +85,7 @@ the owning `types.ts`. The root contains only the public aggregation entrypoint 
 this contract. Focused leaf adapters remain together where they share a command
 contract; independent responsibilities do not accumulate under an admin bucket.
 
-Ownership and comments call application/tasks. Bulk claims select only local queues,
+Ownership and comments call application/issues/commands. Bulk claims select only local queues,
 recheck eligibility under the issue lock, retain individual failures and resume an
 already committed owner's failed label projection. Provider labels/body metadata
 never initialize or select managed workflow state implicitly. Project slots expose

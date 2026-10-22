@@ -6,7 +6,7 @@ import path from "node:path";
 
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { LOCK_FILE_SUFFIX, withFileLock } from "../../persistence/index.js";
-import { parseProjectSlug } from "../../projects/schema.js";
+import { parseProjectSlug } from "../../projects/index.js";
 import { ACTIVE_ISSUES_FILE_NAME, ISSUE_STORE_LOCK_OPTIONS } from "../const.js";
 
 /**

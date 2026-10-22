@@ -3,22 +3,11 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-
-import {
-  DEFAULT_WORKFLOW,
-  ISSUE_INTEGRITY_STATUS,
-  ISSUE_PROVIDER,
-  PIPELINE_NOTIFICATION_STATUS,
-  type IssueRuntimeState,
-} from "../../domain/index.js";
+import { DEFAULT_WORKFLOW, ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, PIPELINE_NOTIFICATION_STATUS, type IssueRuntimeState } from "../../domain/index.js";
 import { readIssueArchiveStore, readIssueStateStore, reservePipelineNotification, settlePipelineNotification } from "../../state/index.js";
-import {
-  createEmptyIssueStateStoreForTesting,
-  createTestHarness,
-  replaceIssueStateStoreForTesting,
-} from "../../testing/index.js";
-import { recoverTerminalIssueArchives } from "../issues/archive/index.js";
-import type { NotificationRuntime } from "./index.js";
+import { createEmptyIssueStateStoreForTesting, createTestHarness, replaceIssueStateStoreForTesting } from "../../testing/index.js";
+import { recoverTerminalIssueArchives } from "../issues/maintenance/index.js";
+import type { NotificationRuntime } from "./types.js";
 import { retryPendingPipelineNotifications } from "./retry-pipeline.js";
 
 /**
@@ -159,7 +148,6 @@ describe("retryPendingPipelineNotifications", () => {
     }
   });
 });
-
 
 for (const scenario of ["disabled", "missing endpoint", "missing issue", "lost response", "expired in-flight"]) {
   it(`retains ${scenario} evidence without a duplicate send`, async () => {

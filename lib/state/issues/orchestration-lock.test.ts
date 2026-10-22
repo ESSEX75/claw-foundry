@@ -8,7 +8,7 @@ import { describe, it } from "node:test";
 import {
   issueOrchestrationLockPath,
   withIssueOrchestrationLock,
-} from "./orchestration/repository.js";
+} from "./orchestration/lock.js";
 
 describe("issue orchestration lock", () => {
   it("serializes operations for the same issue", async () => {
@@ -84,7 +84,7 @@ describe("issue orchestration lock", () => {
     }
   });
 
-  it("recovers a stale lock", async () => {
+  it("refuses an unidentified stale lock until explicit repair", async () => {
     const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issue-lock-stale-"));
     const lockPath = issueOrchestrationLockPath(workspaceDir, "app", 79);
 
@@ -92,15 +92,11 @@ describe("issue orchestration lock", () => {
       await fs.mkdir(path.dirname(lockPath), { recursive: true });
       await fs.writeFile(lockPath, JSON.stringify({ token: "dead", acquiredAt: 1 }), "utf-8");
 
-      const result = await withIssueOrchestrationLock(
-        workspaceDir,
-        "app",
-        79,
-        () => "recovered",
+      await assert.rejects(withIssueOrchestrationLock(
+        workspaceDir, "app", 79, () => assert.fail("unidentified owner"),
         { staleMs: 1, retryMs: 1, timeoutMs: 100 },
-      );
-
-      assert.equal(result, "recovered");
+      ), /Cannot inspect state lock/);
+      assert.equal(await fs.readFile(lockPath, "utf8"), JSON.stringify({ token: "dead", acquiredAt: 1 }));
     } finally {
       await fs.rm(workspaceDir, { recursive: true, force: true });
     }

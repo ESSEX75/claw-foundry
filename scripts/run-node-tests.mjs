@@ -1,9 +1,20 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
+/** Runs all Node test suites without shell argument limits, including on Windows. */
+
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { run } from "node:test";
+import { spec } from "node:test/reporters";
+
+import { verifyAuditProcessWriters } from "./audit-process-tests.mjs";
+import { verifyStateProcessLocks } from "./state-lock-tests.mjs";
+
+await verifyStateProcessLocks();
+console.log("State process-lock checks passed (contention, event-loop pause, owner exit).");
+await verifyAuditProcessWriters();
+console.log("Audit process checks passed (concurrent rotation).");
 
 const root = process.cwd();
 const testFiles = [];
@@ -24,22 +35,21 @@ if (testFiles.length === 0) {
   process.exit(1);
 }
 
-const cmd = process.platform === "win32" ? "tsx.cmd" : "tsx";
-const child = spawn(cmd, ["--test", ...testFiles], {
+const tests = run({
+  concurrency: true,
+  files: testFiles,
   cwd: root,
-  stdio: "inherit",
-  shell: process.platform === "win32",
+  execArgv: ["--import", "tsx"],
 });
 
-child.on("exit", (code, signal) => {
-  if (signal) {
-    console.error(`Test runner terminated by ${signal}`);
-    process.exit(1);
-  }
-
-  process.exit(code ?? 1);
+tests.on("test:fail", () => {
+  process.exitCode = 1;
 });
+tests.compose(spec()).pipe(process.stdout);
 
+/** Discover test candidates without relying on shell expansion.
+ * @param dir - Repository directory whose descendants should be inspected.
+ */
 async function* walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
 

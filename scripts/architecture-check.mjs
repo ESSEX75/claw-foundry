@@ -5,7 +5,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
+import { checkApplicationAggregation, checkApplicationApiBoundary, checkApplicationDependencyDirection, checkCliApiBoundary, checkApplicationAdapterBoundary, checkSharedApiBoundary, checkToolsApiBoundary } from "./architecture-rules.ts";
 
 const root = process.cwd();
 const warnOnly = process.argv.includes("--warn-only");
@@ -169,6 +169,9 @@ function parseImportRecords(content) {
 
 function checkImportBoundary({ sourceFile, sourceLayer, targetFile, targetLayer, specifier }) {
   const targetRelative = targetFile ? relative(targetFile) : specifier;
+
+  const sharedViolation = checkSharedApiBoundary(relative(sourceFile), targetFile ? relative(targetFile) : undefined);
+  if (sharedViolation) return sharedViolation;
 
   const directionViolation = checkApplicationDependencyDirection(sourceLayer, targetLayer);
   if (directionViolation) return directionViolation;

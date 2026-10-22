@@ -2,7 +2,7 @@
 
 import type { Command } from "commander";
 
-import { DEVCLAW_PLUGIN_ID } from "../const.js";
+import { DEVCLAW_PLUGIN_ID } from "../shared/const.js";
 import { registerDoctorCommand } from "./commands/doctor/index.js";
 import { registerIssuesCommands } from "./commands/issues/index.js";
 import { registerRepairCommands } from "./commands/repair/index.js";

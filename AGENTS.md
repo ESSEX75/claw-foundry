@@ -14,6 +14,7 @@ DevClaw is an OpenClaw plugin for multi-project dev/qa pipeline orchestration wi
 - `lib/cli` — command-line adapters that parse terminal input, call application use cases, and format terminal output.
 - `lib/testing` — test harnesses, fakes, and test-only helpers.
 - `lib/roles` — role registry, model selection, level resolution, and model fetchers.
+- `lib/shared` — cross-layer technical primitives, universal types, and the plugin identifier; use capability APIs or root types/constants directly, without an aggregate barrel.
 
 Layer-specific contracts live only in the root `lib/<layer>/README.md`. Do not add README files to nested capabilities or subpackages; keep their contracts in the layer README and implementation details in source JSDoc. Read the complete layer README before changing a package.
 

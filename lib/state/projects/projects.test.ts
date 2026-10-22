@@ -12,7 +12,6 @@ import {
   countActiveSlots,
   emptyRoleWorkerState,
   emptySlot,
-  findFreeSlot,
   findSlotByIssue,
   ISSUE_PROVIDER,
   NOTIFICATION_CHANNEL,
@@ -29,7 +28,17 @@ import {
   updateProjects,
 } from "./index.js";
 import { projectsPath } from "./paths.js";
-import { parseProjectsData } from "./schema.js";
+import { parseProjectSlug, parseProjectsData } from "./schema.js";
+
+describe("portable project identities", () => {
+  it("rejects Windows device names before persistence while preserving ordinary slugs", () => {
+    for (const name of ["con", "prn", "aux", "nul", "com1", "com9", "lpt1", "lpt9"]) {
+      assert.throws(() => parseProjectSlug(name), /reserved Windows device name/);
+    }
+    assert.equal(parseProjectSlug("con-project"), "con-project");
+    assert.equal(parseProjectSlug("custom-project-12"), "custom-project-12");
+  });
+});
 
 /** Notification endpoint fragment accepted by the projects fixture builder. */
 type ProjectFixtureChannel = {
@@ -279,36 +288,6 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
 }
 
 describe("per-level slot helpers", () => {
-  it("findFreeSlot returns lowest inactive slot within a level", () => {
-    const rw: RoleWorkerState = {
-      levels: {
-        medior: [
-          { active: true, issueId: 1, sessionKey: null, startTime: null },
-          { active: false, issueId: null, sessionKey: null, startTime: null },
-          { active: false, issueId: null, sessionKey: null, startTime: null },
-        ],
-      },
-    };
-
-    assert.strictEqual(findFreeSlot(rw, "medior"), 1);
-  });
-
-  it("findFreeSlot returns null when all active in the level", () => {
-    const rw: RoleWorkerState = {
-      levels: {
-        medior: [{ active: true, issueId: 1, sessionKey: null, startTime: null }],
-      },
-    };
-
-    assert.strictEqual(findFreeSlot(rw, "medior"), null);
-  });
-
-  it("findFreeSlot returns null for non-existent level", () => {
-    const rw: RoleWorkerState = { levels: {} };
-
-    assert.strictEqual(findFreeSlot(rw, "senior"), null);
-  });
-
   it("findSlotByIssue returns correct level and index", () => {
     const rw: RoleWorkerState = {
       levels: {

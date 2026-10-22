@@ -1,6 +1,7 @@
 /** Submits one gateway worker turn with an application-owned immutable token and conservative delivery evidence. */
 
-import { DEVCLAW_PLUGIN_ID } from "../../../const.js";
+import { DEVCLAW_PLUGIN_ID } from "../../../shared/const.js";
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { isCompletedCommand } from "../../process/index.js";
 import { AGENT_TURN_LANE, AGENT_TURN_METHOD, AGENT_TURN_STATUS, AGENT_TURN_TIMEOUT_MS, DEFAULT_GATEWAY_AGENT_ID, GATEWAY_COMMAND } from "./const.js";
 import type { AgentTurnInput, AgentTurnOutcome } from "./types.js";
@@ -33,7 +34,7 @@ export async function submitAgentTurn(sessionKey: string, taskMessage: string, o
 
     return { kind: AGENT_TURN_STATUS.ACCEPTED };
   } catch (error) {
-    return { kind: AGENT_TURN_STATUS.UNKNOWN, reason: error instanceof Error ? error.message : String(error) };
+    return { kind: AGENT_TURN_STATUS.UNKNOWN, reason: getErrorMessage(error) };
   }
 }
 

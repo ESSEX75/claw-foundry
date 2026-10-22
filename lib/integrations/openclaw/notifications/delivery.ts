@@ -1,5 +1,6 @@
 /** Sends through OpenClaw once; never retries a possibly delivered message through another path. */
 
+import { getErrorMessage } from "../../../shared/errors/index.js";
 import { isCompletedCommand } from "../../process/index.js";
 import { MESSAGE_COMMAND, MESSAGE_DELIVERY_PATH, MESSAGE_DELIVERY_STATUS, MESSAGE_TIMEOUT_MS } from "./const.js";
 import { hasTextSender } from "./guards.js";
@@ -10,13 +11,6 @@ import type { MessageDeliveryInput, MessageDeliveryOutcome } from "./types.js";
  */
 function messageId(value: unknown): string | undefined {
   return typeof value === "object" && value !== null && "messageId" in value && typeof value.messageId === "string" ? value.messageId : undefined;
-}
-
-/** Convert a transport failure into diagnostic text.
- * @param error - Thrown provider or command failure.
- */
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /** Bound native acceptance observation without cancelling or repeating the external send.
@@ -45,7 +39,7 @@ export async function deliverNotificationMessage(input: MessageDeliveryInput): P
   try {
     adapter = await input.runtime?.outbound.loadAdapter(input.channel);
   } catch (error) {
-    unavailable = errorMessage(error);
+    unavailable = getErrorMessage(error);
   }
 
   if (hasTextSender(adapter)) {
@@ -55,7 +49,7 @@ export async function deliverNotificationMessage(input: MessageDeliveryInput): P
 
       return { status: MESSAGE_DELIVERY_STATUS.ACCEPTED, delivered: true, path: MESSAGE_DELIVERY_PATH.RUNTIME, messageId: messageId(receipt) };
     } catch (error) {
-      return { status: MESSAGE_DELIVERY_STATUS.UNKNOWN, delivered: false, path: MESSAGE_DELIVERY_PATH.RUNTIME, reason: errorMessage(error) };
+      return { status: MESSAGE_DELIVERY_STATUS.UNKNOWN, delivered: false, path: MESSAGE_DELIVERY_PATH.RUNTIME, reason: getErrorMessage(error) };
     }
   }
 
@@ -79,6 +73,6 @@ export async function deliverNotificationMessage(input: MessageDeliveryInput): P
 
     return { status: MESSAGE_DELIVERY_STATUS.ACCEPTED, delivered: true, path: MESSAGE_DELIVERY_PATH.FALLBACK, messageId: messageId(receipt) };
   } catch (error) {
-    return { status: MESSAGE_DELIVERY_STATUS.UNKNOWN, delivered: false, path: MESSAGE_DELIVERY_PATH.FALLBACK, reason: errorMessage(error) };
+    return { status: MESSAGE_DELIVERY_STATUS.UNKNOWN, delivered: false, path: MESSAGE_DELIVERY_PATH.FALLBACK, reason: getErrorMessage(error) };
   }
 }

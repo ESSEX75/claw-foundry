@@ -1,55 +1,30 @@
 /** Exposes the supported workflow state-machine API to the domain package. */
 
-export { getCompletionEmoji, getCompletionRule, getNextStateDescription } from "./completion.js";
+export { getCompletionRule, getNextStateDescription } from "./completion.js";
 export {
   ACTION,
   COMPLETION_RESULT,
-  DEFAULT_LEVELS,
-  DEFAULT_RESULT_EMOJI,
-  DEFAULT_ROLE_LABEL_COLOR,
-  DEFAULT_ROLES,
   EXECUTION_MODE,
-  POLICY_LABEL_PREFIX,
-  RESULT_EMOJI,
   REVIEW_CHECK,
-  REVIEW_POLICY,
-  REVIEW_ROUTING_FIELD,
-  ROLE_LABEL_COLORS,
-  ROUTING_LABELS,
   STATE_TYPE,
-  STEP_ROUTING_COLOR,
-  TEST_POLICY,
-  TEST_ROUTING_FIELD,
   WORKFLOW_EVENT,
-  WORKFLOW_STATE_COLORS,
   WORKFLOW_STATE_KEYS,
   WORKFLOW_STATE_LABELS,
 } from "./const.js";
 export { DEFAULT_WORKFLOW } from "./defaults.js";
-export {
-  isBuiltInLevelId,
-  isBuiltInRoleId,
-  isCompletionResult,
-  isReviewPolicy,
-  isTestPolicy,
-  isWorkflowEvent,
-} from "./guards.js";
-export {
-  getRoleLabelColor,
-  getRoleLabels,
-  getStepRoutingLabels,
-  resolveReviewRouting,
-} from "./labels.js";
+export { isBuiltInCompletionResult, isWorkflowEvent } from "./guards.js";
+export * from "./labels/index.js";
 export { resolveIssueClosedAt } from "./lifecycle.js";
+export { getCompletionEmoji } from "./presentation.js";
 export {
   detectRoleFromLabel,
   findStateByLabel,
   findStateKeyByLabel,
   getActiveLabel,
   getAllQueueLabels,
-  getCurrentStateLabel,
   getInitialStateLabel,
   getLabelColors,
+  getProjectedStateLabel,
   getQueueLabels,
   getRevertLabel,
   getStateLabels,
@@ -59,29 +34,23 @@ export {
   isFeedbackState,
   producesReviewableWork,
 } from "./queries.js";
+export * from "./routing/index.js";
+export { resolveCompletionTransition, resolveQueuePickup, resolveWorkflowTransition } from "./transitions.js";
 export type {
   BuiltInWorkflowConfig,
   CompletionEventMap,
   CompletionResult,
   CompletionRule,
   ExecutionMode,
-  LabelDefinition,
-  LevelId,
   ReviewCheckType,
-  ReviewPolicy,
-  RoleDefinition,
-  RoleId,
-  RoleLevelDefinition,
-  RoutingLabel,
   StateDefinition,
-  TestPolicy,
   TransitionAction,
   TransitionTarget,
   WorkflowConfig,
   WorkflowDefinition,
   WorkflowEvent,
   WorkflowLabel,
-  WorkflowPolicyRouting,
   WorkflowStateConfig,
   WorkflowStateKey,
+  WorkflowTransition,
 } from "./types.js";

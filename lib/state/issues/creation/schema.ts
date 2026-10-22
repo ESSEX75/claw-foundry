@@ -4,14 +4,9 @@
 
 import { z } from "zod";
 
-import {
-  ISSUE_CREATION_ERROR,
-  ISSUE_CREATION_STATUS,
-  ISSUE_PROVIDER,
-  NOTIFICATION_CHANNEL,
-  REVIEW_POLICY,
-  TEST_POLICY,
-} from "../../../domain/index.js";
+import { ISSUE_PROVIDER, NOTIFICATION_CHANNEL, REVIEW_POLICY, TEST_POLICY } from "../../../domain/index.js";
+import { TimestampSchema } from "../../persistence/index.js";
+import { ISSUE_CREATION_ERROR, ISSUE_CREATION_STATUS } from "./const.js";
 import type { IssueCreationStore } from "./types.js";
 
 /** Strict schema for the immutable input captured by a creation operation. */
@@ -26,18 +21,18 @@ const CreationInputSchema = z.object({
 
 /** Strict schema for the last durable creation failure. */
 const CreationFailureSchema = z.object({
-  code: z.enum(ISSUE_CREATION_ERROR), message: z.string(), retryable: z.boolean(), retryAfter: z.string().optional(),
+  code: z.enum(ISSUE_CREATION_ERROR), message: z.string(), retryable: z.boolean(), retryAfter: TimestampSchema.optional(),
 }).strict();
 
 /** Strict schema for one resumable issue-creation operation. */
 const CreationOperationSchema = z.object({
   operationId: z.string().uuid(), idempotencyKey: z.string().min(1), payloadHash: z.string().regex(/^[0-9a-f]{64}$/),
-  projectSlug: z.string(), requestedBy: z.string(), requestedAt: z.string(), updatedAt: z.string(),
+  projectSlug: z.string(), requestedBy: z.string(), requestedAt: TimestampSchema, updatedAt: TimestampSchema,
   status: z.enum(ISSUE_CREATION_STATUS), input: CreationInputSchema, expectedLabels: z.array(z.string()),
-  providerIssue: z.object({ issueId: z.number().int().positive(), url: z.string(), createdAt: z.string() }).strict().optional(),
+  providerIssue: z.object({ issueId: z.number().int().positive(), url: z.string(), createdAt: TimestampSchema }).strict().optional(),
   completedSteps: z.array(z.string()), pendingSteps: z.array(z.string()), attempts: z.number().int().nonnegative(),
   reconciliationAttempts: z.number().int().nonnegative().safe().optional(),
-  retryAfter: z.string().optional(), lastError: CreationFailureSchema.optional(), auditCorrelationId: z.string().uuid(),
+  retryAfter: TimestampSchema.optional(), lastError: CreationFailureSchema.optional(), auditCorrelationId: z.string().uuid(),
 }).strict();
 
 /** Strict schema for the current issue-creation store envelope. */

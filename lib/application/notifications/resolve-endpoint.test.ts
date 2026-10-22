@@ -3,18 +3,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-
-import {
-  ISSUE_INTEGRITY_STATUS,
-  ISSUE_PROVIDER,
-  NOTIFICATION_CHANNEL,
-  type IssueRuntimeState,
-  type Project,
-} from "../../domain/index.js";
-import {
-  createEmptyIssueStateStoreForTesting as emptyIssueStateStore,
-  replaceIssueStateStoreForTesting as writeIssueStateStore,
-} from "../../testing/index.js";
+import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, NOTIFICATION_CHANNEL, type IssueRuntimeState, type Project } from "../../domain/index.js";
+import { createEmptyIssueStateStoreForTesting as emptyIssueStateStore, replaceIssueStateStoreForTesting as writeIssueStateStore } from "../../testing/index.js";
 import { resolveIssueNotificationEndpoint } from "./resolve-endpoint.js";
 
 describe("managed notification endpoint resolution", () => {

@@ -2,6 +2,13 @@
 
 This layer owns local persistence.
 
+Shared error text/string-code narrowing, SHA-256 mechanics and duration syntax are
+consumed from `lib/shared/errors`, `lib/shared/hashing` and `lib/shared/duration`. State retains lock and
+filesystem recovery policy, payload serialization and all persisted schemas. Missing
+file handling requires a real Error with the exact string code; nested causes are
+unwrapped only by the repository that created the contextual wrapper. Duration schema
+validation uses the common grammar without changing existing accepted raw syntax.
+
 State modules read, write, and lock DevClaw project files such as
 project config, setup files, and managed issue runtime state. They may use domain
 types, but they should not contain queue scheduling or worker dispatch behavior.
@@ -17,7 +24,116 @@ contracts exposed to other layers only through `lib/state/index.ts`.
 - Internal state modules import implementation owners directly and never import the root entrypoint.
 - State schemas, parsers, filesystem locks, and persistence helpers stay private unless an exported operation is itself the required boundary API.
 - `lib/state/paths.ts` owns filesystem names shared by multiple state capabilities.
-- `lib/state/persistence` owns token-based file locking and atomic replacement used by state repositories; it is not exported from the root API.
+- `lib/state/persistence` owns process-backed directory locking, timestamp validation,
+  and atomic replacement used by state repositories; it is not exported from the root API.
+- Internal capabilities use sibling entrypoints. The narrow transaction exception is
+  `issues/archive/transaction.ts` accessing `issues/active/repository.ts` for validated
+  writes while already holding the shared store lock. Attachments may read
+  `issues/archive/repository.ts` directly to avoid loading archive retention back into
+  the attachment API. Neither raw writer is exported through the state root.
+- `setup` is an explicit facade: internal resources and document mechanics are not
+  aggregated into the external API. `worker-delivery/markers` is an internal schema
+  entrypoint shared by registry slots and issue workers without loading recovery effects.
+- `attachments/cleanup` exposes retention manifests and purge independently from save
+  repositories. Archive retention uses this entrypoint to avoid a reverse dependency
+  through attachment saves back into archive records. Parent attachment paths, constants
+  and the common lock remain shared internal mechanics of that attachment capability.
+
+## Diagnostic Audit Journal
+
+`audit` owns best-effort NDJSON storage at `devclaw/log/audit.log`, exposed as `log`
+and `AuditEntry` through the state root. Callers own event names and payload meaning;
+the repository owns the `ts` and `event` envelope fields. The shared log directory
+name belongs to state/paths because workspace initialization also creates it.
+Payloads with custom top-level JSON serializers are dropped rather than allowing
+the serializer to replace the diagnostic envelope.
+
+Read, append, rotation and retention are one process-owned locked update. The active
+file admits complete UTF-8 records up to 10 MiB, with no record-count limit. Before
+the next record would exceed that limit, the complete current file becomes a numbered
+archive and the new record starts the active journal. Individual records larger than
+10 MiB are rejected with a warning, without altering history. Existing oversized logs
+are archived intact on the next accepted write, without splitting or truncating them.
+
+Five completed archives are retained alongside the active file. Canonical archives
+use increasing 16-digit sequences (audit.0000000000000001.log, etc.), independent of
+wall-clock ordering. Unrelated files are preserved; linked or malformed resources
+are never followed or deleted, and invalid UTF-8 is not normalized. Only ENOENT permits
+starting a new journal. Atomic replacement keeps the prior file intact if normal
+publication fails.
+
+Rotation first persists audit.rotation.json with the exact source digest, next archive
+sequence and replacement record. It atomically publishes the archive before replacing
+the active file. The next locked writer resumes this exact plan; source/archive drift
+or malformed intent blocks writes rather than guessing or overwriting history. Excess
+archives are removed only after the plan is settled. Interrupted cleanup may retain
+more than five archives until a later successful write retries it. An interrupted call
+can be persisted during recovery; no exactly-once receipt is promised to callers.
+Temporary copies and unpublished lock claims can increase transient disk use; unknown
+leftovers are not recursively deleted by archive retention.
+
+All serialization, lock, filesystem and logger errors remain non-fatal. Plugin
+composition injects the host logger through configureAuditWarnings; standalone callers
+use console.warn. Warning attempts are limited to one per minute per process, across
+all workspaces and failure kinds, without dumping payloads or writing back to this
+journal. Slow asynchronous sinks are not awaited and rejected sink promises are handled.
+Reconfiguration resets that window. Successful log resolution still
+does not prove persistence. Contention may wait up to the configured lock timeout;
+the audit lock never acquires another state repository's lock.
+
+The general journal is bounded diagnostic history, not an immutable append-only
+ledger and never authoritative state for issue ownership or recovery. The separate
+archive-retention journal retains its existing required-write and retention contract.
+Concurrent-write guarantees require cooperative writers using this API on the same
+host; old direct append/truncation writers must be stopped during upgrade.
+The full test command includes independent-process audit contention/rotation checks
+before running the Node suites; audit tests also cover byte limits, archive retention,
+interrupted publication/recovery, warning throttling, retry and unknown lock evidence.
+
+## Lock Ownership and Recovery
+
+Locks are nonempty directories containing one immutable, uniquely named ownership
+marker. A prepared sibling directory is renamed into place only after the marker
+has been written. Cleanup unlinks only the observed token and uses non-recursive
+`rmdir`; delayed cleanup cannot remove a replacement owner's nonempty directory.
+
+Denied empty-directory removal (EPERM/EACCES, including Windows handle races) does
+not authorize acquisition. Acquisition backs off until removal succeeds or its timeout
+expires. After release has removed its exact token, cleanup may leave an ownerless
+empty directory for the next acquisition to remove; other ownership evidence remains
+untouched. EPERM/EACCES while enumerating ownership or reading a marker permits only bounded waiting,
+never acquisition or recovery without validated ownership. Invalid marker contents
+and errors removing the ownership token stay strict.
+
+Lock age only controls when to inspect process liveness. A live local process never
+expires, even after an event-loop pause. Recovery requires the same hostname and an
+OS `ESRCH` result for the recorded PID. Permission failures, foreign hosts and PID
+reuse fail closed; they may require operator inspection. These locks assume local
+storage, one host PID namespace and cooperative writers. External lock deletion
+while a process is live is unsupported. Atomic file publication does not claim
+power-loss durability or cross-file transactionality.
+
+The ownership format intentionally replaces the former lock file format. Stop all
+old writers before upgrading; inspect and remove abandoned old lock files manually.
+Unknown, malformed and linked lock entries are errors, never automatically deleted.
+Interrupted preparation may leave an unpublished `.claim-*` sibling; it never owns
+the protected resource and may be removed after stopping and inspecting writers.
+
+Persisted timestamps require ISO date-times with explicit timezone and valid calendar
+values. Existing malformed records are rejected with no normalization or automatic
+reset. Before upgrade, inspect and repair affected date fields using authoritative
+evidence, preserving a backup; do not invent timestamps or discard runtime records.
+
+If an existing project uses a newly rejected device basename, migrate its identity
+explicitly before upgrading: stop writers, back up the workspace, choose one portable
+slug, and update the registry key/slug, project directory, store envelopes and nested
+project references, archive keys, attachment directory and scoped configuration together.
+Verify archive-first duplicate snapshot identities before resuming recovery. A directory
+rename or registry-only edit is insufficient; no compatibility alias or implicit rename
+is provided. This change does not alter the serialized shape of valid runtime records.
+
+`npm run test` includes separate-process contention and abrupt-owner-exit checks,
+including a live event-loop pause longer than the abandoned-owner inspection age.
 
 ## Managed Issue Stores
 
@@ -32,6 +148,9 @@ contracts exposed to other layers only through `lib/state/index.ts`.
 - `issues.archive.json` contains archived records and deletion tombstones only.
 - `issue-creations.json` contains resumable creation operations and idempotency
   keys; these records are not active runtime state.
+- `issues/creation` owns the operation-stage and failure-code registries and their
+  derived types, exposed through the state API. These identifiers do not determine
+  the workflow state of an initialized issue.
 - `issues/active`, `issues/archive`, and `issues/creation` are separate internal repositories with their own types and strict schemas.
 - `issues/persistence` owns the project lock shared by active/archive transactions; neither repository owns the other's synchronization policy.
 - Issue-store reads have no write side effects; only locked updates and explicit state-owned transactions initialize or replace durable stores.
@@ -85,10 +204,14 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 - Worker activation checks optional configured capacity and cross-role sequential
   exclusivity inside the same registry transaction that reserves the slot. Lingering
   active roles also block exclusivity, even if disabled in the current configuration.
+- Automatic reservation uses the same domain capacity selector as preview planning;
+  unresolved issue references and delivery evidence cannot be overwritten. Explicit
+  release uses the shared domain transformation after validating the selected owner.
 - Optional cross-project sequential execution is checked in the same registry transaction
   as reservation; concurrent dispatches cannot both claim different projects.
 - Project queries and mutations accept only the canonical project slug; notification routing is resolved before entering state.
 - Canonical slugs use strict lowercase kebab-case and must match their registry key; display names never address files or registry entries.
+- Slugs also reject reserved Windows device basenames before registry or filesystem writes.
 - The registry accepts only its current schema and performs no legacy field or identifier normalization.
 
 ## Configuration Pipeline
@@ -103,6 +226,20 @@ they cannot prevent a hostile process swapping paths between inspection and I/O.
 - Only `loadConfig` and resolved runtime selectors are public outside state; parsing details remain internal.
 
 ## Setup Files
+
+Setup resources owns package discovery and cached templates; workspace owns create-only
+initialization and project scaffolding; documents owns per-document synchronization,
+atomic replacement and backups; configuration owns YAML reads, model patches and resets;
+instructions owns prompt precedence and explicit system instruction refresh. Constants
+and types stay with these capabilities. Shared resource filenames belong to resources.
+Only index.ts remains at the setup root because it is a supported facade.
+
+Create, patch, reset and refresh share a per-document lock. Model patches read fresh
+content under that lock and preserve comments and unrelated settings. Replacements
+atomically publish the exact prior text to `.bak` before atomically replacing the
+document. Backup failure prevents replacement; destination failure leaves the old
+document and recoverable backup. Multi-document reset is intentionally resumable file
+by file, not an atomic transaction across all defaults.
 
 Project override scaffolding validates the slug and exclusively creates documentation;
 existing regular files are preserved. Non-file collisions and write failures propagate
@@ -135,7 +272,7 @@ remain errors, and the operation never creates files.
 this strict optional read, so symlinked or alternate path spellings share identity.
 
 
-`workers` stores the latest operator delivery decision per issue in
+`worker-delivery` stores the latest operator delivery decision per issue in
 `worker-delivery-resolutions.json`, under the issue-store lock. Intent is immutable
 and survives slot release and runtime replacement. Only the same decision may be
 marked complete; a different submission may replace only a completed record.

@@ -15,7 +15,7 @@ import { TEMPORARY_FILE_SUFFIX } from "./const.js";
  * @param filePath - Destination file owned by a state repository.
  * @param content - Complete content that should replace the destination.
  */
-async function writeFileAtomic(filePath: string, content: string): Promise<void> {
+export async function writeFileAtomic(filePath: string, content: string): Promise<void> {
   const temporaryPath = `${filePath}.${randomUUID()}${TEMPORARY_FILE_SUFFIX}`;
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });

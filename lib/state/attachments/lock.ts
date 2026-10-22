@@ -4,9 +4,9 @@ import path from "node:path";
 
 import { withFileLock } from "../persistence/index.js";
 import { ATTACHMENTS_LOCK_OPTIONS } from "./const.js";
-import { attachmentDirectory, attachmentLockPath, inspectAttachmentDirectory, inspectAttachmentFile } from "./paths.js";
+import { attachmentDirectory, attachmentLockPath, inspectAttachmentDirectory } from "./paths.js";
 
-/** Run a mutation after validating the ancestors of its external lock file.
+/** Run a mutation after validating the ancestors of its external ownership directory.
  * @param workspaceDir - Configured workspace root.
  * @param projectSlug - Canonical project identifier.
  * @param issueId - Positive issue identifier.
@@ -17,8 +17,6 @@ export async function withAttachmentLock<T>(workspaceDir: string, projectSlug: s
 
   await inspectAttachmentDirectory(workspaceDir, path.dirname(directory), true);
   const lockPath = attachmentLockPath(directory);
-
-  await inspectAttachmentFile(lockPath);
 
   return withFileLock(lockPath, ATTACHMENTS_LOCK_OPTIONS, async () => {
     await inspectAttachmentDirectory(workspaceDir, path.dirname(directory));

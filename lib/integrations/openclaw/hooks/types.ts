@@ -7,6 +7,7 @@ import type { Project } from "../../../domain/index.js";
 import type { RoleInstructionsResult } from "../../../state/index.js";
 import type { ProviderWithType } from "../../providers/index.js";
 import type { MediaAttachmentInfo } from "../media/index.js";
+import type { AttachmentMessageRoute } from "../routing/index.js";
 import type { ATTACHMENT_MESSAGE_HOOK } from "./const.js";
 
 /** Mutable instruction resource owned by the SDK bootstrap event. */
@@ -40,20 +41,6 @@ export type AttachmentMessageEvent = ReturnType<typeof toPluginMessageReceivedEv
 
 /** SDK routing context retaining explicit owner, account and conversation identities. */
 export type AttachmentMessageContext = ReturnType<typeof toPluginMessageContext>;
-
-/** Exact incoming SDK route passed to application-owned project resolution. */
-export type AttachmentMessageRoute = {
-  /** SDK channel identifier; never inferred from attachment metadata. */
-  channel: string;
-  /** Explicit account supplied by the SDK, without a guessed default. */
-  accountId: string;
-  /** Conversation identity without the canonical topic qualifier. */
-  conversationId: string;
-  /** Exact thread identity agreed by the conversation qualifier and message event. */
-  threadId?: string;
-  /** Owner parsed only from an explicitly scoped canonical SDK session. */
-  agentId: string;
-};
 
 /** Only the message registration capability required by attachment capture. */
 export type AttachmentHookRegistrar = {

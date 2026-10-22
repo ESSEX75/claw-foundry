@@ -3,8 +3,6 @@
 export {
   ATTACHMENT_DISPOSITION,
   ISSUE_ARCHIVE_REASON,
-  ISSUE_CREATION_ERROR,
-  ISSUE_CREATION_STATUS,
   ISSUE_INTEGRITY_STATUS,
   ISSUE_PROVIDER,
   OWNER_LABEL_COLOR,
@@ -19,8 +17,6 @@ export type {
   AttachmentDisposition,
   IssueArchiveReason,
   IssueCompletionReceipt,
-  IssueCreationErrorCode,
-  IssueCreationStatus,
   IssueIntegrityStatus,
   IssueProjectionState,
   IssueProviderId,
@@ -30,3 +26,4 @@ export type {
   ProviderMissingState,
   ReviewSummaryReceipt,
 } from "./types.js";
+export type { CreatedIssueReference } from "./types.js";

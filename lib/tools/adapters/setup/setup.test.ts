@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 import { Command } from "commander";
 import { SETUP_APPLY_STEP } from "../../../application/index.js";
 import { registerCli } from "../../../cli/index.js";
-import { DEVCLAW_PLUGIN_ID } from "../../../const.js";
+import { DEVCLAW_PLUGIN_ID } from "../../../shared/const.js";
 import { createSetupRuntime } from "../../../testing/index.js";
 import { createSetupTool } from "./setup.js";
 

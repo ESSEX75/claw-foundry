@@ -3,17 +3,19 @@
  * Atomic writes and scoped locks make idempotency and restart recovery durable.
  */
 
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { ISSUE_CREATION_STATUS } from "../../../domain/index.js";
+import { getErrorMessage,hasErrorCode } from "../../../shared/errors/index.js";
+import { sha256Hex } from "../../../shared/hashing/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
-import { isErrnoException, LOCK_FILE_SUFFIX, withFileLock, writeJsonAtomic } from "../../persistence/index.js";
-import { parseProjectSlug } from "../../projects/schema.js";
+import { LOCK_FILE_SUFFIX, withFileLock, writeJsonAtomic } from "../../persistence/index.js";
+import { parseProjectSlug } from "../../projects/index.js";
 import { CREATION_LOCKS_DIRECTORY_NAME, ISSUE_CREATION_LOCK_OPTIONS, ISSUE_CREATIONS_FILE_NAME } from "../const.js";
+import { ISSUE_CREATION_STATUS } from "./const.js";
 import { parseIssueCreationStore } from "./schema.js";
-import type { IssueCreationStore, IssueCreationUpdate } from "./types.js";
+import type { IssueCreationIdentity, IssueCreationStore, IssueCreationUpdate } from "./types.js";
 
 /**
  * Resolve the durable creation operation file for a project.
@@ -56,7 +58,7 @@ export async function readIssueCreationStore(workspaceDir: string, projectSlug: 
 
     return parseIssueCreationStore(parsed, projectSlug);
   } catch (error) {
-    if (!isErrnoException(error) || error.code !== "ENOENT") throw contextualStoreError(filePath, error);
+    if (!hasErrorCode(error, "ENOENT")) throw contextualStoreError(filePath, error);
 
     return emptyIssueCreationStore(projectSlug);
   }
@@ -69,7 +71,7 @@ export async function readIssueCreationStore(workspaceDir: string, projectSlug: 
  * @param error - Original filesystem, JSON, or schema failure.
  */
 function contextualStoreError(filePath: string, error: unknown): Error {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = getErrorMessage(error);
 
   return new Error(`Cannot read issue creation store ${filePath}: ${message}`, { cause: error });
 }
@@ -127,7 +129,7 @@ export async function withIssueCreationLock<T>(
   idempotencyKey: string,
   operation: () => T | Promise<T>,
 ): Promise<T> {
-  const keyHash = createHash("sha256").update(idempotencyKey).digest("hex");
+  const keyHash = sha256Hex(idempotencyKey);
   const lockPath = path.join(
     path.dirname(issueCreationStorePath(workspaceDir, projectSlug)),
     CREATION_LOCKS_DIRECTORY_NAME,
@@ -138,12 +140,7 @@ export async function withIssueCreationLock<T>(
 }
 
 /** Build identifiers shared by a newly requested creation operation. */
-export function newIssueCreationIdentity(): {
-  /** Stable identifier of the resumable creation operation. */
-  operationId: string;
-  /** Correlation identifier shared by audit records for the operation. */
-  auditCorrelationId: string;
-} {
+export function newIssueCreationIdentity(): IssueCreationIdentity {
   return { operationId: randomUUID(), auditCorrelationId: randomUUID() };
 }
 

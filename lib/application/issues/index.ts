@@ -1,8 +1,8 @@
-/** Aggregates supported managed issue administration, lifecycle, and recovery APIs. */
+/** Aggregates managed issue operations while keeping storage in the state layer. */
 
-export * from "./administration/index.js";
-export * from "./archive/index.js";
-export * from "./deletion/index.js";
-export * from "./ownership/index.js";
-export * from "./policy/index.js";
-export * from "./repair/index.js";
+export * from "./attachments/index.js";
+export * from "./commands/index.js";
+export * from "./maintenance/index.js";
+export * from "./projection/index.js";
+export * from "./queries/index.js";
+export * from "./runtime/index.js";

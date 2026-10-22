@@ -1,6 +1,6 @@
 /** Produces read-only readiness snapshots for collection queries without caching across operations. */
 
-import { ISSUE_CREATION_STATUS } from "../../../domain/index.js";
+import { ISSUE_CREATION_STATUS } from "./const.js";
 import { readIssueCreationStore } from "./repository.js";
 import type { IssueCreationStore } from "./types.js";
 

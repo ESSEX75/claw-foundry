@@ -4,9 +4,10 @@
  */
 
 export * from "./attachments/index.js";
+export * from "./audit/index.js";
 export * from "./config/index.js";
 export * from "./issues/index.js";
 export { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "./paths.js";
 export * from "./projects/index.js";
 export * from "./setup/index.js";
-export * from "./workers/index.js";
+export * from "./worker-delivery/index.js";

@@ -47,7 +47,7 @@ describe("budgeted task context", () => {
   });
 
   it("marks a Unicode fragment and excludes it from acknowledgement while retaining newer comments", () => {
-    const comments = [comment(1, "Old hidden history"), comment(2, "🙂 Важное решение ".repeat(1_000)), comment(3, "Newest instruction")];
+    const comments = [comment(1, "Old hidden history"), comment(2, "🙂 Important decision ".repeat(1_000)), comment(3, "Newest instruction")];
     const input = taskInput(comments);
     const result = selectTaskContext(input);
 
@@ -59,7 +59,7 @@ describe("budgeted task context", () => {
     assert.match(result.taskMessage, /Newest instruction/);
     assert.doesNotMatch(result.taskMessage, /Old hidden history|\uFFFD/);
     assert.ok(result.estimatedInputTokens <= 2_500);
-    assert.equal(comments[1].body, "🙂 Важное решение ".repeat(1_000));
+    assert.equal(comments[1].body, "🙂 Important decision ".repeat(1_000));
   });
 
   it("reports history excluded by the count cap even when size is small", () => {

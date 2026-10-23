@@ -1,12 +1,12 @@
-# DevClaw — Workflow Reference
+# Claw Foundry — Workflow Reference
 
-The issue lifecycle in DevClaw is a configurable state machine defined in `workflow.yaml`. This document covers the default pipeline, all state types, review policies, and the optional test phase.
+The issue lifecycle in Claw Foundry is a configurable state machine defined in `workflow.yaml`. This document covers the default pipeline, all state types, review policies, and the optional test phase.
 
 For config file format and location, see [Configuration](CONFIGURATION.md).
 
 ## PR Linkage Contract
 
-DevClaw owns issue closure. Developer-created PR descriptions must not use provider auto-close keywords such as `Closes #N`, `Fixes #N`, or `Resolves #N`, because those can close the issue before DevClaw finishes review and test transitions.
+Claw Foundry owns issue closure. Developer-created PR descriptions must not use provider auto-close keywords such as `Closes #N`, `Fixes #N`, or `Resolves #N`, because those can close the issue before Claw Foundry finishes review and test transitions.
 
 Use safe linkage text instead:
 
@@ -48,7 +48,7 @@ stateDiagram-v2
 
 ## Workflow States
 
-Each state has a type, label, color, and optional transitions. The complete default graph is maintained in [`defaults/devclaw/workflow.yaml`](../defaults/devclaw/workflow.yaml). Sparse overrides inherit that graph:
+Each state has a type, label, color, and optional transitions. The complete default graph is maintained in [`defaults/claw-foundry/workflow.yaml`](../defaults/claw-foundry/workflow.yaml). Sparse overrides inherit that graph:
 
 ```yaml
 workflow:
@@ -66,14 +66,14 @@ The architect role has dedicated `To Research` and `Researching` states. Design 
 
 ### Managed Issue Projection
 
-For initialized DevClaw-managed issues, `devclaw/projects/<project>/issues.json` is the runtime authority. Provider labels are required visual projection, not truth. The required `eyes` reaction remains a visual compatibility marker for managed issues and PRs.
+For initialized Claw Foundry-managed issues, `claw-foundry/projects/<project>/issues.json` is the runtime authority. Provider labels are required visual projection, not truth. The required `eyes` reaction remains a visual compatibility marker for managed issues and PRs.
 
 - Queue dispatch uses local `workflowState`/`workflowLabel` when a local issue record exists.
 - Provider labels remain visible in GitHub/GitLab and in `task_list`/`tasks_status`.
 - Manual provider label edits do not mutate local state.
 - If the provider issue no longer exists in GitHub/GitLab, heartbeat normally treats that as task deletion. An unresolved worker delivery retains its slot for investigation instead of requeueing from absence alone.
 - Heartbeat repairs recoverable managed-label drift and preserves unmanaged human labels.
-- Missing or tampered managed metadata sets `integrity_error`; repair with `devclaw repair issue --project <slug> --issue <id> --source local-state --dry-run` and then `--apply`.
+- Missing or tampered managed metadata sets `integrity_error`; repair with `claw-foundry repair issue --project <slug> --issue <id> --source local-state --dry-run` and then `--apply`.
 - Old issues without local state are shown as `projection_uninitialized` and must be explicitly backfilled before managed dispatch.
 
 ### Child Issue Creation Invariant
@@ -137,7 +137,7 @@ workflow:
 
 ### Per-Issue Overrides
 
-Override the project-level policy for a single issue through DevClaw-managed state. Provider labels are still rendered for visibility:
+Override the project-level policy for a single issue through Claw Foundry-managed state. Provider labels are still rendered for visibility:
 
 | Projected label | Local policy snapshot |
 |---|---|
@@ -145,7 +145,7 @@ Override the project-level policy for a single issue through DevClaw-managed sta
 | `review:agent` | `reviewPolicy: agent` |
 | `review:skip` | `reviewPolicy: skip` |
 
-For initialized DevClaw-managed issues, these labels are projection from `devclaw/projects/<project>/issues.json`. Editing `review:*`, `test:*`, state, owner, or role labels or body metadata directly in GitHub/GitLab does not change runtime state. The heartbeat projection pass restores recoverable drift and marks metadata tamper as `integrity_error`.
+For initialized Claw Foundry-managed issues, these labels are projection from `claw-foundry/projects/<project>/issues.json`. Editing `review:*`, `test:*`, state, owner, or role labels or body metadata directly in GitHub/GitLab does not change runtime state. The heartbeat projection pass restores recoverable drift and marks metadata tamper as `integrity_error`.
 
 Change existing policy snapshots through `issue_policy_migrate`. Preview the exact selection, review changed/skipped results, then apply with `dryRun: false`:
 
@@ -174,7 +174,7 @@ workflow:
 
 The built-in graph already routes review to the tester queue and defines tester completion transitions. A custom graph must explicitly connect those states and retain a `SKIP` transition for skipped snapshots.
 
-Provide role instructions at `devclaw/prompts/tester.md` or the project override `devclaw/projects/<project>/prompts/tester.md`. If neither exists, DevClaw supplies no role-specific instructions and does not fall back to orchestrator instructions.
+Provide role instructions at `claw-foundry/prompts/tester.md` or the project override `claw-foundry/projects/<project>/prompts/tester.md`. If neither exists, Claw Foundry supplies no role-specific instructions and does not fall back to orchestrator instructions.
 
 Existing issues retain their snapshots. To enable testing on selected existing issues, preview `issue_policy_migrate` with `testPolicy: agent`, then apply the same selection with `dryRun: false`. To skip testing on one issue:
 
@@ -288,8 +288,8 @@ work_finish({
 
 Tester workers receive instructions via role prompt files:
 
-- `devclaw/projects/<project>/prompts/tester.md` — project-specific
-- `devclaw/prompts/tester.md` — default fallback
+- `claw-foundry/projects/<project>/prompts/tester.md` — project-specific
+- `claw-foundry/prompts/tester.md` — default fallback
 
 These prompts should instruct the tester to always call `task_comment` before `work_finish`, include specific details about what was tested, and document results and environment.
 

@@ -20,7 +20,7 @@ import { reconcileManagedTaskCreations } from "./reconcile.js";
 
 /** Minimal registered routing identity shared by creation fixtures. */
 const project = {
-  slug: "devclaw",
+  slug: "claw-foundry",
   channels: [{
     channelId: "telegram:1",
     channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -77,7 +77,7 @@ for (const providerType of [ISSUE_PROVIDER.GITHUB, ISSUE_PROVIDER.GITLAB]) {
  * @param run - Scenario executed with a temporary workspace.
  */
 async function withWorkspace(run: (workspaceDir: string) => Promise<void>): Promise<void> {
-  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-creation-"));
+  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-creation-"));
 
   try {
     await run(workspaceDir);

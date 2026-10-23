@@ -1,18 +1,18 @@
 {
-  "name": "@laurentenhoor/devclaw",
-  "version": "1.6.10",
+  "name": "@essex75/claw-foundry",
+  "version": "0.1.0",
   "description": "Multi-project dev/qa pipeline orchestration for OpenClaw",
   "type": "module",
   "license": "MIT",
-  "author": "Lauren ten Hoor <laurentenhoor@gmail.com>",
+  "author": "Egor Kislitsyn",
   "repository": {
     "type": "git",
-    "url": "https://github.com/laurentenhoor/devclaw.git"
+    "url": "https://github.com/ESSEX75/claw-foundry.git"
   },
   "bugs": {
-    "url": "https://github.com/laurentenhoor/devclaw/issues"
+    "url": "https://github.com/ESSEX75/claw-foundry/issues"
   },
-  "homepage": "https://github.com/laurentenhoor/devclaw#readme",
+  "homepage": "https://github.com/ESSEX75/claw-foundry#readme",
   "keywords": [
     "openclaw",
     "openclaw-plugin",
@@ -49,6 +49,10 @@
     "defaults/",
     "roles/",
     "docs/",
+    "CHANGELOG.md",
+    "CHANGELOG.devclaw.md",
+    "PUBLISHING.md",
+    "scripts/migrate-devclaw-state.mjs",
     "openclaw.plugin.json"
   ],
   "publishConfig": {
@@ -61,7 +65,7 @@
     "build": "node build.mjs && npm run verify:bundle",
     "verify:bundle": "node scripts/verify-bundle-import.mjs",
     "check": "tsc --noEmit",
-    "test": "node scripts/run-node-tests.mjs",
+    "test": "node --test scripts/migrate-devclaw-state.test.mjs && node scripts/run-node-tests.mjs",
     "arch:check": "node scripts/architecture-check.mjs --warn-only",
     "arch:check:strict": "node scripts/architecture-check.mjs",
     "prepublishOnly": "npm run build"
@@ -89,5 +93,8 @@
     "vitest": "^5.0.1",
     "yaml": "^2.9.1",
     "zod": "^4.6.5"
-  }
+  },
+  "maintainers": [
+    "Egor Kislitsyn (https://github.com/ESSEX75)"
+  ]
 }

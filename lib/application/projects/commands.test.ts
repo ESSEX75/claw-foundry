@@ -12,7 +12,7 @@ import { linkProjectChannel } from "./channels/commands.js";
 import { registerProject } from "./registration/command.js";
 
 /** Canonical paths of scaffold resources exercised by failure/recovery tests. */
-const PROJECT_PATH = ["devclaw", "projects"];
+const PROJECT_PATH = ["claw-foundry", "projects"];
 
 /** Build exact SDK bindings for a project owner's requested destinations.
  * @param peers - Conversation identifiers accepted by the configured owner.

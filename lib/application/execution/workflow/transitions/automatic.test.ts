@@ -25,7 +25,7 @@ async function withProject<T>(fn: (ctx: {
   provider: TestProvider;
   runCommand: RunCommand;
 }) => Promise<T>): Promise<T> {
-  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-heartbeat-state-"));
+  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-heartbeat-state-"));
   const project: Project = {
     slug: "test-project",
     name: "test-project",

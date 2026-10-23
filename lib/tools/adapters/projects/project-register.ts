@@ -1,5 +1,5 @@
 /**
- * project_register — Register a new project with DevClaw.
+ * project_register — Register a new project with Claw Foundry.
  *
  * Atomically validates the repository, detects its provider, ensures configured labels,
  * adds project entry to projects.json, and logs the event.
@@ -38,7 +38,7 @@ export function createProjectRegisterTool(ctx: PluginContext): OpenClawPluginToo
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: PROJECT_REGISTER_TOOL_NAME,
     label: "Project Register",
-    description: `Register a new project with DevClaw. Creates state labels, adds to projects.json. One-time setup per project.`,
+    description: `Register a new project with Claw Foundry. Creates state labels, adds to projects.json. One-time setup per project.`,
     parameters: toolInputParameters(projectRegisterInput),
 
     /** Parse the untrusted request before resolving context or performing effects.
@@ -49,7 +49,7 @@ export function createProjectRegisterTool(ctx: PluginContext): OpenClawPluginToo
       const params = projectRegisterInput.parse(rawParams);
       const agentId = toolCtx.agentId;
 
-      if (!agentId) throw new Error("DevClaw project registration requires an agent context.");
+      if (!agentId) throw new Error("Claw Foundry project registration requires an agent context.");
       const result = await registerProject({
         workspaceDir: requireWorkspaceDir(toolCtx), name: params.name, repo: params.repo,
         baseBranch: params.baseBranch, deployBranch: params.deployBranch, agentId,

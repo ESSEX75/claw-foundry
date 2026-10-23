@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { getErrorMessage,hasErrorCode } from "../../../shared/errors/index.js";
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { writeJsonAtomic } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
@@ -21,6 +22,8 @@ import type { IssueArchiveStore, IssueArchiveUpdate } from "./types.js";
  * @param projectSlug - Project whose archive is addressed.
  */
 function issueArchivePath(workspaceDir: string, projectSlug: string): string {
+  assertWorkspaceMigrated(workspaceDir);
+
   return path.join(
     workspaceDir,
     DATA_DIR,

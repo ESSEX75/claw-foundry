@@ -5,14 +5,14 @@ import type { RoleId } from "../../../domain/index.js";
 /** Name of the managed role-prompt directory. */
 export const PROMPTS_DIRECTORY_NAME = "prompts";
 
-/** Name of the packaged defaults directory at the DevClaw package root. */
+/** Name of the packaged defaults directory at the Claw Foundry package root. */
 export const DEFAULTS_DIRECTORY_NAME = "defaults";
 
-/** Filename used to identify the DevClaw package root. */
+/** Filename used to identify the Claw Foundry package root. */
 export const PACKAGE_MANIFEST_FILE_NAME = "package.json";
 
-/** Package name required when accepting a manifest as the DevClaw package root. */
-export const DEVCLAW_PACKAGE_NAME = "@laurentenhoor/devclaw";
+/** Package name required when accepting a manifest as the Claw Foundry package root. */
+export const CLAW_FOUNDRY_PACKAGE_NAME = "@essex75/claw-foundry";
 
 /** Filename of the root agent instructions. */
 export const AGENTS_FILE_NAME = "AGENTS.md";
@@ -36,12 +36,12 @@ export const USER_FILE_NAME = "USER.md";
 export const ROLE_PROMPT_FILE_EXTENSION = ".md";
 
 /** Relative packaged-template path for the workspace workflow configuration. */
-export const WORKFLOW_TEMPLATE_PATH = "devclaw/workflow.yaml";
+export const WORKFLOW_TEMPLATE_PATH = "claw-foundry/workflow.yaml";
 
 /** Relative packaged-template paths for built-in role instructions. */
 export const ROLE_TEMPLATE_PATHS = {
-  developer: "devclaw/prompts/developer.md",
-  tester: "devclaw/prompts/tester.md",
-  architect: "devclaw/prompts/architect.md",
-  reviewer: "devclaw/prompts/reviewer.md",
+  developer: "claw-foundry/prompts/developer.md",
+  tester: "claw-foundry/prompts/tester.md",
+  architect: "claw-foundry/prompts/architect.md",
+  reviewer: "claw-foundry/prompts/reviewer.md",
 } satisfies Readonly<Record<RoleId, string>>;

@@ -35,7 +35,7 @@ export async function resolveSetupCliOptions(
   });
 
   try {
-    console.log("DevClaw setup target:");
+    console.log("Claw Foundry setup target:");
     agents.forEach((agent, index) => {
       const label = formatAgentLabel(agent);
       const workspace = agent.workspace ? ` — ${agent.workspace}` : "";

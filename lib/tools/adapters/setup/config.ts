@@ -1,5 +1,5 @@
 /**
- * config — Config management tool for DevClaw workspaces.
+ * config — Config management tool for Claw Foundry workspaces.
  *
  * Subcommands:
  * - reset: Reset config files to package defaults (with .bak backups)
@@ -24,7 +24,7 @@ export function createConfigTool(): OpenClawPluginToolFactory {
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: CONFIG_TOOL_NAME,
     label: "Config",
-    description: `Manage DevClaw workspace configuration.
+    description: `Manage Claw Foundry workspace configuration.
 
 Actions:
 - **reset**: Reset config files to package defaults. Creates .bak backups of existing files.

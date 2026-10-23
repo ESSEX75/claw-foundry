@@ -208,7 +208,7 @@ describe("E2E bootstrap — agent:bootstrap hook (AGENTS.md stripping)", () => {
     if (h) await h.cleanup();
   });
 
-  it("should replace AGENTS.md for exactly registered DevClaw worker sessions", async () => {
+  it("should replace AGENTS.md for exactly registered Claw Foundry worker sessions", async () => {
     const sessionKey = "agent:test-agent:subagent:my-app-developer-medior-ada";
     h = await createTestHarness({ projectName: "my-app", workers: { developer: { sessionKey, level: "medior" } } });
 
@@ -219,7 +219,7 @@ describe("E2E bootstrap — agent:bootstrap hook (AGENTS.md stripping)", () => {
     assert.ok(!result.agentsMdContent.includes("Orchestrator instructions"));
   });
 
-  it("should NOT strip AGENTS.md for non-DevClaw sessions", async () => {
+  it("should NOT strip AGENTS.md for non-Claw Foundry sessions", async () => {
     h = await createTestHarness();
 
     const result = await h.simulateBootstrap("agent:main:orchestrator");

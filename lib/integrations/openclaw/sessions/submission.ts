@@ -1,6 +1,6 @@
 /** Submits one gateway worker turn with an application-owned immutable token and conservative delivery evidence. */
 
-import { DEVCLAW_PLUGIN_ID } from "../../../shared/const.js";
+import { PERSISTED_PROTOCOL_NAMESPACE } from "../../../shared/const.js";
 import { getErrorMessage } from "../../../shared/errors/index.js";
 import { isCompletedCommand } from "../../process/index.js";
 import { AGENT_TURN_LANE, AGENT_TURN_METHOD, AGENT_TURN_STATUS, AGENT_TURN_TIMEOUT_MS, DEFAULT_GATEWAY_AGENT_ID, GATEWAY_COMMAND } from "./const.js";
@@ -46,7 +46,7 @@ export async function submitAgentTurn(sessionKey: string, taskMessage: string, o
  */
 function agentCommand(sessionKey: string, taskMessage: string, opts: AgentTurnInput): string[] {
   const gatewayParams = JSON.stringify({
-    idempotencyKey: `${DEVCLAW_PLUGIN_ID}-${opts.submissionId}`,
+    idempotencyKey: `${PERSISTED_PROTOCOL_NAMESPACE}-${opts.submissionId}`,
     agentId: opts.agentId ?? DEFAULT_GATEWAY_AGENT_ID,
     sessionKey,
     message: taskMessage,

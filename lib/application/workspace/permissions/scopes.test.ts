@@ -129,7 +129,7 @@ it("combines check approval with a request that only confirms the missing permis
       : { status: "approved", approved: ["operator.write"], missing: [] }));
   });
   assert.deepStrictEqual(result.approved, ["operator.read", "operator.write"]);
-  assert.deepStrictEqual(calls[1], ["openclaw", "scopes", "request", "--scope", "operator.write", "--reason", "devclaw-worker-dispatch", "--json"]);
+  assert.deepStrictEqual(calls[1], ["openclaw", "scopes", "request", "--scope", "operator.write", "--reason", "claw-foundry-worker-dispatch", "--json"]);
 });
 it("does not create another request when check already identifies pending approval", async () => {
   let calls = 0;

@@ -16,7 +16,7 @@ it("rate-limits warning attempts across workspaces without exposing event payloa
   configureAuditWarnings(message => { messages.push(message); });
   await Promise.all(Array.from({ length: 5 }, (_, index) => log(`workspace-${index}`, "failure", { value: 1n, secret: "DO_NOT_LOG" })));
   assert.equal(messages.length, 1);
-  assert.match(messages[0] ?? "", /DevClaw audit/);
+  assert.match(messages[0] ?? "", /Claw Foundry audit/);
   assert.doesNotMatch(messages[0] ?? "", /DO_NOT_LOG/);
   now += AUDIT_WARNING_INTERVAL_MS;
   await log("workspace-next", "failure", { value: 1n });

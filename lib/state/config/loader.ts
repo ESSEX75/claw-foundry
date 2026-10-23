@@ -3,6 +3,7 @@
 import path from "node:path";
 
 import { getErrorMessage } from "../../shared/errors/index.js";
+import { assertWorkspaceMigrated } from "../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME, WORKFLOW_FILE_NAME } from "../paths.js";
 import { parseProjectSlug } from "../projects/index.js";
 import { readYamlFile } from "./boundary.js";
@@ -10,7 +11,7 @@ import { buildDefaultConfig } from "./defaults.js";
 import { mergeConfig } from "./merge.js";
 import { resolveConfig } from "./resolution.js";
 import { parseConfig } from "./schema.js";
-import type { DevClawConfig, ResolvedConfig } from "./types.js";
+import type { ClawFoundryConfig, ResolvedConfig } from "./types.js";
 
 /**
  * Load and resolve built-in, workspace, and optional project configuration layers.
@@ -19,8 +20,10 @@ import type { DevClawConfig, ResolvedConfig } from "./types.js";
  * @param projectSlug - Canonical project whose optional layer has highest precedence.
  */
 export async function loadConfig(workspaceDir: string, projectSlug?: string): Promise<ResolvedConfig> {
+  assertWorkspaceMigrated(workspaceDir);
+
   const dataDir = path.join(workspaceDir, DATA_DIR);
-  const layers: DevClawConfig[] = [buildDefaultConfig()];
+  const layers: ClawFoundryConfig[] = [buildDefaultConfig()];
   const workspacePath = path.join(dataDir, WORKFLOW_FILE_NAME);
   const workspaceRaw = await readYamlFile(workspacePath);
 
@@ -47,7 +50,7 @@ export async function loadConfig(workspaceDir: string, projectSlug?: string): Pr
  * @param value - Unknown YAML parser output.
  * @param filePath - Source file used for diagnostic context.
  */
-function parseLayer(value: unknown, filePath: string): DevClawConfig {
+function parseLayer(value: unknown, filePath: string): ClawFoundryConfig {
   try {
     return parseConfig(value);
   } catch (error) {

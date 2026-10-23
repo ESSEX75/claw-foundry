@@ -72,7 +72,7 @@ describe("custom configuration E2E", () => {
       },
     });
 
-    await fs.writeFile(path.join(harness.workspaceDir, "devclaw", "workflow.yaml"), `
+    await fs.writeFile(path.join(harness.workspaceDir, "claw-foundry", "workflow.yaml"), `
 roles:
   security_auditor:
     levels:

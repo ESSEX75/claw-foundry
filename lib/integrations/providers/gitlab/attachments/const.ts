@@ -10,7 +10,7 @@ export const GITLAB_UPLOAD_PATH = {
 
 /** Temporary resources and cleanup bounds owned exclusively by GitLab multipart transport. */
 export const GITLAB_ATTACHMENT_STORAGE = {
-  TEMP_PREFIX: "devclaw-upload-",
+  TEMP_PREFIX: "claw-foundry-upload-",
   FILE_PREFIX: "attachment-",
   CREATE_FLAG: "wx",
   FILE_MODE: 0o600,

@@ -7,7 +7,7 @@ export const WORKER_BOOTSTRAP_HOOK = "agent:bootstrap";
 export const WORKER_BOOTSTRAP_FILE = "AGENTS.md";
 
 /** Registration identity of the worker instruction hook. */
-export const WORKER_BOOTSTRAP_REGISTRATION = "devclaw-bootstrap-role-instructions";
+export const WORKER_BOOTSTRAP_REGISTRATION = "claw-foundry-bootstrap-role-instructions";
 
 /** Hook delivering normalized incoming message metadata. */
 export const ATTACHMENT_MESSAGE_HOOK = "message_received";

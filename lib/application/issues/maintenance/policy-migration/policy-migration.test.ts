@@ -44,7 +44,7 @@ describe("migrateIssuePolicies", () => {
   it("uses configured terminal states instead of built-in state names", async () => {
     const h = await createTestHarness();
     try {
-      const directory = path.join(h.workspaceDir, "devclaw", "projects", h.project.slug);
+      const directory = path.join(h.workspaceDir, "claw-foundry", "projects", h.project.slug);
       await fs.mkdir(directory, { recursive: true });
       await fs.writeFile(path.join(directory, "workflow.yaml"), "workflow:\n  states:\n    finished:\n      type: terminal\n      label: Finished\n      color: '#000000'\n");
       const store = emptyIssueStateStore(h.project.slug);

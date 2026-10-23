@@ -1,5 +1,5 @@
 /**
- * onboard — Conversational DevClaw onboarding.
+ * onboard — Conversational Claw Foundry onboarding.
  *
  * Returns step-by-step guidance. Call this before setup.
  */
@@ -24,7 +24,7 @@ export function createOnboardTool(ctx: PluginContext): OpenClawPluginToolFactory
   return (toolCtx: OpenClawPluginToolContext) => ({
     name: ONBOARD_TOOL_NAME,
     label: "Onboard",
-    description: "Start DevClaw onboarding workflow. Returns step-by-step QA-style guidance. Call this first, then setup with collected answers.",
+    description: "Start Claw Foundry onboarding workflow. Returns step-by-step QA-style guidance. Call this first, then setup with collected answers.",
     parameters: toolInputParameters(onboardInput),
 
     /** Parse the untrusted request before resolving context or performing effects.

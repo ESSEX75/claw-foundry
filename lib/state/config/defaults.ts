@@ -2,10 +2,10 @@
 
 import { DEFAULT_WORKFLOW } from "../../domain/index.js";
 import { getAllRoleIds, requireBuiltInRole } from "../../roles/index.js";
-import type { DevClawConfig, LevelOverride, RoleOverride } from "./types.js";
+import type { ClawFoundryConfig, LevelOverride, RoleOverride } from "./types.js";
 
 /** Build the complete built-in configuration layer. */
-export function buildDefaultConfig(): DevClawConfig {
+export function buildDefaultConfig(): ClawFoundryConfig {
   const roles: Record<string, RoleOverride> = {};
 
   for (const id of getAllRoleIds()) {

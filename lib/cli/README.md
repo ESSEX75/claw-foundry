@@ -58,7 +58,7 @@ the selected target's effective enabled assignments and submit only entered valu
 
 External consumers import only `lib/cli/index.ts`, whose facade exposes
 `registerCli` and its minimal `CliContext` contract. The root `register.ts` composes
-one DevClaw group; root `types.ts` owns only that composition boundary. Root
+one Claw Foundry group; root `types.ts` owns only that composition boundary. Root
 `const.ts` owns the private terminal audit actor shared by adapters. Internal CLI
 code may import that constant directly, but must never import the root facade.
 

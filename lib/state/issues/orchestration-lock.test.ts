@@ -12,7 +12,7 @@ import {
 
 describe("issue orchestration lock", () => {
   it("serializes operations for the same issue", async () => {
-    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issue-lock-"));
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issue-lock-"));
     const events: string[] = [];
     let releaseFirst: (() => void) | undefined;
     const firstMayFinish = new Promise<void>((resolve) => {
@@ -42,7 +42,7 @@ describe("issue orchestration lock", () => {
   });
 
   it("does not block a different issue", async () => {
-    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issue-lock-parallel-"));
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issue-lock-parallel-"));
     let secondEntered = false;
     let releaseFirst: (() => void) | undefined;
     const firstMayFinish = new Promise<void>((resolve) => {
@@ -66,7 +66,7 @@ describe("issue orchestration lock", () => {
   });
 
   it("releases the lock after an operation fails", async () => {
-    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issue-lock-error-"));
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issue-lock-error-"));
 
     try {
       await assert.rejects(
@@ -85,7 +85,7 @@ describe("issue orchestration lock", () => {
   });
 
   it("refuses an unidentified stale lock until explicit repair", async () => {
-    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issue-lock-stale-"));
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issue-lock-stale-"));
     const lockPath = issueOrchestrationLockPath(workspaceDir, "app", 79);
 
     try {

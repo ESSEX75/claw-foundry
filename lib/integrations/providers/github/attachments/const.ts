@@ -18,7 +18,7 @@ export const GITHUB_ATTACHMENT_RESOURCE = {
 
 /** Repository resources used to publish uniquely identified attachments. */
 export const GITHUB_ATTACHMENT_STORAGE = {
-  BRANCH: "devclaw-attachments",
+  BRANCH: "claw-foundry-attachments",
   DIRECTORY: "attachments",
 } as const;
 

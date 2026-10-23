@@ -8,7 +8,7 @@ export type ProjectionDiff = {
   expectedManagedLabels: string[];
   /** Sorted distinct observed labels owned by configuration or expected local fields. */
   actualManagedLabels: string[];
-  /** Sorted distinct observed labels outside DevClaw ownership. */
+  /** Sorted distinct observed labels outside Claw Foundry ownership. */
   unmanagedLabels: string[];
   /** Expected labels absent from the provider snapshot. */
   missingManagedLabels: string[];

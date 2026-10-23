@@ -1,6 +1,6 @@
-# DevClaw — Agent Instructions
+# Claw Foundry — Agent Instructions
 
-DevClaw is an OpenClaw plugin for multi-project dev/qa pipeline orchestration with GitHub/GitLab integration, developer tiers, managed issue runtime state, and audit logging.
+Claw Foundry is an OpenClaw plugin for multi-project dev/qa pipeline orchestration with GitHub/GitLab integration, developer tiers, managed issue runtime state, and audit logging.
 
 ## Source Layout
 
@@ -33,7 +33,7 @@ Layer-specific contracts live only in the root `lib/<layer>/README.md`. Do not a
 
 ## Runtime State Contract
 
-For each initialized DevClaw-managed issue, `<workspace>/devclaw/projects/<project>/issues.json` is the source of truth for its workflow and runtime state. Provider labels and issue body metadata are a visible projection of that state; provider observations may verify or reconcile the projection, but must not determine workflow transitions, queue eligibility, or worker ownership.
+For each initialized Claw Foundry-managed issue, `<workspace>/claw-foundry/projects/<project>/issues.json` is the source of truth for its workflow and runtime state. Provider labels and issue body metadata are a visible projection of that state; provider observations may verify or reconcile the projection, but must not determine workflow transitions, queue eligibility, or worker ownership.
 
 Normal queue, heartbeat, and health paths must start from local issue state. Do not fall back to provider labels when an issue has no local record, and do not scan provider-only issues to infer managed runtime state. A missing local record means the issue is uninitialized until an explicit initialization or repair flow handles it. Manual provider label edits never become authoritative runtime state implicitly.
 
@@ -111,4 +111,4 @@ npm run build && openclaw gateway restart
 openclaw logs
 ```
 
-Expect: `[plugins] DevClaw plugin registered (... tools, 1 CLI command group, 1 service, 3 hooks)`, where the tool count is read from the current registry.
+Expect: `[plugins] Claw Foundry plugin registered (... tools, 1 CLI command group, 1 service, 3 hooks)`, where the tool count is read from the current registry.

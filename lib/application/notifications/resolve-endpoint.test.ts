@@ -32,7 +32,7 @@ describe("managed notification endpoint resolution", () => {
 async function withIssueBinding(
   run: (workspaceDir: string, project: Project) => Promise<void>,
 ): Promise<void> {
-  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-binding-"));
+  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-binding-"));
   const project = projectFixture();
   const store = emptyIssueStateStore(project.slug);
 
@@ -48,10 +48,10 @@ async function withIssueBinding(
 
 function projectFixture(): Project {
   return {
-    slug: "devclaw",
-    name: "DevClaw",
+    slug: "claw-foundry",
+    name: "Claw Foundry",
     agentId: "test-agent",
-    repo: "D:/web/devclaw",
+    repo: "D:/web/claw-foundry",
     baseBranch: "main",
     deployBranch: "main",
     channels: [
@@ -71,7 +71,7 @@ function projectFixture(): Project {
 
 function issueState(): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 79,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",

@@ -11,7 +11,7 @@ import type { ProjectionViewContext } from "./types.js";
  */
 function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 123,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",

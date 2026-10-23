@@ -1,8 +1,8 @@
-# DevClaw workflow configuration
+# Claw Foundry workflow configuration
 #
-# This file is YOUR configuration — DevClaw will never overwrite it on restart.
+# This file is YOUR configuration — Claw Foundry will never overwrite it on restart.
 # Edit freely: role levels, models, timeouts, reviewPolicy, testPolicy, states, etc.
-# Copy to devclaw/projects/<project>/workflow.yaml for project-specific overrides.
+# Copy to claw-foundry/projects/<project>/workflow.yaml for project-specific overrides.
 #
 # To see what changed in a new version: config({ action: "diff" })
 # To reset to package defaults:         config({ action: "reset", scope: "workflow" })
@@ -82,8 +82,8 @@ workflow:
   # skip  — Testing phase is skipped. Issues go straight from review to done.
   #          For existing issues use issue_policy_migrate with testPolicy: agent.
   # agent — Agent tester runs automated QA on every issue after review.
-  #          Requires tester prompts: devclaw/prompts/tester.md
-  #          (or per-project: devclaw/projects/<name>/prompts/tester.md)
+  #          Requires tester prompts: claw-foundry/prompts/tester.md
+  #          (or per-project: claw-foundry/projects/<name>/prompts/tester.md)
   roleExecution: parallel # Options: parallel (default), sequential
   # parallel   — Different roles can work simultaneously (e.g. developer + tester).
   # sequential — Only one role active at a time.

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { Command } from "commander";
 
-import { DEVCLAW_PLUGIN_ID } from "../shared/const.js";
+import { CLAW_FOUNDRY_PLUGIN_ID } from "../shared/const.js";
 import { createSetupRuntime } from "../testing/index.js";
 import { registerCli } from "./index.js";
 
@@ -29,7 +29,7 @@ describe("administrative CLI input", () => {
       const parent = new Command();
 
       registerCli(parent, fixture);
-      await assert.rejects(parent.parseAsync([DEVCLAW_PLUGIN_ID, ...args, workspace, missing], { from: "user" }),
+      await assert.rejects(parent.parseAsync([CLAW_FOUNDRY_PLUGIN_ID, ...args, workspace, missing], { from: "user" }),
         /Invalid issue ID|non-empty comma-separated list|--confirm-issue must exactly match/);
     }
 

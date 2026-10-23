@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { hasErrorCode } from "../../../shared/errors/index.js";
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { CREATE_ONLY_FILE_FLAG, FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
@@ -23,6 +24,8 @@ export async function scaffoldProjectOverrides(
   projectSlug: string,
   roleIds: readonly string[],
 ): Promise<boolean> {
+  assertWorkspaceMigrated(workspaceDir);
+
   parseProjectSlug(projectSlug);
   const projectDir = path.join(workspaceDir, DATA_DIR, PROJECTS_DIRECTORY_NAME, projectSlug);
   const promptsDir = path.join(projectDir, PROMPTS_DIRECTORY_NAME);
@@ -45,17 +48,17 @@ To override default worker instructions, create \`prompts/<role>.md\`:
 Available roles: ${roles}
 
 Example: \`prompts/developer.md\` overrides the default developer instructions for this project only.
-Files here take priority over the workspace defaults in \`devclaw/prompts/\`.
+Files here take priority over the workspace defaults in \`claw-foundry/prompts/\`.
 
 ## Workflow Overrides
 
 To override the default workflow configuration, create \`workflow.yaml\` in this directory.
 
-Only include the keys you want to override — everything else inherits from the workspace-level \`devclaw/workflow.yaml\`. The three-layer system is:
+Only include the keys you want to override — everything else inherits from the workspace-level \`claw-foundry/workflow.yaml\`. The three-layer system is:
 
 1. **Built-in defaults** (code)
-2. **Workspace** — \`devclaw/workflow.yaml\`
-3. **Project** — \`devclaw/projects/${projectSlug}/workflow.yaml\` (this directory)
+2. **Workspace** — \`claw-foundry/workflow.yaml\`
+3. **Project** — \`claw-foundry/projects/${projectSlug}/workflow.yaml\` (this directory)
 
 Example — use a different review policy for this project:
 

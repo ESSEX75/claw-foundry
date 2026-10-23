@@ -17,12 +17,12 @@ function statusCommand(payload: unknown): RunCommand {
 }
 
 it("only resets context above its budget and preserves same-issue feedback", async t => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-session-budget-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-session-budget-"));
   t.after(async () => {
-    const audit = path.join(directory, "devclaw", "log", "audit.log");
+    const audit = path.join(directory, "claw-foundry", "log", "audit.log");
     await fs.unlink(audit);
     await fs.rmdir(path.dirname(audit));
-    await fs.rmdir(path.join(directory, "devclaw"));
+    await fs.rmdir(path.join(directory, "claw-foundry"));
     await fs.rmdir(directory);
   });
   const { timeouts } = await loadConfig(directory);
@@ -46,7 +46,7 @@ for (const observation of [
   { key: "another-worker", totalTokens: 100, contextTokens: 100 },
 ]) {
   it(`retains the session without a reset audit when budget evidence is insufficient: ${JSON.stringify(observation)}`, async t => {
-    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-session-policy-"));
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-session-policy-"));
     t.after(() => fs.rm(directory, { recursive: true, force: true }));
     const timeouts = { ...(await loadConfig(directory)).timeouts, sessionContextBudget: 0.8 };
     const reset = await shouldClearSession("worker", 1, 2, timeouts, directory, "project",
@@ -57,7 +57,7 @@ for (const observation of [
 }
 
 it("preserves same-issue context without observing the gateway or writing an audit", async t => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-session-policy-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-session-policy-"));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const { timeouts } = await loadConfig(directory);
   let reads = 0;
@@ -68,7 +68,7 @@ it("preserves same-issue context without observing the gateway or writing an aud
 });
 
 it("retains the session when gateway observation fails", async t => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-session-policy-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-session-policy-"));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const { timeouts } = await loadConfig(directory);
   assert.equal(await shouldClearSession("worker", 1, 2, timeouts, directory, "project", async () => { throw new Error("gateway unavailable"); }), false);

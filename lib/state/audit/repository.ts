@@ -2,6 +2,7 @@
 
 import path from "node:path";
 
+import { assertWorkspaceMigrated } from "../migration.js";
 import { DATA_DIR, LOG_DIRECTORY_NAME } from "../paths.js";
 import { LOCK_FILE_SUFFIX, withFileLock, writeFileAtomic } from "../persistence/index.js";
 import { AUDIT_FILE_NAME, AUDIT_LOCK_OPTIONS, MAX_AUDIT_BYTES } from "./const.js";
@@ -15,12 +16,14 @@ import { reportAuditFailure } from "./warnings.js";
  * Atomic publication and a persisted rotation plan preserve history across interrupted rotation.
  * All serialization, lock and filesystem failures are suppressed; resolution does not
  * prove persistence. Records are diagnostic only, never authoritative recovery evidence.
- * @param workspaceDir - Workspace owning the DevClaw diagnostic journal.
+ * @param workspaceDir - Workspace owning the Claw Foundry diagnostic journal.
  * @param event - Event identity owned by the calling capability.
  * @param data - Flat diagnostic payload; ts/event are reserved and root custom serializers are unsupported.
  */
 export async function log(workspaceDir: string, event: string, data: Record<string, unknown>): Promise<void> {
   try {
+    assertWorkspaceMigrated(workspaceDir);
+
     const entry: AuditEntry = { ...data, ts: new Date().toISOString(), event };
 
     if (typeof entry["toJSON"] === "function") throw new Error("Custom root audit serializers are unsupported.");

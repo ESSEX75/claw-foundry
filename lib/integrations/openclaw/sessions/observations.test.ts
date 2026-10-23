@@ -17,7 +17,7 @@ function statusCommand(payload: unknown): RunCommand {
 }
 
 it("merges recent observations with partial stores without proving absence", async t => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-session-observation-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-session-observation-"));
   const file = path.join(directory, "sessions.json");
   t.after(async () => { await fs.unlink(file); await fs.rmdir(directory); });
   await fs.writeFile(file, JSON.stringify({ stored: { updatedAt: 1, totalTokens: 20, contextTokens: 100 } }));
@@ -33,7 +33,7 @@ it("merges recent observations with partial stores without proving absence", asy
 });
 
 it("proves absence only after every store and record was successfully read", async t => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-session-observation-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-session-observation-"));
   const file = path.join(directory, "sessions.json");
   t.after(async () => { await fs.unlink(file); await fs.rmdir(directory); });
   await fs.writeFile(file, JSON.stringify({ known: { updatedAt: 1 } }));
@@ -48,7 +48,7 @@ it("proves absence only after every store and record was successfully read", asy
 });
 
 it("treats a recent-only or corrupt-store inventory as incomplete and prefers newer observations", async t => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-session-observation-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-session-observation-"));
   const file = path.join(directory, "sessions.json");
   t.after(async () => { await fs.unlink(file); await fs.rmdir(directory); });
   await fs.writeFile(file, "broken JSON");

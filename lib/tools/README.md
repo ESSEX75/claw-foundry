@@ -4,7 +4,7 @@ This layer owns OpenClaw tool adapters.
 
 Tool modules validate tool inputs, resolve runtime context, call application use
 cases, and format tool results for OpenClaw. They are the boundary between the
-agent-facing plugin API and deterministic DevClaw behavior.
+agent-facing plugin API and deterministic Claw Foundry behavior.
 
 Each adapter owns a strict Zod input schema and derives its SDK JSON Schema from
 that same definition through `validation`. Parsing precedes context resolution and

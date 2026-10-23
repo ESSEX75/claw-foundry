@@ -38,7 +38,7 @@ export async function runSetup(opts: SetupOpts): Promise<SetupResult> {
 
       if (resources.workspacePath !== workspacePath) throw new Error("SDK agent resource root changed after setup planning.");
       await registerAgentConfiguration({ runtime: opts.runtime, name: opts.newAgentName, agentId, resources,
-        afterWrite: { mode: CONFIG_RELOAD_MODE.NONE, reason: "DevClaw setup continues with a second config write that owns reload handling." } });
+        afterWrite: { mode: CONFIG_RELOAD_MODE.NONE, reason: "Claw Foundry setup continues with a second config write that owns reload handling." } });
       result.agentCreated = true;
       step = SETUP_APPLY_STEP.RESOURCES;
       await provisionAgentResources(resources);

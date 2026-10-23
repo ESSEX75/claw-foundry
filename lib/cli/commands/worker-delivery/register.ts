@@ -1,4 +1,4 @@
-/** Exposes explicit, audited worker-delivery recovery through the DevClaw CLI. */
+/** Exposes explicit, audited worker-delivery recovery through the Claw Foundry CLI. */
 
 import type { Command } from "commander";
 
@@ -10,7 +10,7 @@ import type { WorkerDeliveryCommandOptions } from "./types.js";
 
 /**
  * Register a preview and apply command for a verified uncertain worker turn.
- * @param parent - DevClaw command group receiving the recovery command.
+ * @param parent - Claw Foundry command group receiving the recovery command.
  * @param ctx - Plugin runtime supplying workspace and provider command access.
  */
 export function registerWorkerDeliveryCommand(parent: Command, ctx: AdministrativeCliContext): void {

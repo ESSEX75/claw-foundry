@@ -55,7 +55,7 @@ export type IssueStateWriteInput = {
   assignedRole?: string | null;
   /** Explicit assigned level replacement. */
   assignedLevel?: string | null;
-  /** Explicit DevClaw owner replacement. */
+  /** Explicit Claw Foundry owner replacement. */
   owner?: string | null;
   /** Explicit notification binding replacement. */
   notifyTarget?: NotifyBindingRef | null;

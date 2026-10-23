@@ -21,7 +21,7 @@ import { archiveManagedIssueLocked, recoverArchivedIssueLocked } from "../../mai
  */
 function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 123,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",
@@ -49,12 +49,12 @@ function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
  * @param fn - Scenario to execute before cleanup.
  */
 async function withStore<T>(issueState: IssueRuntimeState, fn: (tmpDir: string, provider: TestProvider) => Promise<T>): Promise<T> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-projection-"));
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-projection-"));
   const provider = new TestProvider();
   try {
-    const store = emptyIssueStateStore("devclaw");
+    const store = emptyIssueStateStore("claw-foundry");
     store.issues[String(issueState.issueId)] = issueState;
-    await writeIssueStateStore(tmpDir, "devclaw", store);
+    await writeIssueStateStore(tmpDir, "claw-foundry", store);
     return await fn(tmpDir, provider);
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
@@ -65,7 +65,7 @@ async function withStore<T>(issueState: IssueRuntimeState, fn: (tmpDir: string, 
  * @param issueId - Identity written to the provider body.
  */
 function metadata(issueId = 123): string {
-  return renderIssueMetadata({ projectSlug: "devclaw", issueId });
+  return renderIssueMetadata({ projectSlug: "claw-foundry", issueId });
 }
 
 describe("projectionIntegrityPass", () => {
@@ -73,15 +73,15 @@ describe("projectionIntegrityPass", () => {
     await withStore(state({ integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR,
       integrityErrors: ["worker ownership conflict"] }), async (tmpDir, provider) => {
       provider.seedIssue({ iid: 123, labels: ["To Do"], description: "Body" });
-      const input = { archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked }, workspaceDir: tmpDir, project: { slug: "devclaw" }, provider,
+      const input = { archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked }, workspaceDir: tmpDir, project: { slug: "claw-foundry" }, provider,
         workflow: DEFAULT_WORKFLOW, roles: ["developer"] };
       await projectionIntegrityPass(input);
-      assert.deepEqual((await readIssueStateStore(tmpDir, "devclaw")).issues["123"].integrityErrors,
+      assert.deepEqual((await readIssueStateStore(tmpDir, "claw-foundry")).issues["123"].integrityErrors,
         ["worker ownership conflict", "issue metadata is missing"]);
       await provider.editIssue(123, { body: metadata() });
       await projectionIntegrityPass(input);
       await projectionIntegrityPass(input);
-      const fresh = (await readIssueStateStore(tmpDir, "devclaw")).issues["123"];
+      const fresh = (await readIssueStateStore(tmpDir, "claw-foundry")).issues["123"];
       assert.deepEqual(fresh.integrityErrors, ["worker ownership conflict"]);
       assert.equal(fresh.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
     });
@@ -91,9 +91,9 @@ describe("projectionIntegrityPass", () => {
     await withStore(state({ integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR,
       integrityErrors: ["issue metadata is missing"] }), async (tmpDir, provider) => {
       provider.seedIssue({ iid: 123, labels: ["To Do"], description: metadata() });
-      await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked }, workspaceDir: tmpDir, project: { slug: "devclaw" }, provider,
+      await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked }, workspaceDir: tmpDir, project: { slug: "claw-foundry" }, provider,
         workflow: DEFAULT_WORKFLOW, roles: ["developer"] });
-      const fresh = (await readIssueStateStore(tmpDir, "devclaw")).issues["123"];
+      const fresh = (await readIssueStateStore(tmpDir, "claw-foundry")).issues["123"];
       assert.equal(fresh.integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
       assert.deepEqual(fresh.integrityErrors, []);
     });
@@ -102,7 +102,7 @@ describe("projectionIntegrityPass", () => {
   it("preserves independent blockers across confirmed provider absence and recovery", async () => {
     await withStore(state({ integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR,
       integrityErrors: ["worker ownership conflict"] }), async (tmpDir, provider) => {
-      const input = { archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked }, workspaceDir: tmpDir, project: { slug: "devclaw" }, provider,
+      const input = { archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked }, workspaceDir: tmpDir, project: { slug: "claw-foundry" }, provider,
         workflow: DEFAULT_WORKFLOW, roles: ["developer"] };
       await projectionIntegrityPass({ ...input, now: new Date("2026-06-22T00:00:00Z") });
       await projectionIntegrityPass({ ...input, now: new Date("2026-06-22T00:08:00Z") });
@@ -110,7 +110,7 @@ describe("projectionIntegrityPass", () => {
       assert.equal(third.removed, 0);
       provider.seedIssue({ iid: 123, labels: ["To Do"], description: metadata() });
       await projectionIntegrityPass(input);
-      const fresh = (await readIssueStateStore(tmpDir, "devclaw")).issues["123"];
+      const fresh = (await readIssueStateStore(tmpDir, "claw-foundry")).issues["123"];
       assert.equal(fresh.providerMissing, null);
       assert.deepEqual(fresh.integrityErrors, ["worker ownership conflict"]);
       assert.equal(fresh.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
@@ -130,18 +130,18 @@ describe("projectionIntegrityPass", () => {
       }
     }
 
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-projection-auth-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-projection-auth-"));
     try {
-      const store = emptyIssueStateStore("devclaw");
+      const store = emptyIssueStateStore("claw-foundry");
       store.issues["123"] = state();
-      await writeIssueStateStore(tmpDir, "devclaw", store);
+      await writeIssueStateStore(tmpDir, "claw-foundry", store);
       const result = await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked },
-        workspaceDir: tmpDir, project: { slug: "devclaw" }, provider: new UnauthorizedProvider(),
+        workspaceDir: tmpDir, project: { slug: "claw-foundry" }, provider: new UnauthorizedProvider(),
         workflow: DEFAULT_WORKFLOW, roles: ["developer"],
       });
       assert.equal(result.errors, 1);
-      assert.ok((await readIssueStateStore(tmpDir, "devclaw")).issues["123"]);
-      assert.equal(Object.keys((await readIssueArchiveStore(tmpDir, "devclaw")).issues).length, 0);
+      assert.ok((await readIssueStateStore(tmpDir, "claw-foundry")).issues["123"]);
+      assert.equal(Object.keys((await readIssueArchiveStore(tmpDir, "claw-foundry")).issues).length, 0);
     } finally {
       await fs.rm(tmpDir, { recursive: true, force: true });
     }
@@ -157,7 +157,7 @@ describe("projectionIntegrityPass", () => {
 
       const result = await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked },
         workspaceDir: tmpDir,
-        project: { slug: "devclaw" },
+        project: { slug: "claw-foundry" },
         provider,
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
@@ -175,14 +175,14 @@ describe("projectionIntegrityPass", () => {
     await withStore(state(), async (tmpDir, provider) => {
       provider.seedIssue({ iid: 123, labels: ["Doing"], description: metadata(), state: "closed" });
       const candidates = await getAutomaticTransitionCandidates({
-        workspaceDir: tmpDir, projectSlug: "devclaw", workflowLabel: "To Do", provider,
+        workspaceDir: tmpDir, projectSlug: "claw-foundry", workflowLabel: "To Do", provider,
       });
 
       assert.equal(candidates.length, 1);
 
       const result = await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked },
         workspaceDir: tmpDir,
-        project: { slug: "devclaw" },
+        project: { slug: "claw-foundry" },
         provider,
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
@@ -191,7 +191,7 @@ describe("projectionIntegrityPass", () => {
       assert.equal(result.checked, 1);
       assert.equal(result.skipped, 0);
       assert.equal(result.repaired, 1);
-      assert.equal((await readIssueStateStore(tmpDir, "devclaw")).issues["123"].workflowState, "todo");
+      assert.equal((await readIssueStateStore(tmpDir, "claw-foundry")).issues["123"].workflowState, "todo");
       assert.ok((await provider.getIssue(123)).labels.includes("To Do"));
     });
   });
@@ -202,12 +202,12 @@ describe("projectionIntegrityPass", () => {
 
       const result = await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked },
         workspaceDir: tmpDir,
-        project: { slug: "devclaw" },
+        project: { slug: "claw-foundry" },
         provider,
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
       });
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
 
       assert.strictEqual(result.errors, 1);
       assert.strictEqual(loaded.issues["123"]!.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
@@ -222,12 +222,12 @@ describe("projectionIntegrityPass", () => {
 
       await projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked },
         workspaceDir: tmpDir,
-        project: { slug: "devclaw" },
+        project: { slug: "claw-foundry" },
         provider,
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
       });
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
 
       assert.strictEqual(loaded.issues["123"]!.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
       assert.deepStrictEqual(loaded.issues["123"]!.integrityErrors, ["issue metadata does not match local issue state"]);
@@ -238,7 +238,7 @@ describe("projectionIntegrityPass", () => {
     await withStore(state(), async (tmpDir, provider) => {
       const run = (now: string) => projectionIntegrityPass({ archive: { archiveManagedIssueLocked, recoverArchivedIssueLocked },
           workspaceDir: tmpDir,
-          project: { slug: "devclaw" },
+          project: { slug: "claw-foundry" },
           provider,
           workflow: DEFAULT_WORKFLOW,
           roles: ["developer"],
@@ -248,8 +248,8 @@ describe("projectionIntegrityPass", () => {
       const first = await run("2026-06-22T00:00:00.000Z");
       const second = await run("2026-06-22T00:08:00.000Z");
       const result = await run("2026-06-22T00:16:00.000Z");
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
-      const archive = await readIssueArchiveStore(tmpDir, "devclaw");
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
+      const archive = await readIssueArchiveStore(tmpDir, "claw-foundry");
 
       assert.strictEqual(first.removed, 0);
       assert.strictEqual(second.removed, 0);

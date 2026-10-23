@@ -14,13 +14,13 @@ import { reconcileManagedLabels } from "./coordinator.js";
 describe("managed projection coordinator", () => {
   it("verifies present local labels across workflow and role drift without repeated mutations", async () => {
     await withFixture(async (workspaceDir, provider) => {
-      await updateIssueStateStore(workspaceDir, "devclaw", store => ({
+      await updateIssueStateStore(workspaceDir, "claw-foundry", store => ({
         store: { ...store, issues: { ...store.issues, "123": {
           ...store.issues["123"], workflowLabel: "Legacy To Do", assignedRole: "security", assignedLevel: "expert",
         } } }, result: undefined,
       }));
       provider.seedIssue({ iid: 123, labels: ["Legacy To Do", "security:expert", "priority:high"] });
-      const input = { workspaceDir, projectSlug: "devclaw", issueId: 123,
+      const input = { workspaceDir, projectSlug: "claw-foundry", issueId: 123,
         workflow: DEFAULT_WORKFLOW, roles: ["developer"], provider, owner: "config_drift" };
       const first = await reconcileManagedLabels(input);
       const second = await reconcileManagedLabels(input);
@@ -30,7 +30,7 @@ describe("managed projection coordinator", () => {
       assert.equal(provider.callsTo("ensureLabel").length, 0);
       assert.equal(provider.callsTo("addLabel").length, 0);
       assert.equal(provider.callsTo("removeLabels").length, 0);
-      const local = (await readIssueStateStore(workspaceDir, "devclaw")).issues["123"];
+      const local = (await readIssueStateStore(workspaceDir, "claw-foundry")).issues["123"];
 
       assert.equal(local.workflowLabel, "Legacy To Do");
       assert.equal(local.assignedRole, "security");
@@ -40,16 +40,16 @@ describe("managed projection coordinator", () => {
 
   it("preserves metadata and independent errors after label verification", async () => {
     await withFixture(async (workspaceDir, provider) => {
-      await updateIssueStateStore(workspaceDir, "devclaw", store => {
+      await updateIssueStateStore(workspaceDir, "claw-foundry", store => {
         const state = store.issues["123"];
         return { store: { ...store, issues: { ...store.issues, "123": { ...state,
           integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR,
           integrityErrors: ["issue metadata is missing", "worker ownership conflict"],
         } } }, result: undefined };
       });
-      await reconcileManagedLabels({ workspaceDir, projectSlug: "devclaw", issueId: 123,
+      await reconcileManagedLabels({ workspaceDir, projectSlug: "claw-foundry", issueId: 123,
         workflow: DEFAULT_WORKFLOW, provider, owner: "test" });
-      const state = (await readIssueStateStore(workspaceDir, "devclaw")).issues["123"];
+      const state = (await readIssueStateStore(workspaceDir, "claw-foundry")).issues["123"];
       assert.equal(state.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
       assert.deepEqual(state.integrityErrors, ["issue metadata is missing", "worker ownership conflict"]);
     });
@@ -64,11 +64,11 @@ describe("managed projection coordinator", () => {
       });
       syncBuiltinESMExports();
       try {
-        const result = await reconcileManagedLabels({ workspaceDir, projectSlug: "devclaw", issueId: 123,
+        const result = await reconcileManagedLabels({ workspaceDir, projectSlug: "claw-foundry", issueId: 123,
           workflow: DEFAULT_WORKFLOW, provider, owner: "test" });
         assert.equal(result.integrity.integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
-        await assert.rejects(fs.access(path.join(workspaceDir, "devclaw", "log", "audit.log")), { code: "ENOENT" });
-        const state = (await readIssueStateStore(workspaceDir, "devclaw")).issues["123"];
+        await assert.rejects(fs.access(path.join(workspaceDir, "claw-foundry", "log", "audit.log")), { code: "ENOENT" });
+        const state = (await readIssueStateStore(workspaceDir, "claw-foundry")).issues["123"];
         assert.equal(state.integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
         assert.deepEqual(state.integrityErrors, []);
       } finally {
@@ -80,16 +80,16 @@ describe("managed projection coordinator", () => {
 
   it("clears only its own failure on retry and does not accumulate repeated failures", async () => {
     await withFixture(async (workspaceDir, provider) => {
-      await updateIssueStateStore(workspaceDir, "devclaw", store => ({ store: { ...store,
+      await updateIssueStateStore(workspaceDir, "claw-foundry", store => ({ store: { ...store,
         issues: { ...store.issues, "123": { ...store.issues["123"],
           integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR, integrityErrors: ["metadata tamper"],
         } } }, result: undefined }));
       const failing = { getIssue: async () => { throw new Error("lookup failed"); },
         ensureLabel: provider.ensureLabel.bind(provider), addLabel: provider.addLabel.bind(provider), removeLabels: provider.removeLabels.bind(provider) };
-      const input = { workspaceDir, projectSlug: "devclaw", issueId: 123, workflow: DEFAULT_WORKFLOW, owner: "retry" };
+      const input = { workspaceDir, projectSlug: "claw-foundry", issueId: 123, workflow: DEFAULT_WORKFLOW, owner: "retry" };
       await assert.rejects(reconcileManagedLabels({ ...input, provider: failing }), /lookup failed/);
       await assert.rejects(reconcileManagedLabels({ ...input, provider: failing }), /lookup failed/);
-      assert.equal((await readIssueStateStore(workspaceDir, "devclaw")).issues["123"].integrityErrors.length, 2);
+      assert.equal((await readIssueStateStore(workspaceDir, "claw-foundry")).issues["123"].integrityErrors.length, 2);
       const result = await reconcileManagedLabels({ ...input, provider });
       assert.deepEqual(result.integrity.integrityErrors, ["metadata tamper"]);
       assert.equal(result.integrity.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
@@ -100,12 +100,12 @@ describe("managed projection coordinator", () => {
     await withFixture(async (workspaceDir, provider) => {
       let reads = 0;
       const concurrent = { getIssue: async (issueId: number) => {
-        if (++reads === 2) await updateIssueStateStore(workspaceDir, "devclaw", store => ({ store: { ...store,
+        if (++reads === 2) await updateIssueStateStore(workspaceDir, "claw-foundry", store => ({ store: { ...store,
           issues: { ...store.issues, "123": { ...store.issues["123"], integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR,
             integrityErrors: ["concurrent metadata finding"] } } }, result: undefined }));
         return provider.getIssue(issueId);
       }, ensureLabel: provider.ensureLabel.bind(provider), addLabel: provider.addLabel.bind(provider), removeLabels: provider.removeLabels.bind(provider) };
-      const result = await reconcileManagedLabels({ workspaceDir, projectSlug: "devclaw", issueId: 123,
+      const result = await reconcileManagedLabels({ workspaceDir, projectSlug: "claw-foundry", issueId: 123,
         workflow: DEFAULT_WORKFLOW, provider: concurrent, owner: "test" });
       assert.deepEqual(result.integrity.integrityErrors, ["concurrent metadata finding"]);
       assert.equal(result.integrity.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
@@ -114,9 +114,9 @@ describe("managed projection coordinator", () => {
 
   it("preserves an unclassified blocker across failure and successful retry", async () => {
     await withFixture(async (workspaceDir, provider) => {
-      await updateIssueStateStore(workspaceDir, "devclaw", store => ({ store: { ...store,
+      await updateIssueStateStore(workspaceDir, "claw-foundry", store => ({ store: { ...store,
         issues: { ...store.issues, "123": { ...store.issues["123"], integrityStatus: ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR } } }, result: undefined }));
-      const input = { workspaceDir, projectSlug: "devclaw", issueId: 123, workflow: DEFAULT_WORKFLOW, owner: "retry" };
+      const input = { workspaceDir, projectSlug: "claw-foundry", issueId: 123, workflow: DEFAULT_WORKFLOW, owner: "retry" };
       const failed = { getIssue: async () => { throw new Error("lookup failed"); },
         ensureLabel: provider.ensureLabel.bind(provider), addLabel: provider.addLabel.bind(provider), removeLabels: provider.removeLabels.bind(provider) };
       await assert.rejects(reconcileManagedLabels({ ...input, provider: failed }), /lookup failed/);
@@ -128,10 +128,10 @@ describe("managed projection coordinator", () => {
 
   it("projects custom role labels and policy colors while retaining unmanaged labels", async () => {
     await withFixture(async (workspaceDir, provider) => {
-      await updateIssueStateStore(workspaceDir, "devclaw", store => ({ store: { ...store,
+      await updateIssueStateStore(workspaceDir, "claw-foundry", store => ({ store: { ...store,
         issues: { ...store.issues, "123": { ...store.issues["123"], assignedRole: "security", assignedLevel: "expert", reviewPolicy: "agent", testPolicy: "skip" } } }, result: undefined }));
       provider.seedIssue({ iid: 123, labels: ["bug", "security:trainee", "team:payments"] });
-      await reconcileManagedLabels({ workspaceDir, projectSlug: "devclaw", issueId: 123,
+      await reconcileManagedLabels({ workspaceDir, projectSlug: "claw-foundry", issueId: 123,
         workflow: DEFAULT_WORKFLOW, roles: ["security"], provider, owner: "custom" });
       const labels = (await provider.getIssue(123)).labels;
       assert.ok(labels.includes("security:expert"));
@@ -147,17 +147,17 @@ describe("managed projection coordinator", () => {
       let acquired: (() => void) | undefined;
       const mayRelease = new Promise<void>((resolve) => { release = resolve; });
       const lockReady = new Promise<void>((resolve) => { acquired = resolve; });
-      const blocker = withIssueOrchestrationLock(workspaceDir, "devclaw", 123, async () => {
+      const blocker = withIssueOrchestrationLock(workspaceDir, "claw-foundry", 123, async () => {
         acquired?.();
         await mayRelease;
-        await updateIssueStateStore(workspaceDir, "devclaw", store => ({ store: { ...store,
+        await updateIssueStateStore(workspaceDir, "claw-foundry", store => ({ store: { ...store,
           issues: { ...store.issues, "123": { ...store.issues["123"], owner: "fresh-owner" } } }, result: undefined }));
       });
       await lockReady;
 
       const reconciliation = reconcileManagedLabels({
         workspaceDir,
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issueId: 123,
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
@@ -172,7 +172,7 @@ describe("managed projection coordinator", () => {
       const first = await reconciliation;
       const second = await reconcileManagedLabels({
         workspaceDir,
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issueId: 123,
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
@@ -185,7 +185,7 @@ describe("managed projection coordinator", () => {
       assert.equal(second.changed, false);
       assert.deepEqual(first.before, ["Doing", "bug"]);
       assert.ok((await provider.getIssue(123)).labels.includes("bug"));
-      assert.equal((await readIssueStateStore(workspaceDir, "devclaw")).issues["123"].integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
+      assert.equal((await readIssueStateStore(workspaceDir, "claw-foundry")).issues["123"].integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
     });
   });
 
@@ -202,7 +202,7 @@ describe("managed projection coordinator", () => {
 
       await assert.rejects(reconcileManagedLabels({
         workspaceDir,
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issueId: 123,
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
@@ -210,10 +210,10 @@ describe("managed projection coordinator", () => {
         owner: "test_failure",
       }), /provider unavailable/);
 
-      const store = await readIssueStateStore(workspaceDir, "devclaw");
+      const store = await readIssueStateStore(workspaceDir, "claw-foundry");
       assert.equal(store.issues["123"]?.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
       assert.match(store.issues["123"]?.integrityErrors[0] ?? "", /test_failure/);
-      const recovered = await reconcileManagedLabels({ workspaceDir, projectSlug: "devclaw", issueId: 123,
+      const recovered = await reconcileManagedLabels({ workspaceDir, projectSlug: "claw-foundry", issueId: 123,
         workflow: DEFAULT_WORKFLOW, provider, owner: "retry" });
       assert.equal(recovered.integrity.integrityStatus, ISSUE_INTEGRITY_STATUS.OK);
       assert.deepEqual(recovered.integrity.integrityErrors, []);
@@ -230,11 +230,11 @@ describe("managed projection coordinator", () => {
       };
 
       await assert.rejects(reconcileManagedLabels({
-        workspaceDir, projectSlug: "devclaw", issueId: 123,
+        workspaceDir, projectSlug: "claw-foundry", issueId: 123,
         workflow: DEFAULT_WORKFLOW, roles: ["developer"],
         provider: ineffectiveProvider, owner: "test_noop",
       }), /still differ/);
-      const state = (await readIssueStateStore(workspaceDir, "devclaw")).issues["123"];
+      const state = (await readIssueStateStore(workspaceDir, "claw-foundry")).issues["123"];
 
       assert.equal(state.integrityStatus, ISSUE_INTEGRITY_STATUS.INTEGRITY_ERROR);
     });
@@ -245,11 +245,11 @@ describe("managed projection coordinator", () => {
  * @param run - Scenario executed before temporary storage is removed.
  */
 async function withFixture(run: (workspaceDir: string, provider: TestProvider) => Promise<void>): Promise<void> {
-  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-managed-projection-"));
+  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-managed-projection-"));
   const provider = new TestProvider();
-  const store = emptyIssueStateStore("devclaw");
+  const store = emptyIssueStateStore("claw-foundry");
   store.issues["123"] = issueState();
-  await writeIssueStateStore(workspaceDir, "devclaw", store);
+  await writeIssueStateStore(workspaceDir, "claw-foundry", store);
   provider.seedIssue({ iid: 123, labels: ["Doing", "bug"] });
 
   try {
@@ -262,7 +262,7 @@ async function withFixture(run: (workspaceDir: string, provider: TestProvider) =
 /** Build a healthy initialized issue whose provider labels initially drift. */
 function issueState(): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 123,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",

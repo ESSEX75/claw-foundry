@@ -70,7 +70,7 @@ export type CreateManagedTaskInput = {
   assignees?: string[];
   /** Exact notification endpoint binding. */
   notifyTarget?: NotifyBindingRef | null;
-  /** DevClaw instance owner. */
+  /** Claw Foundry instance owner. */
   owner?: string | null;
   /** Stable key that deduplicates retries. */
   idempotencyKey: string;

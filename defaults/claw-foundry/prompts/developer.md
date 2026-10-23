@@ -53,7 +53,7 @@ Use `gh pr create` to open a PR against the base branch.
 
 - Do NOT use GitHub/GitLab auto-close keywords in the title or description: no `Closes #X`, `Fixes #X`, `Resolves #X`, or variants.
 - Use `Addresses issue #X.` in the PR description instead.
-- DevClaw is the only authority that closes issues after review/test workflow completion.
+- Claw Foundry is the only authority that closes issues after review/test workflow completion.
 
 ### Handling PR Feedback (changes requested / To Improve)
 

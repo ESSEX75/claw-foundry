@@ -6,14 +6,14 @@ import { DOCTOR_SEVERITY, type WorkspaceDiagnosticsReport } from "../../../appli
  * @param report - Application-owned diagnostic evidence and counters.
  */
 export function printDoctorReport(report: WorkspaceDiagnosticsReport): void {
-  console.log("DevClaw doctor — routing and isolation");
+  console.log("Claw Foundry doctor — routing and isolation");
   for (const finding of report.findings) {
     console.log(`${finding.severity === DOCTOR_SEVERITY.ERROR ? "ERROR" : "OK"} [${finding.code}] ${finding.message}`);
   }
 
   console.log("\nAgent tool access:");
   for (const agent of report.agents) {
-    console.log(`  ${agent.agentId}: ${agent.devclawToolsAllowed ? "allowed" : "denied"}`);
+    console.log(`  ${agent.agentId}: ${agent.clawFoundryToolsAllowed ? "allowed" : "denied"}`);
   }
 
   console.log("\nIssue archives:");

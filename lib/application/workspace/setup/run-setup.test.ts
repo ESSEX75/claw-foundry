@@ -13,11 +13,11 @@ import { runSetup } from "./run-setup.js";
 const directories: string[] = [];
 /** Allocate an isolated workspace with custom instructions and configuration. */
 async function workspace() {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-setup-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-setup-"));
   directories.push(root);
-  await fs.mkdir(path.join(root, "devclaw"));
+  await fs.mkdir(path.join(root, "claw-foundry"));
   await fs.writeFile(path.join(root, "AGENTS.md"), "custom instructions");
-  await fs.writeFile(path.join(root, "devclaw", "workflow.yaml"), `# keep this comment
+  await fs.writeFile(path.join(root, "claw-foundry", "workflow.yaml"), `# keep this comment
 roles:
   developer:
     levels:
@@ -57,12 +57,12 @@ describe("shared setup command", () => {
   it("preserves existing files and custom models during ordinary setup", async () => {
     const root = await workspace();
     const fixture = createSetupRuntime();
-    const before = await fs.readFile(path.join(root, "devclaw", "workflow.yaml"), "utf8");
+    const before = await fs.readFile(path.join(root, "claw-foundry", "workflow.yaml"), "utf8");
     await runSetup({ ...fixture, workspacePath: root });
     const repeated = await runSetup({ ...fixture, workspacePath: root });
     assert.deepEqual(repeated.filesWritten, []);
     assert.equal(await fs.readFile(path.join(root, "AGENTS.md"), "utf8"), "custom instructions");
-    assert.equal(await fs.readFile(path.join(root, "devclaw", "workflow.yaml"), "utf8"), before);
+    assert.equal(await fs.readFile(path.join(root, "claw-foundry", "workflow.yaml"), "utf8"), before);
     assert.equal(repeated.models.security_auditor.expert, "model/security");
   });
   it("patches a configured custom level without replacing other models or YAML comments", async () => {
@@ -71,8 +71,8 @@ describe("shared setup command", () => {
     const config = await loadConfig(root);
     assert.equal(config.roles.security_auditor.levels.expert.model, "model/new");
     assert.equal(config.roles.developer.levels.senior.model, "model/custom");
-    assert.match(await fs.readFile(path.join(root, "devclaw", "workflow.yaml"), "utf8"), /keep this comment/);
-    await fs.access(path.join(root, "devclaw", "workflow.yaml.bak"));
+    assert.match(await fs.readFile(path.join(root, "claw-foundry", "workflow.yaml"), "utf8"), /keep this comment/);
+    await fs.access(path.join(root, "claw-foundry", "workflow.yaml.bak"));
   });
   it("rejects unknown configured levels before preflight or writes", async () => {
     const root = await workspace();
@@ -101,12 +101,12 @@ describe("shared setup command", () => {
   });
   it("resets malformed configuration explicitly while preserving project data", async () => {
     const root = await workspace();
-    await fs.writeFile(path.join(root, "devclaw", "workflow.yaml"), "[invalid");
-    await fs.writeFile(path.join(root, "devclaw", "projects.json"), '{"projects":{}}');
+    await fs.writeFile(path.join(root, "claw-foundry", "workflow.yaml"), "[invalid");
+    await fs.writeFile(path.join(root, "claw-foundry", "projects.json"), '{"projects":{}}');
     const fixture = createSetupRuntime();
     await runSetup({ ...fixture, workspacePath: root, resetDefaults: true });
-    assert.equal(await fs.readFile(path.join(root, "devclaw", "workflow.yaml.bak"), "utf8"), "[invalid");
-    assert.equal(await fs.readFile(path.join(root, "devclaw", "projects.json"), "utf8"), '{"projects":{}}');
+    assert.equal(await fs.readFile(path.join(root, "claw-foundry", "workflow.yaml.bak"), "utf8"), "[invalid");
+    assert.equal(await fs.readFile(path.join(root, "claw-foundry", "projects.json"), "utf8"), '{"projects":{}}');
     await loadConfig(root);
     assert.deepEqual(fixture.commands, []);
   });
@@ -115,7 +115,7 @@ describe("shared setup command", () => {
     const target = path.join(root, "missing");
     const fixture = createSetupRuntime();
     await assert.rejects(runWorkspaceDiagnostics(fixture.runtime, target), /Cannot read projects registry/);
-    await fs.writeFile(path.join(root, "devclaw", "projects.json"), '{"projects":{}}');
+    await fs.writeFile(path.join(root, "claw-foundry", "projects.json"), '{"projects":{}}');
     const before = await fs.readdir(root, { recursive: true });
     await runWorkspaceDiagnostics(fixture.runtime, root);
     assert.deepEqual(await fs.readdir(root, { recursive: true }), before);

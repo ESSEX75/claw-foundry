@@ -54,7 +54,7 @@ export type AgentResourceOptions = {
 export type AgentResourcePaths = {
   /** Normalized or SDK-configured identity. */
   agentId: string;
-  /** Agent workspace receiving DevClaw scaffolding from state. */
+  /** Agent workspace receiving Claw Foundry scaffolding from state. */
   workspacePath: string;
   /** SDK agent configuration directory. */
   agentDirectory: string;

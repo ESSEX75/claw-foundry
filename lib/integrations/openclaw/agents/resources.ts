@@ -1,4 +1,4 @@
-/** Resolves SDK-owned resource paths and provisions them without owning setup policy or DevClaw files. */
+/** Resolves SDK-owned resource paths and provisions them without owning setup policy or Claw Foundry files. */
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -51,7 +51,7 @@ export async function provisionAgentResources(resources: AgentResourcePaths): Pr
 /** Resume an explicit directory plan stored by registration; implicit SDK resources remain host-managed.
  * @param config - Fresh active SDK configuration.
  * @param agentId - Existing agent selected for setup recovery.
- * @param workspacePath - Explicit DevClaw workspace target retained by the application.
+ * @param workspacePath - Explicit Claw Foundry workspace target retained by the application.
  */
 export async function provisionConfiguredAgentResources(config: AgentRegistryConfig, agentId: string, workspacePath: string): Promise<void> {
   const agent = findConfiguredAgent(config, agentId);

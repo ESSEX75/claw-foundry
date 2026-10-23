@@ -1,4 +1,4 @@
-# DevClaw — Roadmap
+# Claw Foundry — Roadmap
 
 This page tracks supported product direction. Completed architecture migrations
 and temporary refactor notes belong in release history or operator reports, not
@@ -8,7 +8,7 @@ in public docs.
 
 - **Configurable workflow state machine** — issue states, transitions, review
   policy, test policy, and role execution are defined in `workflow.yaml`.
-- **Managed issue runtime state** — `devclaw/projects/<project>/issues.json` is
+- **Managed issue runtime state** — `claw-foundry/projects/<project>/issues.json` is
   the runtime source of truth; provider labels and issue bodies are projections.
 - **Role registry** — developer, tester, architect, and reviewer roles are
   configured through `lib/roles/built-in/defaults.ts` and overridable workflow config.

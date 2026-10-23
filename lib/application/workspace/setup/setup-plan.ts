@@ -56,7 +56,7 @@ export async function planSetup(opts: Omit<SetupOpts, "runCommand">): Promise<Se
     ? [opts.resetDefaults ? "Reset packaged defaults with backups" : opts.refreshInstructions ? "Refresh system instructions with backups" : "Create missing packaged defaults"]
     : [
       ...(agentCreated ? [`Create OpenClaw agent "${agentId}"`] : []),
-      ...(opts.agentId || agentCreated ? [`Configure DevClaw tool isolation for "${agentId}" and existing project owners`] : ["Configure DevClaw plugin defaults"]),
+      ...(opts.agentId || agentCreated ? [`Configure Claw Foundry tool isolation for "${agentId}" and existing project owners`] : ["Configure Claw Foundry plugin defaults"]),
       ...(opts.channelBinding ? [`Create exact binding ${opts.channelBinding}/${opts.channelAccountId}/${opts.channelPeerId}`] : []),
       `Create missing workspace files in ${workspacePath}`,
       ...(opts.models ? ["Write explicit model overrides; preserve other configuration"] : []),

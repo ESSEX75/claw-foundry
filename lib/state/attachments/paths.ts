@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { hasErrorCode } from "../../shared/errors/index.js";
+import { assertWorkspaceMigrated } from "../migration.js";
 import { DATA_DIR } from "../paths.js";
 import { LOCK_FILE_SUFFIX } from "../persistence/index.js";
 import { parseProjectSlug } from "../projects/index.js";
@@ -16,6 +17,8 @@ import { attachmentNameSchema } from "./schema.js";
  * @param issueId - Positive provider issue identifier.
  */
 export function attachmentDirectory(workspaceDir: string, projectSlug: string, issueId: number): string {
+  assertWorkspaceMigrated(workspaceDir);
+
   try { parseProjectSlug(projectSlug); } catch { throw new Error(`Unsafe project slug "${projectSlug}".`); }
 
   if (!Number.isSafeInteger(issueId) || issueId <= 0) throw new Error(`Unsafe issue ID "${issueId}".`);

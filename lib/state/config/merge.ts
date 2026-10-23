@@ -1,5 +1,5 @@
 /**
- * config/merge.ts — Deep merge for DevClaw config layers.
+ * config/merge.ts — Deep merge for Claw Foundry config layers.
  *
  * Merge semantics:
  * - Objects: recursively merge (sparse override)
@@ -10,7 +10,7 @@
  */
 
 import { isBuiltInRoleId } from "../../domain/index.js";
-import type { DevClawConfig, LevelOverride, RoleOverride, StateOverride } from "./types.js";
+import type { ClawFoundryConfig, LevelOverride, RoleOverride, StateOverride } from "./types.js";
 
 /**
  * Merge a config overlay on top of a base config.
@@ -20,10 +20,10 @@ import type { DevClawConfig, LevelOverride, RoleOverride, StateOverride } from "
  * @param overlay - Higher-precedence configuration applied over the base.
  */
 export function mergeConfig(
-  base: DevClawConfig,
-  overlay: DevClawConfig,
-): DevClawConfig {
-  const merged: DevClawConfig = {};
+  base: ClawFoundryConfig,
+  overlay: ClawFoundryConfig,
+): ClawFoundryConfig {
+  const merged: ClawFoundryConfig = {};
 
   // Merge roles
   if (base.roles || overlay.roles) {

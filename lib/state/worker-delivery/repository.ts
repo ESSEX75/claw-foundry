@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { hasErrorCode } from "../../shared/errors/index.js";
 import { withIssueStoreLock } from "../issues/persistence/index.js";
+import { assertWorkspaceMigrated } from "../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../paths.js";
 import { writeJsonAtomic } from "../persistence/index.js";
 import { parseProjectSlug } from "../projects/index.js";
@@ -17,6 +18,8 @@ import type { WorkerDeliveryResolution } from "./types.js";
  * @param projectSlug - Owning project identity.
  */
 function resolutionPath(workspaceDir: string, projectSlug: string): string {
+  assertWorkspaceMigrated(workspaceDir);
+
   return path.join(workspaceDir, DATA_DIR, PROJECTS_DIRECTORY_NAME, parseProjectSlug(projectSlug), WORKER_RESOLUTIONS_FILE_NAME);
 }
 

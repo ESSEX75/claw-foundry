@@ -12,7 +12,7 @@ import { provisionLabelCatalog } from "./catalog.js";
 import { syncProjectLabels } from "./sync.js";
 
 /** Workspace override fixture for custom enabled/disabled levels and workflow labels. */
-const CONFIG_PATH = ["devclaw", "workflow.yaml"];
+const CONFIG_PATH = ["claw-foundry", "workflow.yaml"];
 
 describe("project label catalogs", () => {
   it("provisions custom workflow and role levels, then resumes an interrupted catalog without touching issues", async () => {

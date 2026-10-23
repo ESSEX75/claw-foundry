@@ -7,6 +7,7 @@ import path from "node:path";
 
 import { isBuiltInRoleId } from "../../../domain/index.js";
 import { getErrorMessage,hasErrorCode } from "../../../shared/errors/index.js";
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { FILESYSTEM_ERROR_CODE, STATE_TEXT_ENCODING } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
@@ -62,6 +63,8 @@ export async function loadRoleInstructions(
   role: string,
   options?: RoleInstructionsOptions,
 ): Promise<string | RoleInstructionsResult> {
+  assertWorkspaceMigrated(workspaceDir);
+
   const dataDir = path.join(workspaceDir, DATA_DIR);
   const roleFileName = `${role}${ROLE_PROMPT_FILE_EXTENSION}`;
   const candidates = [

@@ -8,7 +8,7 @@ import { registerDeleteCommand } from "./delete.js";
 import { registerResetStoreCommand } from "./reset.js";
 
 /** Register the issues namespace with independent application-backed operations.
- * @param parent - Parent DevClaw command group.
+ * @param parent - Parent Claw Foundry command group.
  * @param ctx - Runtime input and application transport capabilities.
  */
 export function registerIssuesCommands(parent: Command, ctx: AdministrativeCliContext): void {

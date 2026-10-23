@@ -10,10 +10,10 @@ import { fileURLToPath } from "node:url";
 
 import {
   DEFAULTS_DIRECTORY_NAME,
-  DEVCLAW_PACKAGE_NAME,
+  CLAW_FOUNDRY_PACKAGE_NAME,
   PACKAGE_MANIFEST_FILE_NAME,
 } from "./const.js";
-import { findDevClawPackageRoot, resolveDefaultsDirectory } from "./package-root.js";
+import { findClawFoundryPackageRoot, resolveDefaultsDirectory } from "./package-root.js";
 
 /** Package-manifest fragment required by the published-file smoke test. */
 type PackageFileManifest = {
@@ -22,7 +22,7 @@ type PackageFileManifest = {
 };
 
 /** Prefix used for isolated installed-package layout fixtures. */
-const PACKAGE_LAYOUT_TEST_PREFIX = "devclaw-package-layout-";
+const PACKAGE_LAYOUT_TEST_PREFIX = "claw-foundry-package-layout-";
 
 /** Directory name representing bundled JavaScript inside an installed package. */
 const BUNDLE_DIRECTORY_NAME = "dist";
@@ -44,7 +44,7 @@ afterEach(async () => {
   temporaryPackageRoot = undefined;
 });
 
-describe("DevClaw package root resolution", () => {
+describe("Claw Foundry package root resolution", () => {
   it("resolves one defaults directory from source and bundled module locations", async () => {
     temporaryPackageRoot = await fs.mkdtemp(path.join(os.tmpdir(), PACKAGE_LAYOUT_TEST_PREFIX));
     const sourceDirectory = path.join(temporaryPackageRoot, ...SOURCE_MODULE_SEGMENTS);
@@ -58,16 +58,16 @@ describe("DevClaw package root resolution", () => {
     ]);
     await fs.writeFile(
       path.join(temporaryPackageRoot, PACKAGE_MANIFEST_FILE_NAME),
-      JSON.stringify({ name: DEVCLAW_PACKAGE_NAME }),
+      JSON.stringify({ name: CLAW_FOUNDRY_PACKAGE_NAME }),
       "utf-8",
     );
 
-    assert.equal(await findDevClawPackageRoot(sourceDirectory), temporaryPackageRoot);
-    assert.equal(await findDevClawPackageRoot(bundleDirectory), temporaryPackageRoot);
+    assert.equal(await findClawFoundryPackageRoot(sourceDirectory), temporaryPackageRoot);
+    assert.equal(await findClawFoundryPackageRoot(bundleDirectory), temporaryPackageRoot);
     assert.equal(await resolveDefaultsDirectory(bundleDirectory), defaultsDirectory);
   });
 
-  it("rejects a directory tree without the DevClaw package manifest", async () => {
+  it("rejects a directory tree without the Claw Foundry package manifest", async () => {
     temporaryPackageRoot = await fs.mkdtemp(path.join(os.tmpdir(), PACKAGE_LAYOUT_TEST_PREFIX));
     const packageRoot = temporaryPackageRoot;
 
@@ -78,14 +78,14 @@ describe("DevClaw package root resolution", () => {
     );
 
     await assert.rejects(
-      () => findDevClawPackageRoot(packageRoot),
-      /Cannot locate package root for @laurentenhoor\/devclaw/,
+      () => findClawFoundryPackageRoot(packageRoot),
+      /Cannot locate package root for @essex75\/claw-foundry/,
     );
   });
 
   it("declares bundled code and defaults in the published package allowlist", async () => {
     const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
-    const packageRoot = await findDevClawPackageRoot(sourceDirectory);
+    const packageRoot = await findClawFoundryPackageRoot(sourceDirectory);
     const manifest: unknown = JSON.parse(await fs.readFile(
       path.join(packageRoot, PACKAGE_MANIFEST_FILE_NAME),
       "utf-8",

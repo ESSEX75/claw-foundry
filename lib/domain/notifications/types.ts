@@ -1,5 +1,5 @@
 /**
- * Defines pure notification endpoint and binding contracts shared across DevClaw layers.
+ * Defines pure notification endpoint and binding contracts shared across Claw Foundry layers.
  */
 
 import type { ValueOf } from "../../shared/types.js";

@@ -1,5 +1,5 @@
 /**
- * Seeds validated DevClaw stores through their locked public update boundaries for tests.
+ * Seeds validated Claw Foundry stores through their locked public update boundaries for tests.
  */
 
 import { initializeIssueRuntimeState, type IssueStateInitializeInput, writeIssueRuntimeState } from "../../application/index.js";

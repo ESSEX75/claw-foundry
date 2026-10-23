@@ -18,14 +18,14 @@ export type ScopePreflightResult = {
   warning?: string;
 };
 
-/** SDK-owned per-agent tool policy, preserved when extending DevClaw permissions. */
+/** SDK-owned per-agent tool policy, preserved when extending Claw Foundry permissions. */
 export type AgentToolPolicy = NonNullable<NonNullable<NonNullable<OpenClawConfig["agents"]>["list"]>[number]["tools"]>;
 
 /** Approval request details surfaced to setup adapters. */
 export type ScopeApprovalRequiredDetails = {
   /** Gateway approval request identifier. */
   requestId: string;
-  /** Complete permissions required by DevClaw. */
+  /** Complete permissions required by Claw Foundry. */
   requiredScopes: string[];
   /** Permissions awaiting approval. */
   missingScopes: string[];

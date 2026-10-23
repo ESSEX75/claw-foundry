@@ -12,6 +12,7 @@ on:
 
 jobs:
   publish:
+    if: github.repository == 'ESSEX75/claw-foundry'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,8 +33,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Verify release identity
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const p = JSON.parse(fs.readFileSync("package.json")); const l = JSON.parse(fs.readFileSync("package-lock.json")); if (p.name !== "@essex75/claw-foundry" || l.name !== p.name || l.version !== p.version || l.packages[""].version !== p.version || process.env.RELEASE_TAG !== `v${p.version}`) throw new Error("Release identity/version mismatch");'
+
+      - name: Architecture
+        run: npm run arch:check:strict
+
       - name: Build
         run: npm run build
+
+      - name: Test
+        run: npm run test
       
       - name: Publish to npm
         run: npm publish --provenance --access public
@@ -44,6 +57,6 @@ jobs:
         run: |
           echo "## ✅ Published to npm" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Package:** \`@laurentenhoor/devclaw\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** \`@essex75/claw-foundry\`" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** \`$(node -p "require('./package.json').version")\`" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** https://www.npmjs.com/package/@laurentenhoor/devclaw" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://www.npmjs.com/package/@essex75/claw-foundry" >> $GITHUB_STEP_SUMMARY

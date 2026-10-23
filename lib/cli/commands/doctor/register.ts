@@ -1,5 +1,5 @@
 /**
- * Registers the shared DevClaw doctor CLI and renders routing/isolation diagnostics.
+ * Registers the shared Claw Foundry doctor CLI and renders routing/isolation diagnostics.
  */
 
 import type { Command } from "commander";
@@ -9,14 +9,14 @@ import { type AdministrativeCliContext, requireWorkspace } from "../../runtime/i
 import { printDoctorReport } from "./output.js";
 
 /** Register read-only routing diagnostics and a failing exit code for blocking findings.
- * @param parent - Parent DevClaw command group.
+ * @param parent - Parent Claw Foundry command group.
  * @param ctx - Configuration and command capabilities supplied by the plugin.
  */
 export function registerDoctorCommand(parent: Command, ctx: AdministrativeCliContext): void {
   parent
     .command("doctor")
-    .description("Validate DevClaw configuration, routing, and agent isolation")
-    .option("--workspace <path>", "Workspace containing devclaw/projects.json")
+    .description("Validate Claw Foundry configuration, routing, and agent isolation")
+    .option("--workspace <path>", "Workspace containing claw-foundry/projects.json")
     .action(async (opts: { workspace?: string }) => {
       const workspace = requireWorkspace(opts.workspace, ctx.runtime);
 

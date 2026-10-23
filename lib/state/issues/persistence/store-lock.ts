@@ -4,6 +4,7 @@
 
 import path from "node:path";
 
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { LOCK_FILE_SUFFIX, withFileLock } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
@@ -21,6 +22,8 @@ export async function withIssueStoreLock<T>(
   projectSlug: string,
   operation: () => Promise<T>,
 ): Promise<T> {
+  assertWorkspaceMigrated(workspaceDir);
+
   const lockPath = path.join(
     workspaceDir,
     DATA_DIR,

@@ -1,6 +1,6 @@
-# DevClaw — Testing Guide
+# Claw Foundry — Testing Guide
 
-DevClaw uses Node.js built-in test runner (`node:test`) with `node:assert/strict` for all tests.
+Claw Foundry uses Node.js built-in test runner (`node:test`) with `node:assert/strict` for all tests.
 
 ## Quick Start
 
@@ -87,7 +87,7 @@ try {
 ```
 
 **`createTestHarness()`** scaffolds:
-- Temporary workspace directory with `devclaw/` data dir and `log/` subdirectory
+- Temporary workspace directory with `claw-foundry/` data dir and `log/` subdirectory
 - `projects.json` with test project and configurable worker state
 - Mock `runCommand` via `CommandInterceptor` (captures all CLI calls)
 - `TestProvider` — in-memory `IssueProvider` with call tracking
@@ -246,7 +246,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
       - run: npm ci
       - run: npm run build
       - run: npx tsx --test lib/**/*.test.ts
@@ -256,7 +256,7 @@ jobs:
 
 ```yaml
 test:
-  image: node:20
+  image: node:24
   script:
     - npm ci
     - npm run build

@@ -7,11 +7,11 @@ import { registerIssueRepairCommand } from "./issue.js";
 import { registerPolicyMigrationCommand } from "./policies.js";
 
 /** Register the repair namespace without exposing its individual handlers.
- * @param parent - Parent DevClaw command group.
+ * @param parent - Parent Claw Foundry command group.
  * @param ctx - Runtime input and application transport capabilities.
  */
 export function registerRepairCommands(parent: Command, ctx: AdministrativeCliContext): void {
-  const repair = parent.command("repair").description("Repair DevClaw-managed provider projections");
+  const repair = parent.command("repair").description("Repair Claw Foundry-managed provider projections");
 
   registerIssueRepairCommand(repair, ctx);
   registerPolicyMigrationCommand(repair, ctx);

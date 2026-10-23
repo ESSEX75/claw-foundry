@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import { describe, it } from "node:test";
 import { Command } from "commander";
 
-import { DEVCLAW_PLUGIN_ID } from "../shared/const.js";
+import { CLAW_FOUNDRY_PLUGIN_ID } from "../shared/const.js";
 import { createSetupRuntime, createTestHarness } from "../testing/index.js";
 import { registerCli } from "./index.js";
 
@@ -17,10 +17,10 @@ describe("CLI registration facade", () => {
     registerCli(program, fixture);
 
     assert.equal(program.commands.length, 1);
-    const devclaw = program.commands[0];
-    assert.ok(devclaw);
-    assert.equal(devclaw.name(), DEVCLAW_PLUGIN_ID);
-    assert.deepEqual(devclaw.commands.map(command => command.name()).sort(), ["doctor", "issues", "repair", "setup", "worker-delivery"]);
+    const clawFoundry = program.commands[0];
+    assert.ok(clawFoundry);
+    assert.equal(clawFoundry.name(), CLAW_FOUNDRY_PLUGIN_ID);
+    assert.deepEqual(clawFoundry.commands.map(command => command.name()).sort(), ["doctor", "issues", "repair", "setup", "worker-delivery"]);
     assert.deepEqual(fixture.commands, []);
     assert.deepEqual(fixture.writes, []);
   });
@@ -28,10 +28,10 @@ describe("CLI registration facade", () => {
   it("preserves administrative command nesting and exact confirmation options", () => {
     const program = new Command();
     registerCli(program, createSetupRuntime());
-    const devclaw = program.commands[0];
-    assert.ok(devclaw);
-    const issues = devclaw.commands.find(command => command.name() === "issues");
-    const repair = devclaw.commands.find(command => command.name() === "repair");
+    const clawFoundry = program.commands[0];
+    assert.ok(clawFoundry);
+    const issues = clawFoundry.commands.find(command => command.name() === "issues");
+    const repair = clawFoundry.commands.find(command => command.name() === "repair");
     assert.ok(issues && repair);
     assert.deepEqual(issues.commands.map(command => command.name()).sort(), ["archive", "delete", "reset-store"]);
     assert.deepEqual(repair.commands.map(command => command.name()).sort(), ["issue", "policies"]);
@@ -40,7 +40,7 @@ describe("CLI registration facade", () => {
     assert.match(issues.commands.find(command => command.name() === "delete")?.helpInformation() ?? "", /--confirm-issue/);
     assert.match(issues.commands.find(command => command.name() === "reset-store")?.helpInformation() ?? "", /--confirm-project/);
     assert.match(repair.commands.find(command => command.name() === "issue")?.helpInformation() ?? "", /--plan-token/);
-    const deliveryHelp = devclaw.commands.find(command => command.name() === "worker-delivery")?.helpInformation() ?? "";
+    const deliveryHelp = clawFoundry.commands.find(command => command.name() === "worker-delivery")?.helpInformation() ?? "";
     for (const flag of ["--session-key", "--delivery-id", "--decision", "--reason", "--dry-run", "--apply"]) assert.ok(deliveryHelp.includes(flag));
   });
 
@@ -66,7 +66,7 @@ describe("CLI registration facade", () => {
     const before = await fs.readdir(h.workspaceDir, { recursive: true });
     const program = new Command();
     registerCli(program, fixture);
-    await program.parseAsync([DEVCLAW_PLUGIN_ID, "doctor", "--workspace", h.workspaceDir], { from: "user" });
+    await program.parseAsync([CLAW_FOUNDRY_PLUGIN_ID, "doctor", "--workspace", h.workspaceDir], { from: "user" });
 
     assert.equal(process.exitCode, 1);
     assert.ok(lines.some(line => line.startsWith("ERROR")));
@@ -87,19 +87,19 @@ describe("CLI registration facade", () => {
     for (const args of [["archive", "status"], ["archive", "purge", "--dry-run"]]) {
       const program = new Command();
       registerCli(program, fixture);
-      await program.parseAsync([DEVCLAW_PLUGIN_ID, "issues", ...args, "--project", h.project.slug, "--workspace", h.workspaceDir], { from: "user" });
+      await program.parseAsync([CLAW_FOUNDRY_PLUGIN_ID, "issues", ...args, "--project", h.project.slug, "--workspace", h.workspaceDir], { from: "user" });
     }
     assert.deepEqual(await fs.readdir(h.workspaceDir, { recursive: true }), before);
     const preview: unknown = JSON.parse(lines.at(-1) ?? "null");
     assert.deepEqual(preview, { dryRun: true, purge: [] });
     const program = new Command();
     registerCli(program, fixture);
-    await assert.rejects(program.parseAsync([DEVCLAW_PLUGIN_ID, "issues", "reset-store", "--project", h.project.slug,
+    await assert.rejects(program.parseAsync([CLAW_FOUNDRY_PLUGIN_ID, "issues", "reset-store", "--project", h.project.slug,
       "--confirm-project", "different", "--workspace", h.workspaceDir], { from: "user" }), /confirmProjectSlug/);
     assert.deepEqual(await fs.readdir(h.workspaceDir, { recursive: true }), before);
     const confirmed = new Command();
     registerCli(confirmed, fixture);
-    await confirmed.parseAsync([DEVCLAW_PLUGIN_ID, "issues", "reset-store", "--project", h.project.slug,
+    await confirmed.parseAsync([CLAW_FOUNDRY_PLUGIN_ID, "issues", "reset-store", "--project", h.project.slug,
       "--confirm-project", h.project.slug, "--workspace", h.workspaceDir], { from: "user" });
     const result: unknown = JSON.parse(lines.at(-1) ?? "null");
     assert.deepEqual(result, { projectSlug: h.project.slug, reset: true });

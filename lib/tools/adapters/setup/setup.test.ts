@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 import { Command } from "commander";
 import { SETUP_APPLY_STEP } from "../../../application/index.js";
 import { registerCli } from "../../../cli/index.js";
-import { DEVCLAW_PLUGIN_ID } from "../../../shared/const.js";
+import { CLAW_FOUNDRY_PLUGIN_ID } from "../../../shared/const.js";
 import { createSetupRuntime } from "../../../testing/index.js";
 import { createSetupTool } from "./setup.js";
 
@@ -15,7 +15,7 @@ describe("setup adapter parity", () => {
   for (const [flag, param] of [["--eject-defaults", "ejectDefaults"], ["--reset-defaults", "resetDefaults"], ["--refresh-instructions", "refreshInstructions"]]) {
     for (const dryRun of [true, false]) {
       it(`${flag} agrees for tool and CLI (dryRun=${dryRun})`, async () => {
-        const root = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-setup-adapters-"));
+        const root = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-setup-adapters-"));
         try {
           const toolDir = path.join(root, "tool");
           const cliDir = path.join(root, "cli");
@@ -29,7 +29,7 @@ describe("setup adapter parity", () => {
           await tool.execute("test", { [param]: true, dryRun });
           const command = new Command();
           registerCli(command, fixture);
-          await command.parseAsync([DEVCLAW_PLUGIN_ID, "setup", "--workspace", cliDir, flag, ...(dryRun ? ["--dry-run"] : [])], { from: "user" });
+          await command.parseAsync([CLAW_FOUNDRY_PLUGIN_ID, "setup", "--workspace", cliDir, flag, ...(dryRun ? ["--dry-run"] : [])], { from: "user" });
           const files = await fs.readdir(toolDir, { recursive: true });
           assert.deepEqual(files, await fs.readdir(cliDir, { recursive: true }));
           for (const file of files) {
@@ -46,7 +46,7 @@ describe("setup adapter parity", () => {
 });
 
 it("reports partial setup as a failed tool result with the stopped step and recovery target", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-setup-partial-tool-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-setup-partial-tool-"));
 
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const fixture = createSetupRuntime();

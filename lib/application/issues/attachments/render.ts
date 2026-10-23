@@ -9,7 +9,7 @@ import { ATTACHMENT_SIZE_UNIT, IMAGE_MIME_PREFIX } from "./const.js";
 export function formatAttachmentComment(attachments: AttachmentMeta[]): string {
   if (attachments.length === 0) return "";
 
-  const lines = ["📎 **Attachment(s) added via DevClaw:**", ""];
+  const lines = ["📎 **Attachment(s) added via Claw Foundry:**", ""];
 
   for (const a of attachments) {
     const sizeStr = formatAttachmentSize(a.size);

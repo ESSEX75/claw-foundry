@@ -33,7 +33,7 @@ export function reportAuditFailure(workspaceDir: string, event: string, error: u
   if (lastWarningAt !== undefined && now >= lastWarningAt && now - lastWarningAt < AUDIT_WARNING_INTERVAL_MS) return;
   lastWarningAt = now;
   try {
-    const message = `[DevClaw audit] Operation failed for ${JSON.stringify(event)} in ${JSON.stringify(workspaceDir)}: ${getErrorMessage(error)}`;
+    const message = `[Claw Foundry audit] Operation failed for ${JSON.stringify(event)} in ${JSON.stringify(workspaceDir)}: ${getErrorMessage(error)}`;
 
     void Promise.resolve(reporter(message)).catch(() => {});
   } catch {

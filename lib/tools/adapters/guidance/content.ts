@@ -253,7 +253,7 @@ Each role can have a system prompt file:
 - Workspace default: \`<dataDir>/prompts/<role>.md\`
 - Project override: \`<dataDir>/projects/<name>/prompts/<role>.md\`
 
-If neither prompt exists, DevClaw supplies no role-specific instructions and does not
+If neither prompt exists, Claw Foundry supplies no role-specific instructions and does not
 substitute orchestrator instructions. Do not assume a generic role prompt. Create the
 role prompt before enabling or dispatching it.`;
 }
@@ -283,7 +283,7 @@ Set defaults for new issues in \`workflow.reviewPolicy\`; existing issues retain
 
 ## Per-issue policy snapshots and their label projection
 
-For each initialized issue, \`devclaw/projects/<project>/issues.json\` is authoritative.
+For each initialized issue, \`claw-foundry/projects/<project>/issues.json\` is authoritative.
 Its \`reviewPolicy\` and \`testPolicy\` snapshots determine routing; provider labels and
 body metadata display local state. Manual label/body edits never change runtime policy.
 

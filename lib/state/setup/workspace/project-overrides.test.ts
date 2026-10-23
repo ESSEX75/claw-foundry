@@ -10,7 +10,7 @@ import { PROJECT_OVERRIDES_FILE_NAME } from "./const.js";
 import { scaffoldProjectOverrides } from "./project-overrides.js";
 
 /** Project documentation location within an isolated workspace. */
-const PROJECT_PATH = ["devclaw", "projects", "test-project"];
+const PROJECT_PATH = ["claw-foundry", "projects", "test-project"];
 
 it("creates documentation once under concurrent scaffolds and rejects invalid slugs", async () => {
   const h = await createTestHarness();

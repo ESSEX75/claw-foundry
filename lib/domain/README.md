@@ -1,6 +1,6 @@
 # Domain Layer
 
-This layer owns pure DevClaw semantics.
+This layer owns pure Claw Foundry semantics.
 
 Domain modules define workflow types, role/project/issue concepts, labels,
 policies, IDs, and deterministic helper functions. Code here should be safe to

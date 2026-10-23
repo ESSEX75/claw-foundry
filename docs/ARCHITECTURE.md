@@ -1,4 +1,4 @@
-# DevClaw — Architecture & Component Interaction
+# Claw Foundry — Architecture & Component Interaction
 
 ## How it works
 
@@ -33,12 +33,12 @@ graph TB
     AGENT --- B_O
 ```
 
-Worker sessions are expensive to start — each new spawn reads the full codebase (~50K tokens). DevClaw maintains **separate sessions per role, level, and slot** ([session-per-slot design](#session-per-slot-design)). When a medior developer slot finishes task A and picks up task B on the same project, the accumulated context carries over — no re-reading the repo. The plugin handles all session dispatch internally via OpenClaw CLI; the orchestrator agent never calls `sessions_spawn` or `sessions_send`.
+Worker sessions are expensive to start — each new spawn reads the full codebase (~50K tokens). Claw Foundry maintains **separate sessions per role, level, and slot** ([session-per-slot design](#session-per-slot-design)). When a medior developer slot finishes task A and picks up task B on the same project, the accumulated context carries over — no re-reading the repo. The plugin handles all session dispatch internally via OpenClaw CLI; the orchestrator agent never calls `sessions_spawn` or `sessions_send`.
 
 ```mermaid
 sequenceDiagram
     participant O as Orchestrator
-    participant DC as DevClaw Plugin
+    participant DC as Claw Foundry Plugin
     participant IT as Issue Tracker
     participant S as Worker Session
 
@@ -55,7 +55,7 @@ sequenceDiagram
 
 ## Agents vs Sessions
 
-Understanding the OpenClaw model is key to understanding how DevClaw works:
+Understanding the OpenClaw model is key to understanding how Claw Foundry works:
 
 - **Agent** — A configured entity in `openclaw.json`. Has a workspace, model, identity files (SOUL.md, IDENTITY.md), and tool permissions. Persists across restarts.
 - **Session** — A runtime conversation instance. Each session has its own context window and conversation history, stored as a `.jsonl` transcript file.
@@ -91,7 +91,7 @@ Why per-slot instead of switching models on one session:
 
 ### Plugin-controlled session lifecycle
 
-DevClaw controls the **full** session lifecycle end-to-end. The orchestrator agent never calls `sessions_spawn` or `sessions_send` — the plugin handles session creation and task dispatch internally using the OpenClaw CLI:
+Claw Foundry controls the **full** session lifecycle end-to-end. The orchestrator agent never calls `sessions_spawn` or `sessions_send` — the plugin handles session creation and task dispatch internally using the OpenClaw CLI:
 
 ```
 Plugin dispatch (heartbeat → dispatchTask):
@@ -110,7 +110,7 @@ The orchestrator's only job is to advance issues to the queue via `task_start`. 
 
 **What we trade off vs. registered sub-agents:**
 
-| Feature | Sub-agent system | Plugin-controlled | DevClaw equivalent |
+| Feature | Sub-agent system | Plugin-controlled | Claw Foundry equivalent |
 |---|---|---|---|
 | Auto-reporting | Sub-agent reports to parent | No | Heartbeat polls for completion |
 | Concurrency control | `maxConcurrent` | No | Heartbeat checks `active` flag |
@@ -118,11 +118,11 @@ The orchestrator's only job is to advance issues to the queue via `task_start`. 
 | Timeout detection | `runTimeoutSeconds` | No | `health` flags stale >2h |
 | Cleanup | Auto-archive | No | `health` manual cleanup |
 
-DevClaw provides equivalent guardrails for everything except auto-reporting, which the heartbeat handles.
+Claw Foundry provides equivalent guardrails for everything except auto-reporting, which the heartbeat handles.
 
 ## Roles
 
-DevClaw ships with four built-in roles, defined in `lib/roles/built-in/defaults.ts`. Built-in developer/tester use junior/medior/senior; architect/reviewer use junior/senior. Custom roles and levels are defined in workflow.yaml, with explicit capability ranks and model assignments.
+Claw Foundry ships with four built-in roles, defined in `lib/roles/built-in/defaults.ts`. Built-in developer/tester use junior/medior/senior; architect/reviewer use junior/senior. Custom roles and levels are defined in workflow.yaml, with explicit capability ranks and model assignments.
 
 | Role | ID | Levels | Default Level | Completion Results |
 |---|---|---|---|---|
@@ -157,7 +157,7 @@ graph TB
         ARCH[ARCHITECT session<br/>junior]
     end
 
-    subgraph "DevClaw Plugin"
+    subgraph "Claw Foundry Plugin"
         WS[task_start]
         WF[work_finish]
         TCR[task_create]
@@ -238,7 +238,7 @@ sequenceDiagram
     participant H as Human (Telegram)
     participant TG as Telegram Channel
     participant MS as Main Session<br/>(orchestrator)
-    participant DC as DevClaw Plugin
+    participant DC as Claw Foundry Plugin
     participant GW as Gateway RPC
     participant CLI as openclaw gateway call agent
     participant DEV as DEVELOPER Session<br/>(medior)
@@ -287,7 +287,7 @@ On the **next DEVELOPER task** for this project that also assigns medior:
 ```mermaid
 sequenceDiagram
     participant MS as Main Session
-    participant DC as DevClaw Plugin
+    participant DC as Claw Foundry Plugin
     participant CLI as openclaw gateway call agent
     participant DEV as DEVELOPER Session<br/>(medior, existing)
 
@@ -312,10 +312,10 @@ Issues are created by the orchestrator agent or by sub-agent sessions via `task_
 
 ```
 Orchestrator Agent → Issue Tracker: creates managed issue #42 with label "To Do"
-DevClaw → issues.json: writes workflowState=todo, workflowLabel=To Do
+Claw Foundry → issues.json: writes workflowState=todo, workflowLabel=To Do
 ```
 
-**State:** Issue tracker has issue #42 labeled "To Do"; DevClaw has local runtime state for #42.
+**State:** Issue tracker has issue #42 labeled "To Do"; Claw Foundry has local runtime state for #42.
 
 ### Phase 2: Heartbeat detects work
 
@@ -424,7 +424,7 @@ sequenceDiagram
 
 ### Phase 5b: Review pass (heartbeat auto-transition)
 
-The issue sits in "To Review" until the heartbeat's **review pass** detects the PR has been approved. DevClaw then auto-merges the PR, closes the issue, and transitions to Done. If the merge fails (e.g. conflicts) or the PR has unaddressed comments, the issue moves to "To Improve" where a developer is auto-dispatched to fix.
+The issue sits in "To Review" until the heartbeat's **review pass** detects the PR has been approved. Claw Foundry then auto-merges the PR, closes the issue, and transitions to Done. If the merge fails (e.g. conflicts) or the PR has unaddressed comments, the issue moves to "To Improve" where a developer is auto-dispatched to fix.
 
 With agent review (`reviewPolicy: agent`), the heartbeat dispatches a reviewer worker instead. The reviewer checks the PR and calls `work_finish` with approve/reject.
 
@@ -550,8 +550,8 @@ sequenceDiagram
 ```
 
 **Resolution order:**
-1. `devclaw/projects/<project>/prompts/<role>.md` (project-specific)
-2. `devclaw/prompts/<role>.md` (workspace default)
+1. `claw-foundry/projects/<project>/prompts/<role>.md` (project-specific)
+2. `claw-foundry/prompts/<role>.md` (workspace default)
 
 The source path is logged for production traceability: `Bootstrap hook: injected developer instructions for project "my-app" from /path/to/prompts/developer.md`.
 
@@ -572,7 +572,7 @@ Every piece of data and where it lives:
         ↕ gh/glab CLI (read/write, auto-detected)
         ↕ cockatiel resilience: retry + circuit breaker
 ┌─────────────────────────────────────────────────────────────────┐
-│ DevClaw Plugin (orchestration logic)                            │
+│ Claw Foundry Plugin (orchestration logic)                            │
 │                                                                 │
 │  setup          → agent creation + workspace + model config     │
 │  task_start     → advance issue to queue (state-agnostic)       │
@@ -598,7 +598,7 @@ Every piece of data and where it lives:
 └─────────────────────────────────────────────────────────────────┘
         ↕ atomic file I/O          ↕ OpenClaw CLI (plugin shells out)
 ┌────────────────────────────────┐ ┌──────────────────────────────┐
-│ devclaw/projects.json          │ │ OpenClaw Gateway + CLI       │
+│ claw-foundry/projects.json          │ │ OpenClaw Gateway + CLI       │
 │                                │ │ (called by plugin, not agent)│
 │  Per project slug:             │ │                              │
 │    channels[]                  │ │  openclaw gateway call       │
@@ -617,7 +617,7 @@ Every piece of data and where it lives:
 └────────────────────────────────┘ └──────────────────────────────┘
         ↕ append-only
 ┌─────────────────────────────────────────────────────────────────┐
-│ devclaw/log/audit.log (observability)                           │
+│ claw-foundry/log/audit.log (observability)                           │
 │                                                                 │
 │  NDJSON, one line per event:                                    │
 │  task_start, work_finish, model_selection,                       │
@@ -653,11 +653,11 @@ Every piece of data and where it lives:
 
 ## Scope boundaries
 
-What DevClaw controls vs. what it delegates:
+What Claw Foundry controls vs. what it delegates:
 
 ```mermaid
 graph LR
-    subgraph "DevClaw controls (deterministic)"
+    subgraph "Claw Foundry controls (deterministic)"
         L[Label transitions]
         S[Worker state]
         PR[Project registration]
@@ -698,7 +698,7 @@ graph LR
 
 ## IssueProvider abstraction
 
-All issue tracker operations go through the `IssueProvider` interface, defined in `lib/integrations/providers/provider.ts`. This abstraction allows DevClaw to support multiple issue trackers without changing tool logic.
+All issue tracker operations go through the `IssueProvider` interface, defined in `lib/integrations/providers/provider.ts`. This abstraction allows Claw Foundry to support multiple issue trackers without changing tool logic.
 
 **Interface methods:**
 - `ensureLabel` / `ensureAllStateLabels` — idempotent label creation
@@ -724,12 +724,12 @@ Provider selection is handled by `createProvider()` in `lib/integrations/provide
 
 ## Configuration system
 
-DevClaw uses a three-layer config system with `workflow.yaml` files:
+Claw Foundry uses a three-layer config system with `workflow.yaml` files:
 
 ```
 Layer 1: Built-in role defaults + DEFAULT_WORKFLOW
-Layer 2: Workspace:  <workspace>/devclaw/workflow.yaml
-Layer 3: Project:    <workspace>/devclaw/projects/<project>/workflow.yaml
+Layer 2: Workspace:  <workspace>/claw-foundry/workflow.yaml
+Layer 3: Project:    <workspace>/claw-foundry/projects/<project>/workflow.yaml
 ```
 
 Each layer can override structured role levels (rank, model, capacity, and emoji), workflow states/transitions, and timeouts. Config is validated with Zod schemas at load time, with cross-reference integrity checks (every active level has a unique positive rank and model, transition targets exist, queue states have roles, terminal states have no outgoing transitions).
@@ -746,7 +746,7 @@ See [CONFIGURATION.md](CONFIGURATION.md) for the full reference.
 | `sessions.patch` fails | Plugin catches error during session creation | Plugin rolls back label transition. Returns error. |
 | projects.json corrupted | Tool can't parse JSON | Manual fix needed. Atomic writes (temp+rename) prevent partial writes. File locking prevents concurrent races. |
 | Provider label drift | Heartbeat projection pass compares labels with `issues.json` | Restores missing/extra managed labels while preserving unmanaged human labels. |
-| Managed metadata missing/tampered | Heartbeat projection pass compares provider metadata with `issues.json` | Marks local issue `integrity_error`; external gates and dispatch skip until repaired with `devclaw repair issue --source local-state`. |
+| Managed metadata missing/tampered | Heartbeat projection pass compares provider metadata with `issues.json` | Marks local issue `integrity_error`; external gates and dispatch skip until repaired with `claw-foundry repair issue --source local-state`. |
 | Old issue without local state | No `issues.json` entry for provider issue | Treated as `projection_uninitialized`; not a normal managed dispatch candidate until explicitly initialized/backfilled. |
 | Worker already active | Heartbeat checks `active` flag | Skips dispatch: role already active on project. Must complete current task first. |
 | Stale worker (>2h) | `health` and heartbeat health check | `fix=true`: deactivates worker, reverts label to queue. Task available for next pickup. |
@@ -758,14 +758,14 @@ See [CONFIGURATION.md](CONFIGURATION.md) for the full reference.
 
 | File | Location | Purpose |
 |---|---|---|
-| Plugin source | `~/.openclaw/extensions/devclaw/` | Plugin code |
-| Plugin manifest | `~/.openclaw/extensions/devclaw/openclaw.plugin.json` | Plugin registration |
+| Plugin source | `~/.openclaw/extensions/claw-foundry/` | Plugin code |
+| Plugin manifest | `~/.openclaw/extensions/claw-foundry/openclaw.plugin.json` | Plugin registration |
 | Agent config | `~/.openclaw/openclaw.json` | Agent definition + tool permissions + model config |
-| Worker state | `<workspace>/devclaw/projects.json` | Per-project worker state |
-| Workflow config (workspace) | `<workspace>/devclaw/workflow.yaml` | Workspace-level role/workflow overrides |
-| Workflow config (project) | `<workspace>/devclaw/projects/<project>/workflow.yaml` | Project-specific overrides |
-| Default role instructions | `<workspace>/devclaw/prompts/<role>.md` | Default `developer.md`, `tester.md`, `architect.md` |
-| Project role instructions | `<workspace>/devclaw/projects/<project>/prompts/<role>.md` | Per-project role instruction overrides |
-| Audit log | `<workspace>/devclaw/log/audit.log` | NDJSON event log |
+| Worker state | `<workspace>/claw-foundry/projects.json` | Per-project worker state |
+| Workflow config (workspace) | `<workspace>/claw-foundry/workflow.yaml` | Workspace-level role/workflow overrides |
+| Workflow config (project) | `<workspace>/claw-foundry/projects/<project>/workflow.yaml` | Project-specific overrides |
+| Default role instructions | `<workspace>/claw-foundry/prompts/<role>.md` | Default `developer.md`, `tester.md`, `architect.md` |
+| Project role instructions | `<workspace>/claw-foundry/projects/<project>/prompts/<role>.md` | Per-project role instruction overrides |
+| Audit log | `<workspace>/claw-foundry/log/audit.log` | NDJSON event log |
 | Session transcripts | `~/.openclaw/agents/<agent>/sessions/<uuid>.jsonl` | Conversation history per session |
 | Git repos | `~/git/<project>/` | Project source code |

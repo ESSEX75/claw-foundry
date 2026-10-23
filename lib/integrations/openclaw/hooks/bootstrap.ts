@@ -1,4 +1,4 @@
-/** Registers SDK bootstrap handling and replaces instructions only for an exactly identified DevClaw worker. */
+/** Registers SDK bootstrap handling and replaces instructions only for an exactly identified Claw Foundry worker. */
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 
@@ -38,5 +38,5 @@ export function registerBootstrapHook<TIdentity extends BootstrapInstructionIden
     }
 
     ctx.logger.info(`agent:bootstrap: ${content.trim() ? "injected" : "stripped"} ${identity.role} instructions for "${identity.projectSlug}" from ${source}`);
-  }, { name: WORKER_BOOTSTRAP_REGISTRATION, description: "Replaces orchestrator AGENTS.md with role-specific instructions for DevClaw workers" });
+  }, { name: WORKER_BOOTSTRAP_REGISTRATION, description: "Replaces orchestrator AGENTS.md with role-specific instructions for Claw Foundry workers" });
 }

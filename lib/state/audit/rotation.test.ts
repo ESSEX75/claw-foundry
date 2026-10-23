@@ -36,7 +36,7 @@ async function events(file: string): Promise<unknown[]> {
 }
 
 it("rotates only when the next complete UTF-8 record would exceed 10 MiB", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-rotation-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-rotation-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));
@@ -53,7 +53,7 @@ it("rotates only when the next complete UTF-8 record would exceed 10 MiB", async
 });
 
 it("keeps five completed archives and retries failed expiration without losing the new history", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-rotation-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-rotation-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
   const unlink = fs.unlink.bind(fs);
 
@@ -79,7 +79,7 @@ it("keeps five completed archives and retries failed expiration without losing t
 
 for (const phase of ["intent", "archive", "active"]) {
   it(`preserves history after ${phase} publication failure and resumes the exact rotation`, async t => {
-    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-rotation-"));
+    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-rotation-"));
     const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
     const rename = fs.rename.bind(fs);
 
@@ -104,7 +104,7 @@ for (const phase of ["intent", "archive", "active"]) {
 }
 
 it("resumes failed plan cleanup without resetting an already published active journal", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-rotation-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-rotation-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
   const unlink = fs.unlink.bind(fs);
 
@@ -125,7 +125,7 @@ it("resumes failed plan cleanup without resetting an already published active jo
 
 for (const drift of ["active", "archive"]) {
   it(`does not overwrite history after ${drift} drift outside an interrupted rotation`, async t => {
-    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-rotation-"));
+    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-rotation-"));
     const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
     const rename = fs.rename.bind(fs);
 
@@ -150,7 +150,7 @@ for (const drift of ["active", "archive"]) {
 }
 
 it("rejects oversized individual records without changing existing history", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-rotation-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-rotation-"));
   const messages: string[] = [];
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
@@ -167,7 +167,7 @@ it("rejects oversized individual records without changing existing history", asy
 });
 
 it("preserves undecodable UTF-8 and invalid rotation evidence instead of resetting history", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-rotation-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-rotation-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));

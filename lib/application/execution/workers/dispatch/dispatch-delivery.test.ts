@@ -244,6 +244,8 @@ describe("worker delivery outcome", () => {
         return params.idempotencyKey;
       });
       assert.equal(keys.length, 2);
+      assert.ok(keys.every(key => typeof key === "string" && key.startsWith("devclaw-")),
+        "Rebranding must preserve persisted gateway replay identities");
       assert.notEqual(keys[0], keys[1]);
     } finally { await h.cleanup(); }
   });
@@ -490,7 +492,7 @@ describe("worker delivery outcome", () => {
       assert.equal(state.activeWorker?.sessionKey, result.sessionKey);
       assert.equal(state.activeWorker?.delivery?.status, WORKER_DELIVERY_STATUS.UNKNOWN);
       assert.ok((await h.provider.getIssue(62)).labels.includes("Doing"));
-      const audit = await fs.readFile(path.join(h.workspaceDir, "devclaw", "log", "audit.log"), "utf8");
+      const audit = await fs.readFile(path.join(h.workspaceDir, "claw-foundry", "log", "audit.log"), "utf8");
 
       assert.match(audit, /dispatch_delivery_unknown/);
       await assert.rejects(dispatchTask(dispatchInput(h, 62, runCommand)), /active worker/);
@@ -621,7 +623,7 @@ describe("worker delivery outcome", () => {
       assert.equal(summary.projection.workerDelivery?.status, WORKER_DELIVERY_STATUS.NEEDS_ATTENTION);
       assert.equal(summary.projection.workerSessionKey, state.activeWorker?.sessionKey);
       assert.ok((await h.provider.getIssue(67)).labels.includes("Doing"));
-      const audit = await fs.readFile(path.join(h.workspaceDir, "devclaw", "log", "audit.log"), "utf8");
+      const audit = await fs.readFile(path.join(h.workspaceDir, "claw-foundry", "log", "audit.log"), "utf8");
 
       assert.match(audit, /dispatch_delivery_needs_attention/);
       await assert.rejects(dispatchTask(dispatchInput(h, 67, runCommand)), /active worker/);

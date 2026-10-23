@@ -23,7 +23,7 @@ afterEach(async () => {
 
 /** Create an isolated lock path and register its directory for cleanup. */
 async function createLockPath(): Promise<string> {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-file-lock-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-file-lock-"));
 
   temporaryDirectories.push(directory);
 

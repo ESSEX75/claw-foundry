@@ -7,4 +7,4 @@ export const ONBOARDING_MODE = {
 } as const;
 
 /** Instruction markers used only to choose the onboarding scenario. */
-export const WORKSPACE_INSTRUCTION_MARKERS = ["DevClaw", "task_start"] as const;
+export const WORKSPACE_INSTRUCTION_MARKERS = ["Claw Foundry", "task_start"] as const;

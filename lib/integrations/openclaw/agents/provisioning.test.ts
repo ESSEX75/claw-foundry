@@ -11,7 +11,7 @@ import { registerAgentConfiguration } from "./registration.js";
 import { provisionAgentResources, resolveConfiguredAgentResources, resolveNewAgentResources } from "./resources.js";
 
 it("registers through one SDK mutation and provisions explicit resources separately", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-agent-resources-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-agent-resources-"));
 
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const { runtime, writes } = createSetupRuntime({ agents: { defaults: { model: "model/default" }, list: [] } });
@@ -28,7 +28,7 @@ it("registers through one SDK mutation and provisions explicit resources separat
 });
 
 it("uses the active entries registry and rejects a concurrent duplicate before provisioning", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-agent-entries-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-agent-entries-"));
 
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const { runtime, writes } = createSetupRuntime({ agents: { entries: { owner: {} }, list: [{ id: "legacy" }] } });
@@ -45,7 +45,7 @@ it("uses the active entries registry and rejects a concurrent duplicate before p
 });
 
 it("honors SDK state-root environment and configured custom paths without new-name guards on existing IDs", async t => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-sdk-home-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-sdk-home-"));
   const previous = process.env.OPENCLAW_STATE_DIR;
 
   process.env.OPENCLAW_STATE_DIR = root;

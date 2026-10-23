@@ -1,13 +1,13 @@
-# DevClaw — Configuration Reference
+# Claw Foundry — Configuration Reference
 
-DevClaw uses a three-layer configuration system. All role, workflow, and timeout settings live in `workflow.yaml` files — not in `openclaw.json`.
+Claw Foundry uses a three-layer configuration system. All role, workflow, and timeout settings live in `workflow.yaml` files — not in `openclaw.json`.
 
 ## Three-Layer Config Resolution
 
 ```
 Layer 1: Built-in role defaults + DEFAULT_WORKFLOW
-Layer 2: Workspace:  <workspace>/devclaw/workflow.yaml
-Layer 3: Project:    <workspace>/devclaw/projects/<project>/workflow.yaml
+Layer 2: Workspace:  <workspace>/claw-foundry/workflow.yaml
+Layer 3: Project:    <workspace>/claw-foundry/projects/<project>/workflow.yaml
 ```
 
 Each layer can partially override the one below it. Only the fields you specify are merged — everything else inherits from the layer below.
@@ -20,7 +20,7 @@ Each layer can partially override the one below it. Only the fields you specify 
 
 ## Workflow Config (`workflow.yaml`)
 
-The `workflow.yaml` file configures roles, workflow states, and timeouts. Place it at `<workspace>/devclaw/workflow.yaml` for workspace-wide settings, or at `<workspace>/devclaw/projects/<project>/workflow.yaml` for project-specific overrides.
+The `workflow.yaml` file configures roles, workflow states, and timeouts. Place it at `<workspace>/claw-foundry/workflow.yaml` for workspace-wide settings, or at `<workspace>/claw-foundry/projects/<project>/workflow.yaml` for project-specific overrides.
 
 ### Role Configuration
 
@@ -114,8 +114,8 @@ must also be placed in the workflow state graph:
 2. The queue state must declare `role: <role>` and transition on `PICKUP` to an
    active state for the same role.
 3. The active state's events must lead to the states that should run next.
-4. The role needs a matching prompt at `devclaw/prompts/<role>.md` or
-   `devclaw/projects/<project>/prompts/<role>.md` describing its responsibilities.
+4. The role needs a matching prompt at `claw-foundry/prompts/<role>.md` or
+   `claw-foundry/projects/<project>/prompts/<role>.md` describing its responsibilities.
 
 For example, this places `designer` between `architect` and `developer`:
 
@@ -290,7 +290,7 @@ Terminal issues move immediately from `issues.json` into the dedicated `issues.a
 
 ## Plugin Configuration (`openclaw.json`)
 
-Some settings still live in `openclaw.json` under `plugins.entries.devclaw.config`:
+Some settings still live in `openclaw.json` under `plugins.entries.claw-foundry.config`:
 
 ### Project Execution Mode
 
@@ -300,7 +300,7 @@ Controls cross-project parallelism:
 {
   "plugins": {
     "entries": {
-      "devclaw": {
+      "claw-foundry": {
         "config": {
           "projectExecution": "parallel"
         }
@@ -323,7 +323,7 @@ Token-free interval-based health checks + queue dispatch:
 {
   "plugins": {
     "entries": {
-      "devclaw": {
+      "claw-foundry": {
         "config": {
           "work_heartbeat": {
             "enabled": true,
@@ -355,7 +355,7 @@ Control which lifecycle events send notifications:
 {
   "plugins": {
     "entries": {
-      "devclaw": {
+      "claw-foundry": {
         "config": {
           "notifications": {
             "workerStart": true,
@@ -375,7 +375,7 @@ Control which lifecycle events send notifications:
 
 ### Telegram Link Previews
 
-By default Telegram shows a link preview card for the first URL in each message. This clutters DevClaw notifications with GitHub/GitLab issue cards. Disable it globally with a single config line:
+By default Telegram shows a link preview card for the first URL in each message. This clutters Claw Foundry notifications with GitHub/GitLab issue cards. Disable it globally with a single config line:
 
 ```json
 {
@@ -387,13 +387,13 @@ By default Telegram shows a link preview card for the first URL in each message.
 }
 ```
 
-Setting `linkPreview: false` on the Telegram channel config causes OpenClaw to pass `link_preview_options: { is_disabled: true }` to the Telegram Bot API on every send. This is a **gateway-level global setting** — it applies to all messages, not just DevClaw notifications.
+Setting `linkPreview: false` on the Telegram channel config causes OpenClaw to pass `link_preview_options: { is_disabled: true }` to the Telegram Bot API on every send. This is a **gateway-level global setting** — it applies to all messages, not just Claw Foundry notifications.
 
-> **Recommended for all DevClaw deployments.** DevClaw already uses inline markdown links (`[text](url)`) for cleaner output, and link preview cards add no value in a CI/CD notification context.
+> **Recommended for all Claw Foundry deployments.** Claw Foundry already uses inline markdown links (`[text](url)`) for cleaner output, and link preview cards add no value in a CI/CD notification context.
 
 ### Agent Tool Permissions
 
-Restrict DevClaw tools to your orchestrator agent. Setup writes these tools to `tools.alsoAllow`, preserves existing `alsoAllow` entries, and denies direct session-control tools because the plugin owns worker session lifecycle:
+Restrict Claw Foundry tools to your orchestrator agent. Setup writes these tools to `tools.alsoAllow`, preserves existing `alsoAllow` entries, and denies direct session-control tools because the plugin owns worker session lifecycle:
 
 ```json
 {
@@ -441,9 +441,9 @@ Restrict DevClaw tools to your orchestrator agent. Setup writes these tools to `
 
 ## Project State (`projects.json` and `issues.json`)
 
-Project registration and worker-slot state live in `<workspace>/devclaw/projects.json`, keyed by project slug. Initialized DevClaw-managed issue runtime state lives per project in `<workspace>/devclaw/projects/<project>/issues.json`.
+Project registration and worker-slot state live in `<workspace>/claw-foundry/projects.json`, keyed by project slug. Initialized Claw Foundry-managed issue runtime state lives per project in `<workspace>/claw-foundry/projects/<project>/issues.json`.
 
-In-progress creation lives separately in `<workspace>/devclaw/projects/<project>/issue-creations.json`. The strict, atomically written store retains idempotency, provider identity, progress, retry timing, and typed failures across Gateway restarts; it is not a dispatch queue.
+In-progress creation lives separately in `<workspace>/claw-foundry/projects/<project>/issue-creations.json`. The strict, atomically written store retains idempotency, provider identity, progress, retry timing, and typed failures across Gateway restarts; it is not a dispatch queue.
 
 **Source:** [`lib/domain/projects/types.ts`](../lib/domain/projects/types.ts), [`lib/domain/projects/slots.ts`](../lib/domain/projects/slots.ts), [`lib/domain/issues/types.ts`](../lib/domain/issues/types.ts), [`lib/state/issues/store.ts`](../lib/state/issues/store.ts)
 
@@ -570,7 +570,7 @@ Each slot has:
 ### Key design decisions
 
 - **Project-first state** — projects are keyed by slug and can be linked to multiple channels.
-- **Issue-local runtime authority** — initialized managed issues use `devclaw/projects/<project>/issues.json` for `workflowState`, `workflowLabel`, role/level assignment, review/test policy, and projection integrity.
+- **Issue-local runtime authority** — initialized managed issues use `claw-foundry/projects/<project>/issues.json` for `workflowState`, `workflowLabel`, role/level assignment, review/test policy, and projection integrity.
 - **Provider labels are projection** — GitHub/GitLab labels remain required for visual parity and filtering, but they are not runtime truth for initialized managed issues. Manual label edits do not mutate local state.
 - **Stable notification binding** — each managed issue keeps its selected named endpoint in local state. Comments, attachments, heartbeat, and projection repair do not silently rebind it.
 - **Projection guard** — heartbeat compares provider labels and metadata with local state. Recoverable label drift is repaired. Missing or tampered managed metadata sets `integrity_error` until repaired from local state.
@@ -590,7 +590,7 @@ Each slot has:
 
 ```
 <workspace>/
-├── devclaw/
+├── claw-foundry/
 │   ├── projects.json              ← Project state (auto-managed)
 │   ├── workflow.yaml              ← Workspace-level config overrides
 │   ├── prompts/
@@ -619,7 +619,7 @@ Each slot has:
 
 ### Role instruction files
 
-Role instructions are injected into worker sessions via the `agent:bootstrap` hook at session startup. The hook loads instructions from `devclaw/projects/<project>/prompts/<role>.md`, falling back to `devclaw/prompts/<role>.md`.
+Role instructions are injected into worker sessions via the `agent:bootstrap` hook at session startup. The hook loads instructions from `claw-foundry/projects/<project>/prompts/<role>.md`, falling back to `claw-foundry/prompts/<role>.md`.
 
 Edit to customize: deployment steps, test commands, acceptance criteria, coding standards.
 
@@ -629,7 +629,7 @@ Edit to customize: deployment steps, test commands, acceptance criteria, coding 
 
 ## Audit Log
 
-Append-only NDJSON at `<workspace>/devclaw/log/audit.log`. Auto-truncated to 250 lines.
+Append-only NDJSON at `<workspace>/claw-foundry/log/audit.log`. Auto-truncated to 250 lines.
 
 **Source:** [`lib/audit.ts`](../lib/audit.ts)
 
@@ -667,7 +667,7 @@ cat audit.log | jq 'select(.event=="model_selection")'
 
 ## Issue Provider
 
-DevClaw uses an `IssueProvider` interface (`lib/integrations/providers/provider.ts`) to abstract issue tracker operations. The provider is auto-detected from the git remote URL.
+Claw Foundry uses an `IssueProvider` interface (`lib/integrations/providers/provider.ts`) to abstract issue tracker operations. The provider is auto-detected from the git remote URL.
 
 **Supported providers:**
 

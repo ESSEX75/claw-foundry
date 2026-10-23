@@ -16,7 +16,7 @@ it("performs no provider upload for incomplete or ambiguous routing", async t =>
   const endpoint = harness.project.channels[0]!;
   const registry = await readProjects(harness.workspaceDir);
   // Deliberately corrupt the registry to model externally written conflicting destinations.
-  await fs.writeFile(path.join(harness.workspaceDir, "devclaw", "projects.json"), JSON.stringify({
+  await fs.writeFile(path.join(harness.workspaceDir, "claw-foundry", "projects.json"), JSON.stringify({
     ...registry, projects: { ...registry.projects, duplicate: { ...harness.project, slug: "duplicate" } },
   }));
   const handlers: Array<Parameters<AttachmentHookRegistrar["on"]>[1]> = [];
@@ -44,5 +44,5 @@ it("performs no provider upload for incomplete or ambiguous routing", async t =>
   assert.equal(upload.mock.callCount(), 0);
   assert.equal(warnings.length, 1);
   assert.match(warnings[0]!, /destination is already registered/);
-  await assert.rejects(fs.stat(path.join(harness.workspaceDir, "devclaw", "attachments")), { code: "ENOENT" });
+  await assert.rejects(fs.stat(path.join(harness.workspaceDir, "claw-foundry", "attachments")), { code: "ENOENT" });
 });

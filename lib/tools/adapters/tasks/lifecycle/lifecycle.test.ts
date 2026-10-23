@@ -17,7 +17,7 @@ import { createTaskSetLevelTool } from "./task-set-level.js";
 import { createTaskStartTool } from "./task-start.js";
 
 /** Workspace configuration fixture for configured custom level validation. */
-const CONFIG_PATH = ["devclaw", "workflow.yaml"];
+const CONFIG_PATH = ["claw-foundry", "workflow.yaml"];
 
 /** Bind only external provider effects; orchestration, eligibility and local writes remain real.
  * @param t - Test-scoped mocks restored automatically after each scenario.

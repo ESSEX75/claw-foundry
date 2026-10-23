@@ -13,7 +13,7 @@ import { researchTask } from "./command.js";
 import type { ResearchTaskInput } from "./types.js";
 
 /** Project configuration fixture path for renamed workflow states and worker capacities. */
-const CONFIG_PATH = ["devclaw", "workflow.yaml"];
+const CONFIG_PATH = ["claw-foundry", "workflow.yaml"];
 
 /** Bind a stable research request to an isolated provider and command transport.
  * @param h - Isolated project, provider and external command recorder.

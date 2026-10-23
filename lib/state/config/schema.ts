@@ -1,5 +1,5 @@
 /**
- * Strict validation for raw and merged DevClaw workflow configuration.
+ * Strict validation for raw and merged Claw Foundry workflow configuration.
  */
 
 import { z } from "zod";
@@ -16,7 +16,7 @@ import {
   WORKFLOW_EVENT,
 } from "../../domain/index.js";
 import { DURATION_PATTERN } from "../../shared/duration/index.js";
-import type { DevClawConfig, LevelOverride } from "./types.js";
+import type { ClawFoundryConfig, LevelOverride } from "./types.js";
 
 /** Pattern accepted for configuration-owned identifiers. */
 const IDENTIFIER_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
@@ -191,7 +191,7 @@ const IssueArchiveMaintenanceSchema = z.object({
 }).strict().optional();
 
 /** Strict schema for the complete current raw configuration document. */
-const DevClawConfigSchema = z.object({
+const ClawFoundryConfigSchema = z.object({
   roles: z.record(IdentifierSchema, RoleOverrideSchema).optional(),
   workflow: WorkflowConfigSchema.optional(),
   timeouts: TimeoutConfigSchema,
@@ -204,8 +204,8 @@ const DevClawConfigSchema = z.object({
  *
  * @param raw - Untrusted value obtained from a configuration boundary.
  */
-export function parseConfig(raw: unknown): DevClawConfig {
-  return DevClawConfigSchema.parse(raw);
+export function parseConfig(raw: unknown): ClawFoundryConfig {
+  return ClawFoundryConfigSchema.parse(raw);
 }
 
 /**
@@ -299,7 +299,7 @@ export function validateRoleIntegrity(
 }
 
 /**
- * Check whether a provider label uses a routing format reserved by DevClaw.
+ * Check whether a provider label uses a routing format reserved by Claw Foundry.
  *
  * @param label - Provider-visible label to examine.
  */

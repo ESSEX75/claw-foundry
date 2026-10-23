@@ -9,10 +9,10 @@ export function renderTaskIssue(issue: TaskIssueSummary) {
   const projection = issue.projection;
 
   return { ...issue, projection: { ...projection,
-    repairHint: projection.needsRepair ? `devclaw issue_repair ${issue.id} --source local-state --dry-run` : null,
+    repairHint: projection.needsRepair ? `claw-foundry issue_repair ${issue.id} --source local-state --dry-run` : null,
     ...(projection.workerDelivery ? {
       deliveryHint: `Inspect OpenClaw session ${projection.workerSessionKey ?? "unknown"} and the worker slot before retrying issue #${issue.id}.`
-        + " Use devclaw worker-delivery --help with this marker's operationId as --delivery-id to preview and apply a verified conclusion.",
+        + " Use claw-foundry worker-delivery --help with this marker's operationId as --delivery-id to preview and apply a verified conclusion.",
     } : {}),
   } };
 }

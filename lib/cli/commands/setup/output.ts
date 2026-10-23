@@ -107,5 +107,5 @@ export function printSetupResult(
   console.log("  - Restart the OpenClaw gateway so the new bot/chat binding becomes active.");
   console.log("  - Add the bot to the selected Telegram/WhatsApp chat.");
   console.log('  - In that group, send: "Register project <name> at <repo> with base branch <branch>".');
-  console.log("  - Create the first issue and ask DevClaw to pick it up.");
+  console.log("  - Create the first issue and ask Claw Foundry to pick it up.");
 }

@@ -7,16 +7,16 @@ import { ISSUE_PROVIDER, NOTIFICATION_CHANNEL } from "../../domain/index.js";
 import type { ProjectsData } from "../../state/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../state/index.js";
 import { createSetupRuntime, createTestHarness, replaceIssueArchiveStoreForTesting } from "../../testing/index.js";
-import { DEVCLAW_AGENT_TOOLS } from "../workspace/permissions/index.js";
+import { CLAW_FOUNDRY_AGENT_TOOLS } from "../workspace/permissions/index.js";
 import { buildWorkspaceDiagnosticsReport, inspectArchiveRetention } from "./report.js";
 import { runWorkspaceDiagnostics } from "./inspect.js";
 
 /** Persisted project used to exercise exact bindings and owner tool access. */
 const projects: ProjectsData = {
   projects: {
-    devclaw: {
-      slug: "devclaw",
-      name: "DevClaw",
+    "claw-foundry": {
+      slug: "claw-foundry",
+      name: "Claw Foundry",
       agentId: "dev-agent",
       repo: "repo",
       baseBranch: "develop",
@@ -35,16 +35,16 @@ const projects: ProjectsData = {
 
 describe("routing doctor", () => {
   it("checks every project owner and preserves explicit denials", () => {
-    const first = projects.projects.devclaw!;
+    const first = projects.projects["claw-foundry"]!;
     const second = { ...first, slug: "second", agentId: "second-agent",
       channels: first.channels.map((channel) => ({ ...channel, channelId: "chat-2" })),
     };
-    const registry = { projects: { devclaw: first, second } };
+    const registry = { projects: { "claw-foundry": first, second } };
     const config = {
       agents: { list: [
-        { id: first.agentId, tools: { allow: [...DEVCLAW_AGENT_TOOLS] } },
-        { id: second.agentId, tools: { alsoAllow: [...DEVCLAW_AGENT_TOOLS], deny: [DEVCLAW_AGENT_TOOLS[0]] } },
-        { id: "foreign", tools: { deny: [...DEVCLAW_AGENT_TOOLS] } },
+        { id: first.agentId, tools: { allow: [...CLAW_FOUNDRY_AGENT_TOOLS] } },
+        { id: second.agentId, tools: { alsoAllow: [...CLAW_FOUNDRY_AGENT_TOOLS], deny: [CLAW_FOUNDRY_AGENT_TOOLS[0]] } },
+        { id: "foreign", tools: { deny: [...CLAW_FOUNDRY_AGENT_TOOLS] } },
       ] },
       channels: { telegram: { enabled: true, accounts: { dev: {} } } },
     };
@@ -59,20 +59,20 @@ describe("routing doctor", () => {
     assert.equal(report.ok, false);
     assert.deepEqual(report.findings.map((finding) => finding.code), ["isolation.owner_tools_incomplete"]);
     assert.deepEqual(report.agents, [
-      { agentId: first.agentId, devclawToolsAllowed: true },
-      { agentId: second.agentId, devclawToolsAllowed: false },
-      { agentId: "foreign", devclawToolsAllowed: false },
+      { agentId: first.agentId, clawFoundryToolsAllowed: true },
+      { agentId: second.agentId, clawFoundryToolsAllowed: false },
+      { agentId: "foreign", clawFoundryToolsAllowed: false },
     ]);
     assert.deepEqual(fixture.runtime.config.current(), snapshot);
     const allowed = { ...snapshot, agents: { list: snapshot.agents!.list!.map((agent) =>
-      agent.id === second.agentId ? { ...agent, tools: { alsoAllow: [...DEVCLAW_AGENT_TOOLS] } } : agent) } };
+      agent.id === second.agentId ? { ...agent, tools: { alsoAllow: [...CLAW_FOUNDRY_AGENT_TOOLS] } } : agent) } };
 
     assert.equal(buildWorkspaceDiagnosticsReport(allowed, registry).ok, true);
   });
 
   it("reports active entries policies and routes without legacy agents", () => {
     const fixture = createSetupRuntime({
-      agents: { entries: { "dev-agent": { tools: { alsoAllow: [...DEVCLAW_AGENT_TOOLS] } } },
+      agents: { entries: { "dev-agent": { tools: { alsoAllow: [...CLAW_FOUNDRY_AGENT_TOOLS] } } },
         list: [{ id: "legacy" }] },
       channels: { telegram: { accounts: { dev: {} } } },
       bindings: [{ agentId: "dev-agent", match: { channel: "telegram", accountId: "dev",
@@ -81,20 +81,20 @@ describe("routing doctor", () => {
     const report = buildWorkspaceDiagnosticsReport(fixture.runtime.config.current(), projects);
 
     assert.equal(report.ok, true);
-    assert.deepEqual(report.agents, [{ agentId: "dev-agent", devclawToolsAllowed: true }]);
+    assert.deepEqual(report.agents, [{ agentId: "dev-agent", clawFoundryToolsAllowed: true }]);
   });
 
   it("reports retention ordering as information without promising cleanup", () => {
     const retention = { archiveRetention: "1d", attachmentsRetention: "30d",
       deletedProviderRetention: "1d", maxPerHeartbeat: 10 };
-    const findings = inspectArchiveRetention("devclaw", retention);
+    const findings = inspectArchiveRetention("claw-foundry", retention);
 
     assert.equal(findings.length, 1);
     assert.equal(findings[0]?.code, "archive.retention_order");
     assert.equal(findings[0]?.severity, "info");
     assert.match(findings[0]!.message, /verify attachment cleanup/);
-    assert.deepEqual(inspectArchiveRetention("devclaw", { ...retention, archiveRetention: "30d" }), []);
-    assert.deepEqual(inspectArchiveRetention("devclaw", { ...retention, archiveRetention: "31d" }), []);
+    assert.deepEqual(inspectArchiveRetention("claw-foundry", { ...retention, archiveRetention: "30d" }), []);
+    assert.deepEqual(inspectArchiveRetention("claw-foundry", { ...retention, archiveRetention: "31d" }), []);
   });
 
   it("retains healthy project counters and reports an unreadable project without writes", async () => {
@@ -116,7 +116,7 @@ describe("routing doctor", () => {
       await fs.writeFile(blockedPath, "invalid archive JSON");
       const before = await fs.readdir(harness.workspaceDir, { recursive: true });
       const fixture = createSetupRuntime({
-        agents: { list: [{ id: harness.project.agentId, tools: { alsoAllow: [...DEVCLAW_AGENT_TOOLS] } }] },
+        agents: { list: [{ id: harness.project.agentId, tools: { alsoAllow: [...CLAW_FOUNDRY_AGENT_TOOLS] } }] },
         channels: { telegram: { enabled: true, accounts: { default: {} } } },
         bindings: [harness.channelId, "broken-chat"].map((id) => ({ agentId: harness.project.agentId, match: {
           channel: NOTIFICATION_CHANNEL.TELEGRAM, accountId: "default",
@@ -142,8 +142,8 @@ describe("routing doctor", () => {
   it("reports a valid route and isolated foreign agent", () => {
     const report = buildWorkspaceDiagnosticsReport({
       agents: { list: [
-        { id: "dev-agent", tools: { alsoAllow: [...DEVCLAW_AGENT_TOOLS] } },
-        { id: "main", tools: { deny: [...DEVCLAW_AGENT_TOOLS] } },
+        { id: "dev-agent", tools: { alsoAllow: [...CLAW_FOUNDRY_AGENT_TOOLS] } },
+        { id: "main", tools: { deny: [...CLAW_FOUNDRY_AGENT_TOOLS] } },
       ] },
       channels: { telegram: { enabled: true, accounts: { dev: {} } } },
       bindings: [{
@@ -159,7 +159,7 @@ describe("routing doctor", () => {
   it("reports an invalid binding and exposed foreign agent", () => {
     const report = buildWorkspaceDiagnosticsReport({
       agents: { list: [
-        { id: "dev-agent", tools: { alsoAllow: [...DEVCLAW_AGENT_TOOLS] } },
+        { id: "dev-agent", tools: { alsoAllow: [...CLAW_FOUNDRY_AGENT_TOOLS] } },
         { id: "main", tools: { alsoAllow: ["task_start"] } },
       ] },
       channels: { telegram: { enabled: true, accounts: { dev: {} } } },

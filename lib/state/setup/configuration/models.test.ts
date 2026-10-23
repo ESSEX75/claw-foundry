@@ -16,7 +16,7 @@ import { writeWorkspaceModels } from "./models.js";
 import { resetWorkspaceConfiguration } from "./workspace.js";
 
 it("preserves both concurrent model patches, unrelated settings and comments", async () => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-model-patches-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-model-patches-"));
   const workflow = path.join(workspace, DATA_DIR, WORKFLOW_FILE_NAME);
 
   try {
@@ -42,7 +42,7 @@ it("preserves both concurrent model patches, unrelated settings and comments", a
 });
 
 it("serializes reset after an in-flight patch and backs up the patched document", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-model-reset-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-model-reset-"));
   const workflow = path.join(workspace, DATA_DIR, WORKFLOW_FILE_NAME);
   const rename = fs.rename.bind(fs);
   let publish: (() => void) | undefined;

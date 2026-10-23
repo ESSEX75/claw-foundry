@@ -1,9 +1,12 @@
 /**
- * Defines filesystem names shared by every DevClaw state capability.
+ * Defines filesystem names shared by every Claw Foundry state capability.
  */
 
-/** Directory below a workspace that contains all DevClaw-managed state. */
-export const DATA_DIR = "devclaw";
+/** Directory below a workspace that contains all Claw Foundry-managed state. */
+export const DATA_DIR = "claw-foundry";
+
+/** Previous data directory, detected only to require an explicit offline migration. */
+export const UPSTREAM_DATA_DIR = "devclaw";
 
 /** Directory for diagnostic journals and workspace logs. */
 export const LOG_DIRECTORY_NAME = "log";

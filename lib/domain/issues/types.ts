@@ -1,5 +1,5 @@
 /**
- * issues/types.ts — Runtime state for DevClaw-managed provider issues.
+ * issues/types.ts — Runtime state for Claw Foundry-managed provider issues.
  */
 
 import type { ValueOf } from "../../shared/types.js";
@@ -124,7 +124,7 @@ export type IssueRuntimeState = IssueProjectionState & {
   assignedRole: string | null;
   /** Worker level currently assigned for the selected role. */
   assignedLevel: string | null;
-  /** DevClaw instance identity owning this issue; independent of provider assignees. */
+  /** Claw Foundry instance identity owning this issue; independent of provider assignees. */
   owner: string | null;
   /** Override review policy for this issue. */
   reviewPolicy: ReviewPolicy | null;

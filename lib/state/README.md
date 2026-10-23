@@ -2,6 +2,18 @@
 
 This layer owns local persistence.
 
+## Claw Foundry migration
+
+Managed state lives in `claw-foundry/`. The internal root `migration.ts` guard
+rejects any remaining `devclaw` entry before state path access, config loading or workspace setup,
+including ambiguous dual-directory layouts. It never creates a replacement store
+or adopts provider state. The explicit offline script
+`scripts/migrate-devclaw-state.mjs` moves the complete directory without rewriting
+records, merging destinations or deleting data. See `docs/MIGRATION.md` for backup,
+OpenClaw configuration, identity preservation, verification and rollback steps.
+Its guard is also exposed through the state root API so instance identity creation
+outside this layer cannot initialize a second identity before migration.
+
 Shared error text/string-code narrowing, SHA-256 mechanics and duration syntax are
 consumed from `lib/shared/errors`, `lib/shared/hashing` and `lib/shared/duration`. State retains lock and
 filesystem recovery policy, payload serialization and all persisted schemas. Missing
@@ -9,7 +21,7 @@ file handling requires a real Error with the exact string code; nested causes ar
 unwrapped only by the repository that created the contextual wrapper. Duration schema
 validation uses the common grammar without changing existing accepted raw syntax.
 
-State modules read, write, and lock DevClaw project files such as
+State modules read, write, and lock Claw Foundry project files such as
 project config, setup files, and managed issue runtime state. They may use domain
 types, but they should not contain queue scheduling or worker dispatch behavior.
 Strict store envelopes and resumable operation records are state-owned public
@@ -41,7 +53,7 @@ contracts exposed to other layers only through `lib/state/index.ts`.
 
 ## Diagnostic Audit Journal
 
-`audit` owns best-effort NDJSON storage at `devclaw/log/audit.log`, exposed as `log`
+`audit` owns best-effort NDJSON storage at `claw-foundry/log/audit.log`, exposed as `log`
 and `AuditEntry` through the state root. Callers own event names and payload meaning;
 the repository owns the `ts` and `event` envelope fields. The shared log directory
 name belongs to state/paths because workspace initialization also creates it.
@@ -289,4 +301,4 @@ Creation readiness query APIs produce per-invocation snapshots only; callers mus
 not reuse them to authorize a later mutation. Strict locked readiness reads remain available.
 
 SDK-owned OpenClaw agent directories are provisioned by integrations/agents. State
-continues to own only DevClaw workspace scaffolding, instructions and model YAML writes.
+continues to own only Claw Foundry workspace scaffolding, instructions and model YAML writes.

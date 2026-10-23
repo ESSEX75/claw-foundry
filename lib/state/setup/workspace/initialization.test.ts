@@ -22,7 +22,7 @@ import {
 } from "../resources/index.js";
 
 /** Prefix used for isolated setup filesystem test workspaces. */
-const TEST_WORKSPACE_PREFIX = "devclaw-ws-test-";
+const TEST_WORKSPACE_PREFIX = "claw-foundry-ws-test-";
 
 /** Built-in role used to verify role prompt persistence. */
 const TEST_ROLE_ID = "developer";

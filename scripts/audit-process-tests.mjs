@@ -29,9 +29,9 @@ it("isolated audit writer", async () => {
 
 /** Prove that both writers' records survive one byte-limit rotation of a shared journal. */
 export async function verifyAuditProcessWriters() {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-process-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-process-"));
   const actorFile = path.join(workspace, "actor.mjs");
-  const file = path.join(workspace, "devclaw", "log", "audit.log");
+  const file = path.join(workspace, "claw-foundry", "log", "audit.log");
 
   try {
     await fs.mkdir(path.dirname(file), { recursive: true });

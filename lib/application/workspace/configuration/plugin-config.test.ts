@@ -1,5 +1,5 @@
 /**
- * Tests for OpenClaw config writes performed by DevClaw setup.
+ * Tests for OpenClaw config writes performed by Claw Foundry setup.
  * Run with: npx tsx --test lib/application/workspace/configuration/plugin-config.test.ts
  */
 import { describe, it } from "node:test";
@@ -9,14 +9,14 @@ import os from "node:os";
 import path from "node:path";
 import { createSetupRuntime as createRuntime } from "../../../testing/index.js";
 import { resolveProjectToolOwners } from "../permissions/index.js";
-import { DEVCLAW_AGENT_TOOLS } from "../permissions/index.js";
+import { CLAW_FOUNDRY_AGENT_TOOLS } from "../permissions/index.js";
 import { readProjects } from "../../../state/index.js";
 import { DOCTOR_FINDING_CODE } from "../../diagnostics/const.js";
 import { runWorkspaceDiagnostics } from "../../diagnostics/index.js";
 import { writePluginConfig } from "./plugin-config.js";
 
 describe("writePluginConfig", () => {
-  it("grants DevClaw tools to the configured agent and preserves session denials", async () => {
+  it("grants Claw Foundry tools to the configured agent and preserves session denials", async () => {
     const { runtime, writes } = createRuntime({
       agents: {
         list: [
@@ -33,9 +33,9 @@ describe("writePluginConfig", () => {
         ],
       },
       plugins: {
-        allow: ["devclaw"],
+        allow: ["claw-foundry"],
         entries: {
-          devclaw: { config: {} },
+          "claw-foundry": { config: {} },
         },
       },
     });
@@ -46,7 +46,7 @@ describe("writePluginConfig", () => {
     const agent = writes[0]?.nextConfig.agents?.list?.find((entry) => entry.id === "orchestrator");
     assert.ok(agent?.tools);
     assert.ok(agent.tools.alsoAllow?.includes("existing_tool"));
-    for (const tool of DEVCLAW_AGENT_TOOLS) {
+    for (const tool of CLAW_FOUNDRY_AGENT_TOOLS) {
       assert.ok(agent.tools.alsoAllow?.includes(tool), `expected ${tool} to be allowed`);
     }
     assert.ok(agent.tools.deny?.includes("sessions_spawn"));
@@ -56,7 +56,7 @@ describe("writePluginConfig", () => {
 
     assert.ok(foreignAgent?.tools?.alsoAllow?.includes("existing_tool"));
     assert.ok(!foreignAgent?.tools?.alsoAllow?.includes("task_start"));
-    for (const tool of DEVCLAW_AGENT_TOOLS) {
+    for (const tool of CLAW_FOUNDRY_AGENT_TOOLS) {
       assert.ok(foreignAgent?.tools?.deny?.includes(tool), `expected ${tool} to be denied for main`);
     }
   });
@@ -64,11 +64,11 @@ describe("writePluginConfig", () => {
 
 /** Exercise policy against real validated registries in separate workspaces. */
 it("preserves both project owners through A -> B -> A while denying a foreign agent", async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-owners-"));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-owners-"));
   try {
     for (const id of ["a", "b"]) {
-      await fs.mkdir(path.join(root, id, "devclaw"), { recursive: true });
-      await fs.writeFile(path.join(root, id, "devclaw", "projects.json"), JSON.stringify({ projects: {
+      await fs.mkdir(path.join(root, id, "claw-foundry"), { recursive: true });
+      await fs.writeFile(path.join(root, id, "claw-foundry", "projects.json"), JSON.stringify({ projects: {
         [id]: { slug: id, name: id, agentId: id, repo: "repo", baseBranch: "main", deployBranch: "main", provider: "github", workers: {},
           channels: [{ channel: "telegram", accountId: "dev", channelId: id, name: "primary" }] },
       } }));
@@ -81,7 +81,7 @@ it("preserves both project owners through A -> B -> A while denying a foreign ag
     for (const selected of ["a", "b", "a"]) {
       await writePluginConfig(runtime, selected);
       for (const agent of runtime.config.current().agents?.list ?? []) {
-        for (const tool of DEVCLAW_AGENT_TOOLS) {
+        for (const tool of CLAW_FOUNDRY_AGENT_TOOLS) {
           assert.equal(agent.tools?.alsoAllow?.includes(tool) ?? false, agent.id !== "foreign");
           assert.equal(agent.tools?.deny?.includes(tool) ?? false, agent.id === "foreign");
         }
@@ -89,7 +89,7 @@ it("preserves both project owners through A -> B -> A while denying a foreign ag
     }
     const report = await runWorkspaceDiagnostics(runtime, path.join(root, "a"));
     assert.equal(report.findings.some(finding => finding.code === DOCTOR_FINDING_CODE.FOREIGN_AGENT_TOOLS_VISIBLE), false);
-    assert.ok(report.agents.filter(agent => agent.agentId !== "foreign").every(agent => agent.devclawToolsAllowed));
+    assert.ok(report.agents.filter(agent => agent.agentId !== "foreign").every(agent => agent.clawFoundryToolsAllowed));
     const foreign = runtime.config.current().agents?.list?.find(agent => agent.id === "foreign");
     assert.ok(foreign?.tools?.alsoAllow?.includes("existing_tool"));
     const current = runtime.config.current();
@@ -97,12 +97,12 @@ it("preserves both project owners through A -> B -> A while denying a foreign ag
       agent.id === "b" ? { ...agent, workspace: path.join(root, "a") } : agent) } };
     const registryA = await readProjects(path.join(root, "a"));
     const registryB = await readProjects(path.join(root, "b"));
-    await fs.writeFile(path.join(root, "a", "devclaw", "projects.json"), JSON.stringify({ projects: {
+    await fs.writeFile(path.join(root, "a", "claw-foundry", "projects.json"), JSON.stringify({ projects: {
       ...registryA.projects, ...registryB.projects,
       foreign: { ...registryA.projects.a, slug: "foreign", agentId: "foreign", channels: [{ channel: "telegram", accountId: "dev", channelId: "foreign", name: "primary" }] },
     } }));
     assert.deepStrictEqual([...await resolveProjectToolOwners(sharedConfig)].sort(), ["a", "b"]);
-    await fs.writeFile(path.join(root, "b", "devclaw", "projects.json"), "broken");
+    await fs.writeFile(path.join(root, "b", "claw-foundry", "projects.json"), "broken");
     const before = structuredClone(runtime.config.current());
     await assert.rejects(writePluginConfig(runtime, "a"), /Cannot read projects registry/);
     assert.deepStrictEqual(runtime.config.current(), before);
@@ -112,12 +112,12 @@ it("preserves both project owners through A -> B -> A while denying a foreign ag
 });
 
 it("extends an explicit allow policy without producing the SDK allow/alsoAllow conflict", async () => {
-  const { runtime } = createRuntime({ agents: { list: [{ id: "owner", workspace: "/tmp/devclaw-policy-owner", tools: { allow: ["read"], deny: ["task_start", "other_denial"] } }] } });
+  const { runtime } = createRuntime({ agents: { list: [{ id: "owner", workspace: "/tmp/claw-foundry-policy-owner", tools: { allow: ["read"], deny: ["task_start", "other_denial"] } }] } });
   await writePluginConfig(runtime, "owner");
   const policy = runtime.config.current().agents?.list?.[0]?.tools;
   assert.equal(policy?.alsoAllow, undefined);
   assert.ok(policy?.allow?.includes("read"));
-  for (const tool of DEVCLAW_AGENT_TOOLS) assert.ok(policy?.allow?.includes(tool));
+  for (const tool of CLAW_FOUNDRY_AGENT_TOOLS) assert.ok(policy?.allow?.includes(tool));
   assert.ok(policy?.deny?.includes("other_denial"));
   assert.ok(!policy?.deny?.includes("task_start"));
 });
@@ -130,7 +130,7 @@ it("applies tool isolation only to active entries", async () => {
   await writePluginConfig(runtime, "owner");
   const agents = runtime.config.current().agents;
 
-  for (const tool of DEVCLAW_AGENT_TOOLS) {
+  for (const tool of CLAW_FOUNDRY_AGENT_TOOLS) {
     assert.ok(agents?.entries?.owner?.tools?.alsoAllow?.includes(tool));
     assert.ok(agents?.entries?.foreign?.tools?.deny?.includes(tool));
   }

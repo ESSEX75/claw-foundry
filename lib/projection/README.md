@@ -27,7 +27,7 @@ and cannot select or validate a task's lifecycle eligibility.
   and its tests. The configured role list is required; an explicit empty list owns
   no role namespaces. Missing roles are rejected, never interpreted as all roles.
 - The plugin ID prefix alone grants no label ownership. Labels such as
-  `devclaw:example` are preserved unless configured workflow/roles or exact local
+  `claw-foundry:example` are preserved unless configured workflow/roles or exact local
   expectations independently establish their ownership. Body block identifiers
   belong to the separate body protocol and do not reserve provider label names.
 - Exact labels expected from local state remain managed even when current workflow
@@ -38,6 +38,10 @@ and cannot select or validate a task's lifecycle eligibility.
   and the shared external API; nested README files are not used.
 
 ## Body protocol and failure semantics
+
+The persisted body namespace remains `devclaw` across the Claw Foundry rebrand.
+It is independent of the plugin registration ID, preserving existing provider
+metadata and durable creation recovery without modifying user issue bodies.
 
 - Metadata contains only `projectSlug` and a positive safe-integer `issueId`.
   Extraction returns compact identity and discards unrelated JSON fields.

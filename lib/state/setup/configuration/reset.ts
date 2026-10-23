@@ -2,6 +2,7 @@
 
 import path from "node:path";
 
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, WORKFLOW_FILE_NAME } from "../../paths.js";
 import type { WorkspaceWriteResult } from "../documents/index.js";
 import { backupAndWrite } from "../documents/index.js";
@@ -21,6 +22,8 @@ import {
  * @param workspacePath - Workspace whose defaults are explicitly reset with recoverable backups.
  */
 export async function resetDefaults(workspacePath: string): Promise<WorkspaceWriteResult> {
+  assertWorkspaceMigrated(workspacePath);
+
   const templates = await loadSetupTemplates();
   const dataDir = path.join(workspacePath, DATA_DIR);
 

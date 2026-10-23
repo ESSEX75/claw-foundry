@@ -6,6 +6,7 @@ import path from "node:path";
 import { ATTACHMENT_DISPOSITION } from "../../../domain/index.js";
 import type { AttachmentPurgeManifestEntry } from "../../attachments/cleanup/index.js";
 import { purgeIssueAttachments } from "../../attachments/cleanup/index.js";
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { parseProjectSlug } from "../../projects/index.js";
 import { readIssueStateStore } from "../active/index.js";
@@ -53,6 +54,8 @@ export async function applyArchiveRetention(workspaceDir: string, projectSlug: s
  * @param manifest - Complete validated file set captured before the first unlink.
  */
 async function writePurgeIntent(workspaceDir: string, projectSlug: string, input: ArchiveRetentionMutation, manifest: readonly AttachmentPurgeManifestEntry[]): Promise<void> {
+  assertWorkspaceMigrated(workspaceDir);
+
   const file = path.join(workspaceDir, DATA_DIR, PROJECTS_DIRECTORY_NAME, parseProjectSlug(projectSlug), ARCHIVE_RETENTION_AUDIT_FILE_NAME);
 
   await fs.appendFile(file, JSON.stringify({ requestedAt: new Date().toISOString(), record: input.expected, removeRecord: input.removeRecord, manifest }) + "\n", "utf8");

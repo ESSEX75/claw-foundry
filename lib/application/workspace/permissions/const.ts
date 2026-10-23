@@ -6,8 +6,8 @@ export const REQUIRED_OPENCLAW_SCOPES = [
   "operator.write",
 ] as const;
 
-/** Supported tools explicitly isolated to DevClaw agents. */
-export const DEVCLAW_AGENT_TOOLS = [
+/** Supported tools explicitly isolated to Claw Foundry agents. */
+export const CLAW_FOUNDRY_AGENT_TOOLS = [
   "task_start",
   "work_finish",
   "task_create",
@@ -36,13 +36,13 @@ export const DEVCLAW_AGENT_TOOLS = [
 ] as const;
 
 /** Session tools that bypass managed worker orchestration. */
-export const DEVCLAW_DENIED_TOOLS = ["sessions_spawn", "sessions_send"] as const;
+export const CLAW_FOUNDRY_DENIED_TOOLS = ["sessions_spawn", "sessions_send"] as const;
 
 /** Membership set used to preserve unrelated tool permissions. */
-export const DEVCLAW_AGENT_TOOL_SET: ReadonlySet<string> = new Set(DEVCLAW_AGENT_TOOLS);
+export const CLAW_FOUNDRY_AGENT_TOOL_SET: ReadonlySet<string> = new Set(CLAW_FOUNDRY_AGENT_TOOLS);
 
 /** Stable justification attached to setup scope approval requests. */
-export const SCOPE_APPROVAL_REASON = "devclaw-worker-dispatch";
+export const SCOPE_APPROVAL_REASON = "claw-foundry-worker-dispatch";
 
 /** Nonblocking scope preflight outcomes. */
 export const SCOPE_PREFLIGHT_STATUS = {

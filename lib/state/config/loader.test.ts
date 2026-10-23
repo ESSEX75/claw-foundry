@@ -18,8 +18,8 @@ const temporaryWorkspaces: string[] = [];
  * @param workflowYaml - Complete YAML content written as the workspace configuration layer.
  */
 async function createWorkspace(workflowYaml: string): Promise<string> {
-  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-custom-role-"));
-  const configDir = path.join(workspaceDir, "devclaw");
+  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-custom-role-"));
+  const configDir = path.join(workspaceDir, "claw-foundry");
 
   temporaryWorkspaces.push(workspaceDir);
   await fs.mkdir(configDir, { recursive: true });
@@ -139,7 +139,7 @@ workflow:
         COMPLETE:
           target: todo
 `);
-    const projectDir = path.join(workspaceDir, "devclaw", "projects", "design-app");
+    const projectDir = path.join(workspaceDir, "claw-foundry", "projects", "design-app");
 
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(projectDir, "workflow.yaml"), `
@@ -173,7 +173,7 @@ workflow:
 describe("custom role resolution", () => {
   it("preserves instance names and applies project precedence", async () => {
     const workspaceDir = await createWorkspace("instance:\n  name: workspace-team\n");
-    const projectDir = path.join(workspaceDir, "devclaw", "projects", "sample-app");
+    const projectDir = path.join(workspaceDir, "claw-foundry", "projects", "sample-app");
 
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(projectDir, "workflow.yaml"), "timeouts:\n  gatewayMs: 1234\n", "utf8");
@@ -185,7 +185,7 @@ describe("custom role resolution", () => {
 
   it("preserves disabled role definitions until explicitly re-enabled", async () => {
     const workspaceDir = await createWorkspace("roles:\n  developer: false\n");
-    const projectDir = path.join(workspaceDir, "devclaw", "projects", "sample-app");
+    const projectDir = path.join(workspaceDir, "claw-foundry", "projects", "sample-app");
 
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(projectDir, "workflow.yaml"), "roles:\n  developer:\n    levels:\n      senior:\n        model: model/project-senior\n", "utf8");
@@ -204,7 +204,7 @@ describe("custom role resolution", () => {
 
   it("retains workspace role overrides when a project disables the role", async () => {
     const workspaceDir = await createWorkspace("roles:\n  developer:\n    levels:\n      senior:\n        model: model/workspace-senior\n");
-    const projectDir = path.join(workspaceDir, "devclaw", "projects", "sample-app");
+    const projectDir = path.join(workspaceDir, "claw-foundry", "projects", "sample-app");
 
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(projectDir, "workflow.yaml"), "roles:\n  developer: false\n", "utf8");
@@ -216,7 +216,7 @@ describe("custom role resolution", () => {
 
   it("requires a complete definition when restoring a removed level", async () => {
     const workspaceDir = await createWorkspace("roles:\n  developer:\n    levels:\n      senior: false\n");
-    const projectDir = path.join(workspaceDir, "devclaw", "projects", "sample-app");
+    const projectDir = path.join(workspaceDir, "claw-foundry", "projects", "sample-app");
 
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(projectDir, "workflow.yaml"), "roles:\n  developer:\n    levels:\n      senior:\n        model: model/restored\n", "utf8");
@@ -299,7 +299,7 @@ roles:
     completion:
       done: COMPLETE
 `);
-    const projectDir = path.join(workspaceDir, "devclaw", "projects", "secure-app");
+    const projectDir = path.join(workspaceDir, "claw-foundry", "projects", "secure-app");
 
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(projectDir, "workflow.yaml"), `

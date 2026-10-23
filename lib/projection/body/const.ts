@@ -1,12 +1,12 @@
 /** Defines the managed HTML-comment protocol shared by body parsing and rendering. */
 
-import { DEVCLAW_PLUGIN_ID } from "../../shared/const.js";
+import { PERSISTED_PROTOCOL_NAMESPACE } from "../../shared/const.js";
 
 /** Reserved identity block identifier. */
-export const ISSUE_BODY_METADATA_ID = `${DEVCLAW_PLUGIN_ID}:issue-metadata`;
+export const ISSUE_BODY_METADATA_ID = `${PERSISTED_PROTOCOL_NAMESPACE}:issue-metadata`;
 
 /** Reserved durable creation-operation block identifier. */
-export const ISSUE_BODY_CREATION_ID = `${DEVCLAW_PLUGIN_ID}:issue-creation`;
+export const ISSUE_BODY_CREATION_ID = `${PERSISTED_PROTOCOL_NAMESPACE}:issue-creation`;
 
 /** HTML comment opener used for canonical managed blocks. */
 export const ISSUE_BODY_BLOCK_PREFIX = "<!-- ";

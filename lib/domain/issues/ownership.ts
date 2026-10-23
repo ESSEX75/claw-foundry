@@ -1,5 +1,5 @@
 /**
- * Defines pure helpers for projecting and detecting DevClaw issue ownership labels.
+ * Defines pure helpers for projecting and detecting Claw Foundry issue ownership labels.
  */
 
 import { OWNER_LABEL_PREFIX } from "./const.js";
@@ -7,7 +7,7 @@ import { OWNER_LABEL_PREFIX } from "./const.js";
 /**
  * Build the owner label for a given instance name.
  *
- * @param instanceName - Stable DevClaw instance name encoded in the label.
+ * @param instanceName - Stable Claw Foundry instance name encoded in the label.
  */
 export function getOwnerLabel(instanceName: string): string {
   return `${OWNER_LABEL_PREFIX}${instanceName}`;
@@ -31,7 +31,7 @@ export function detectOwner(issueLabels: readonly string[]): string | null {
  * instance or unclaimed. This is a diagnostic predicate, not runtime authorization.
  *
  * @param issueLabels - Provider-visible labels to inspect for an ownership marker.
- * @param instanceName - DevClaw instance allowed to own the issue.
+ * @param instanceName - Claw Foundry instance allowed to own the issue.
  */
 export function isOwnedByOrUnclaimed(
   issueLabels: readonly string[],

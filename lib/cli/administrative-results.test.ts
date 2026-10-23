@@ -12,7 +12,7 @@ import { ISSUE_INTEGRITY_STATUS, ISSUE_PROVIDER, type IssueRuntimeState } from "
 import { renderIssueMetadata } from "../projection/index.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME, readIssueStateStore } from "../state/index.js";
 import { createEmptyIssueStateStoreForTesting, createSetupRuntime, createTestHarness, replaceIssueStateStoreForTesting } from "../testing/index.js";
-import { DEVCLAW_PLUGIN_ID } from "../shared/const.js";
+import { CLAW_FOUNDRY_PLUGIN_ID } from "../shared/const.js";
 import { registerCli } from "./index.js";
 
 /** Archive collision fixture used to force a recoverable local archival failure. */
@@ -99,7 +99,7 @@ async function createCliFixture(t: TestContext, occupied = false) {
     registerCli(parent, { runtime, runCommand });
     lines.length = 0;
     process.exitCode = initialExitCode;
-    await parent.parseAsync([DEVCLAW_PLUGIN_ID, ...args, "--project", h.project.slug, "--issue", "123", "--workspace", h.workspaceDir], { from: "user" });
+    await parent.parseAsync([CLAW_FOUNDRY_PLUGIN_ID, ...args, "--project", h.project.slug, "--issue", "123", "--workspace", h.workspaceDir], { from: "user" });
     assert.equal(lines.length, 1, "the application result remains a single JSON output");
     const output: unknown = JSON.parse(lines[0] ?? "null");
 

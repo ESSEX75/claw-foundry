@@ -10,7 +10,7 @@ import { finishWork } from "./finish-work.js";
 import { DEFAULT_WORKFLOW, ISSUE_PROVIDER } from "../../../../domain/index.js";
 
 /** Audit fixture location asserted by the application rejection regression. */
-const AUDIT_PATH = ["devclaw", "log", "audit.log"];
+const AUDIT_PATH = ["claw-foundry", "log", "audit.log"];
 
 describe("work_finish rejection", () => {
   describe("missing active worker rejection", () => {

@@ -25,13 +25,13 @@ function buildModelTable(models: ModelConfig = getAllBuiltInDefaultModels()): st
 export function buildReconfigContext(models: ModelConfig): string {
   const modelTable = buildModelTable(models);
 
-  return `# DevClaw Reconfiguration
+  return `# Claw Foundry Reconfiguration
 
-The user wants to reconfigure DevClaw. Current workspace model configuration:
+The user wants to reconfigure Claw Foundry. Current workspace model configuration:
 
 ${modelTable}
 
-Models are configured in \`devclaw/workflow.yaml\`. Edit that file directly or call \`setup\` with a \`models\` object to update.
+Models are configured in \`claw-foundry/workflow.yaml\`. Edit that file directly or call \`setup\` with a \`models\` object to update.
 
 ## What can be changed
 1. **Model levels** — call \`setup\` with a \`models\` object containing only the levels to change
@@ -45,10 +45,10 @@ Ordinary \`setup\` preserves existing files. Explicit refresh/reset operations c
 
 /** Describe the first-run conversational setup procedure. */
 export function buildOnboardToolContext(): string {
-  return `# DevClaw Onboarding
+  return `# Claw Foundry Onboarding
 
-## What is DevClaw?
-DevClaw turns each Telegram group into an autonomous development team:
+## What is Claw Foundry?
+Claw Foundry turns each Telegram group into an autonomous development team:
 - An **orchestrator** that manages backlogs and delegates work
 - **Developer workers** (junior/medior/senior levels) that write code in isolated sessions
 - **Tester workers** that review code and run tests
@@ -57,7 +57,7 @@ DevClaw turns each Telegram group into an autonomous development team:
 ## Setup Steps
 
 **Step 1: Agent Selection**
-Ask: "Do you want to configure DevClaw for the current agent, or create a new dedicated agent?"
+Ask: "Do you want to configure Claw Foundry for the current agent, or create a new dedicated agent?"
 - Current agent → collect its exact \`agentId\` or \`workspacePath\` for setup
 - New agent → ask for agent name
 - Selected/new agent → ask for:
@@ -78,7 +78,7 @@ ${buildModelTable()}
 2. Present the assignments and ask whether to keep them or change specific role levels.
 3. Collect an explicit model ID for each requested role-level change.
 4. Pass only those changes through \`setup.models\`; omit \`models\` when keeping current settings or accepting defaults.
-5. Define new roles and levels in \`devclaw/workflow.yaml\` first, including rank, model, defaultLevel, and completion mappings.
+5. Define new roles and levels in \`claw-foundry/workflow.yaml\` first, including rank, model, defaultLevel, and completion mappings.
    Custom roles also need a prompt and workflow queue/active states.
 
 Model authentication is configured separately in OpenClaw. Setup does not invoke an LLM to choose models or require a model-discovery command.
@@ -102,7 +102,7 @@ Call \`setup\` with the collected answers:
 After setup completes, explain project isolation best practices:
 
 📱 **Telegram Group Guidance:**
-DevClaw uses **one Telegram group per project** for isolation and clean backlogs.
+Claw Foundry uses **one Telegram group per project** for isolation and clean backlogs.
 
 **Recommended Setup:**
 1. **Create a new Telegram group** for each project
@@ -141,11 +141,11 @@ After project registration, briefly tell the user about their active workflow:
     `- **Review policy**: human (default) — PRs need human approval on GitHub/GitLab, heartbeat auto-merges when approved.
 ` +
     `- **Test phase**: skipped by default — the testing step is in the workflow but issues bypass it automatically. ` +
-    `Use an explicit DevClaw policy migration for existing managed issues; editing provider labels does not change their authoritative state. ` +
+    `Use an explicit Claw Foundry policy migration for existing managed issues; editing provider labels does not change their authoritative state. ` +
     `To enable globally, set \`testPolicy: agent\` in workflow.yaml.
 ` +
     `- **Customization**: They can change the review policy (human/agent/auto), enable testing (testPolicy: agent), ` +
-    `or override settings per project. Point them to \`workflow.yaml\` in the devclaw data directory.
+    `or override settings per project. Point them to \`workflow.yaml\` in the claw-foundry data directory.
 ` +
     `- Say: "Your workflow is set up with **human review** and **testing skipped** by default. ` +
     `Set \`testPolicy: agent\` in workflow.yaml for new issues and use \`issue_policy_migrate\` for existing managed issues."

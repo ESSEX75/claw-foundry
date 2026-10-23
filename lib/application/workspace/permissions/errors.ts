@@ -6,7 +6,7 @@ import type { ScopeApprovalRejectedDetails, ScopeApprovalRequiredDetails } from 
 export class ScopeApprovalRequiredError extends Error {
   /** Gateway request the operator must approve. */
   readonly requestId: string;
-  /** Complete DevClaw permission set. */
+  /** Complete Claw Foundry permission set. */
   readonly requiredScopes: string[];
   /** Permissions awaiting approval. */
   readonly missingScopes: string[];

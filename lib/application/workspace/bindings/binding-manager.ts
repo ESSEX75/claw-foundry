@@ -75,8 +75,8 @@ export function inspectPlannedChannelBinding(config: RouteConfig, channel: strin
  * @param peerId - Destination peer identifier.
  */
 function buildBinding(channel: string, agentId: string, accountId: string, peerId: string): NonNullable<OpenClawConfig["bindings"]>[number] {
-  if (!accountId.trim()) throw new Error("accountId is required for an exact DevClaw binding");
-  if (!peerId.trim()) throw new Error("peerId is required for an exact DevClaw binding");
+  if (!accountId.trim()) throw new Error("accountId is required for an exact Claw Foundry binding");
+  if (!peerId.trim()) throw new Error("peerId is required for an exact Claw Foundry binding");
 
   const kind = isDirectDestination(channel, peerId) ? ROUTE_PEER_KIND.DIRECT : ROUTE_PEER_KIND.GROUP;
 

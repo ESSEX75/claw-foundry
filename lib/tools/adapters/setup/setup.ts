@@ -1,5 +1,5 @@
 /**
- * setup — Agent-driven DevClaw setup.
+ * setup — Agent-driven Claw Foundry setup.
  *
  * Creates agent, configures model levels, writes workspace files.
  * Thin wrapper around application setup orchestration.
@@ -42,8 +42,8 @@ export function createSetupTool(ctx: Pick<SetupOpts, "runtime" | "runCommand">):
     name: SETUP_TOOL_NAME,
     label: "Setup",
     description:
-      `Execute DevClaw setup. Creates AGENTS.md, HEARTBEAT.md, TOOLS.md, devclaw/projects.json, ` +
-      `devclaw/prompts/, and model level config. Optionally creates a new agent with channel binding. ` +
+      `Execute Claw Foundry setup. Creates AGENTS.md, HEARTBEAT.md, TOOLS.md, claw-foundry/projects.json, ` +
+      `claw-foundry/prompts/, and model level config. Optionally creates a new agent with channel binding. ` +
       `Called after onboard collects configuration.`,
     parameters: toolInputParameters(setupInput),
 
@@ -82,7 +82,7 @@ export function createSetupTool(ctx: Pick<SetupOpts, "runtime" | "runCommand">):
             missingScopes: err.missingScopes,
             requestId: err.requestId,
             summary:
-              `OpenClaw approval is required before DevClaw setup can continue.\n` +
+              `OpenClaw approval is required before Claw Foundry setup can continue.\n` +
               `Approve request ${err.requestId} in OpenClaw UI or CLI, then call setup again.`,
           });
         }
@@ -147,7 +147,7 @@ export function createSetupTool(ctx: Pick<SetupOpts, "runtime" | "runCommand">):
         "  - Restart the OpenClaw gateway so the new bot/chat binding becomes active.",
         "  - Add the bot to the selected Telegram/WhatsApp chat.",
         '  - In that group, send: "Register project <name> at <repo> with base branch <branch>".',
-        "  - Create the first issue and ask DevClaw to pick it up.",
+        "  - Create the first issue and ask Claw Foundry to pick it up.",
       );
 
       return jsonResult({

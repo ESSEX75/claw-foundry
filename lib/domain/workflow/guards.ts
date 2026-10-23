@@ -1,5 +1,5 @@
 /**
- * Validates membership in DevClaw's closed built-in workflow value sets.
+ * Validates membership in Claw Foundry's closed built-in workflow value sets.
  */
 
 import { COMPLETION_RESULT, WORKFLOW_EVENT } from "./const.js";

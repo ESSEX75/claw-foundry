@@ -1,6 +1,6 @@
-# DevClaw — Tools Reference
+# Claw Foundry — Tools Reference
 
-Complete reference for all tools registered by DevClaw. See [`index.ts`](../index.ts) for registration.
+Complete reference for all tools registered by Claw Foundry. See [`index.ts`](../index.ts) for registration.
 
 ## Task Lifecycle
 
@@ -27,7 +27,7 @@ Advance a HOLD-state issue through its `APPROVE` transition to the configured qu
 | ACTIVE (Doing, Reviewing, etc.) | Error — already being worked on | — |
 | TERMINAL (Done, Rejected) | Error — cannot start | — |
 
-**Level resolution:** An explicit `level` wins. Otherwise DevClaw reuses a level prepared by `task_set_level` for the same target role, or selects the role's level once before queueing. The `(assignedRole, assignedLevel)` pair is stored in local issue state; provider `role:level` is only its projection. A level is not inherited when the workflow changes to another role.
+**Level resolution:** An explicit `level` wins. Otherwise Claw Foundry reuses a level prepared by `task_set_level` for the same target role, or selects the role's level once before queueing. The `(assignedRole, assignedLevel)` pair is stored in local issue state; provider `role:level` is only its projection. A level is not inherited when the workflow changes to another role.
 
 ---
 
@@ -102,7 +102,7 @@ Create a new issue through a durable, idempotent operation.
 - Workers file follow-up bugs discovered during development
 - Breaking down epics into smaller tasks
 
-**Default behavior:** Creates a managed issue in `workflow.initial`, normally the `"Planning"` hold state. The provider issue receives its initial labels and hidden creation marker in the create request. DevClaw then applies metadata and verifies a fresh provider read before publishing local runtime state as `ready`. Partial operations return `pending`, `failed`, or `manual_repair_required` with recovery details and remain unavailable to workers. Call `task_start` when a ready task should enter its first queue. A custom workflow whose initial state is already a queue becomes eligible only after verification.
+**Default behavior:** Creates a managed issue in `workflow.initial`, normally the `"Planning"` hold state. The provider issue receives its initial labels and hidden creation marker in the create request. Claw Foundry then applies metadata and verifies a fresh provider read before publishing local runtime state as `ready`. Partial operations return `pending`, `failed`, or `manual_repair_required` with recovery details and remain unavailable to workers. Call `task_start` when a ready task should enter its first queue. A custom workflow whose initial state is already a queue becomes eligible only after verification.
 
 ---
 
@@ -286,7 +286,7 @@ Browse and search issues by workflow state. Returns individual issues grouped by
 
 **Note:** When browsing terminal states (Done), the tool queries closed issues from the provider.
 
-Provider labels are displayed for parity with GitHub/GitLab. For initialized DevClaw-managed issues, the local `issues.json` entry is the authoritative workflow state.
+Provider labels are displayed for parity with GitHub/GitLab. For initialized Claw Foundry-managed issues, the local `issues.json` entry is the authoritative workflow state.
 
 ---
 
@@ -376,8 +376,8 @@ Agent + workspace initialization.
 
 1. Creates a new agent or configures existing workspace
 2. Optionally creates an exact messaging binding with an explicit account and peer
-3. Grants DevClaw tools to the selected agent and explicitly denies them to other agents
-4. Writes workspace files: AGENTS.md, HEARTBEAT.md, IDENTITY.md, TOOLS.md, SOUL.md, `devclaw/projects.json`, `devclaw/workflow.yaml`
+3. Grants Claw Foundry tools to the selected agent and explicitly denies them to other agents
+4. Writes workspace files: AGENTS.md, HEARTBEAT.md, IDENTITY.md, TOOLS.md, SOUL.md, `claw-foundry/projects.json`, `claw-foundry/workflow.yaml`
 5. Scaffolds default prompt files for all roles
 
 ---
@@ -390,12 +390,12 @@ Conversational onboarding guide. Returns step-by-step instructions for the agent
 
 **Note:** Call this before `setup` to get step-by-step guidance.
 
-### CLI: `devclaw doctor`
+### CLI: `claw-foundry doctor`
 
-Validate persisted project routes and explicit per-agent DevClaw tool isolation:
+Validate persisted project routes and explicit per-agent Claw Foundry tool isolation:
 
 ```bash
-openclaw devclaw doctor
+openclaw claw-foundry doctor
 ```
 
 The command emits stable diagnostic codes, verifies every endpoint against its exact
@@ -530,28 +530,28 @@ Provider identity comes from the registry. This provisions repository label defi
 
 ---
 
-### `devclaw worker-delivery`
+### `claw-foundry worker-delivery`
 
 Resolve a worker turn whose gateway response was lost. `tasks_status` shows the durable `workerDelivery` status, session key, and investigation hint. Heartbeat marks an unresolved turn `needs_attention` after five minutes without recent worker activity; it does not requeue the issue from session absence alone.
 
 ```bash
-devclaw worker-delivery --project my-webapp --issue 42 --session-key agent:my-agent:subagent:my-webapp-developer-medior-ada --decision confirmed-not-started --reason "verified no accepted or in-flight run" --dry-run
-devclaw worker-delivery --project my-webapp --issue 42 --session-key agent:my-agent:subagent:my-webapp-developer-medior-ada --decision confirmed-not-started --reason "verified no accepted or in-flight run" --apply
+claw-foundry worker-delivery --project my-webapp --issue 42 --session-key agent:my-agent:subagent:my-webapp-developer-medior-ada --decision confirmed-not-started --reason "verified no accepted or in-flight run" --dry-run
+claw-foundry worker-delivery --project my-webapp --issue 42 --session-key agent:my-agent:subagent:my-webapp-developer-medior-ada --decision confirmed-not-started --reason "verified no accepted or in-flight run" --apply
 ```
 
 Use `--decision confirmed-started` after verifying that the turn started; this clears the uncertainty and keeps the active worker. `confirmed-not-started` requires proof that no accepted or in-flight turn can still run. It restores the previous queue label, clears active issue ownership, and releases the exact slot. Both decisions recheck the issue, slot, and session key under the issue lock. `--dry-run` reads fresh state and provider labels without writing.
 
 ---
 
-### `issue_repair` / `devclaw repair issue`
+### `issue_repair` / `claw-foundry repair issue`
 
 Plan or apply a verified repair between local managed state and the provider projection. CLI and plugin tool call the same application service.
 
 **Source:** [`lib/application/issues/repair.ts`](../lib/application/issues/repair.ts), [`lib/tools/issues/issue-repair.ts`](../lib/tools/issues/issue-repair.ts)
 
 ```bash
-devclaw repair issue --project my-webapp --issue 42 --source local-state --dry-run
-devclaw repair issue --project my-webapp --issue 42 --source local-state --plan-token <token> --apply
+claw-foundry repair issue --project my-webapp --issue 42 --source local-state --dry-run
+claw-foundry repair issue --project my-webapp --issue 42 --source local-state --plan-token <token> --apply
 ```
 
 **Behavior:**
@@ -568,46 +568,46 @@ The tool requires exactly one of `project` or `channelId`, a positive safe integ
 
 ---
 
-### `issue_policy_migrate` / `devclaw repair policies`
+### `issue_policy_migrate` / `claw-foundry repair policies`
 
 Migrate review/test policy snapshots for existing managed issues. This is for cases where project workflow config changed after issues were already created. New issues use the new project config automatically; existing issues keep their local snapshot until explicitly migrated.
 
 **Source:** [`lib/application/issues/policy/command.ts`](../lib/application/issues/policy/command.ts), [`lib/tools/issues/issue-policy-migrate.ts`](../lib/tools/issues/issue-policy-migrate.ts)
 
 ```bash
-devclaw repair policies --project my-webapp --review agent --test agent --state toReview --dry-run
-devclaw repair policies --project my-webapp --review agent --test agent --issue 75,77 --apply
+claw-foundry repair policies --project my-webapp --review agent --test agent --state toReview --dry-run
+claw-foundry repair policies --project my-webapp --review agent --test agent --issue 75,77 --apply
 ```
 
 **Behavior:**
 
 - `--dry-run` reports which local issue records would change and performs no provider writes.
-- `--apply` updates `devclaw/projects/<project>/issues.json` first, then repairs provider projection labels from local state.
+- `--apply` updates `claw-foundry/projects/<project>/issues.json` first, then repairs provider projection labels from local state.
 - Closed/done/rejected issues are skipped by default; pass `--include-closed` only for explicit historical migrations.
 - Provider label edits alone are not authoritative. Projection repair converges labels back to local `issues.json`.
 
 ---
 
-### `issue_delete` / `devclaw issues delete`
+### `issue_delete` / `claw-foundry issues delete`
 
 Safely delete one provider issue and retain a local tombstone. Preview is the default tool behavior; apply mode requires `confirmIssueId` or `--confirm-issue` to exactly match the target issue.
 
 ```bash
-devclaw issues delete --project my-webapp --issue 42 --dry-run
-devclaw issues delete --project my-webapp --issue 42 --confirm-issue 42 --apply
+claw-foundry issues delete --project my-webapp --issue 42 --dry-run
+claw-foundry issues delete --project my-webapp --issue 42 --confirm-issue 42 --apply
 ```
 
-Deletion is rejected for active workers and unhealthy local state. DevClaw audits the request and provider result, confirms the issue is actually absent, writes `issues.archive.json` first, and only then removes the active record from `issues.json`.
+Deletion is rejected for active workers and unhealthy local state. Claw Foundry audits the request and provider result, confirms the issue is actually absent, writes `issues.archive.json` first, and only then removes the active record from `issues.json`.
 
-### `devclaw issues archive status/purge`
+### `claw-foundry issues archive status/purge`
 
 ```bash
-devclaw issues archive status --project my-webapp
-devclaw issues archive purge --project my-webapp --dry-run
-devclaw issues archive purge --project my-webapp --apply
+claw-foundry issues archive status --project my-webapp
+claw-foundry issues archive purge --project my-webapp --dry-run
+claw-foundry issues archive purge --project my-webapp --apply
 ```
 
-Terminal issues are archived immediately by lifecycle code; heartbeat retries interrupted transfers. Archive purge never deletes provider issues and requires an explicit mode. `devclaw issues reset-store --project my-webapp --confirm-project my-webapp` is the deliberate one-time destructive reset for the new non-legacy schema and never runs during Gateway startup.
+Terminal issues are archived immediately by lifecycle code; heartbeat retries interrupted transfers. Archive purge never deletes provider issues and requires an explicit mode. `claw-foundry issues reset-store --project my-webapp --confirm-project my-webapp` is the deliberate one-time destructive reset for the new non-legacy schema and never runs during Gateway startup.
 
 ---
 
@@ -663,7 +663,7 @@ List channels for a project or all projects. Shows channel type, ID, name, and e
 
 ### `config`
 
-Manage DevClaw workspace configuration. Supports three actions: reset config files to defaults, diff against defaults, and show version info.
+Manage Claw Foundry workspace configuration. Supports three actions: reset config files to defaults, diff against defaults, and show version info.
 
 **Source:** [`lib/tools/setup/config.ts`](../lib/tools/setup/config.ts)
 
@@ -680,4 +680,4 @@ Manage DevClaw workspace configuration. Supports three actions: reset config fil
 |---|---|
 | `reset` | Reset config files to package defaults. Creates `.bak` backups. Use `scope` to target: `prompts` (role prompts only), `workflow` (workflow.yaml only), `all` (everything). |
 | `diff` | Show differences between current `workflow.yaml` and the built-in default template. Helps identify customizations and see what changed in new versions. |
-| `version` | Show DevClaw package version and workspace tracked version. |
+| `version` | Show Claw Foundry package version and workspace tracked version. |

@@ -1,6 +1,6 @@
 # Shared primitives
 
-Owns small technical primitives used across DevClaw layers, without workflow,
+Owns small technical primitives used across Claw Foundry layers, without workflow,
 project, provider, persistence or SDK policy.
 
 ## Ownership and APIs
@@ -14,7 +14,7 @@ Consumers import the specific capability API or one of the two shared root files
 | `hashing/index.ts` | Exact-byte or UTF-8 SHA-256 hexadecimal digest. |
 | `duration/index.ts` | Explicit integral duration grammar and safe millisecond parsing. |
 | `types.ts` | Universal type construction `ValueOf<T> = T[keyof T]`. |
-| `const.ts` | Stable `DEVCLAW_PLUGIN_ID` shared by registration, configuration and protocol namespaces. |
+| `const.ts` | `CLAW_FOUNDRY_PLUGIN_ID` for registration/configuration and the separate `PERSISTED_PROTOCOL_NAMESPACE` for existing issue markers and gateway replay keys. |
 
 Capability internals import local implementation files, never their own barrel.
 Other consumers use the owning capability's `index.ts`; private constants and

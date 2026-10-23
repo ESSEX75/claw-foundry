@@ -3,7 +3,7 @@
 import { getAllRoleIds } from "../../roles/index.js";
 import { DEFAULT_ISSUE_ARCHIVE_MAINTENANCE, DEFAULT_MAX_WORKERS_PER_LEVEL, DEFAULT_TIMEOUTS } from "./const.js";
 import { parseResolvedWorkflowConfig, validateRoleIntegrity, validateWorkflowIntegrity } from "./schema.js";
-import type { DevClawConfig, LevelOverride, ResolvedConfig, ResolvedLevelConfig, ResolvedRoleConfig, ResolvedTimeouts } from "./types.js";
+import type { ClawFoundryConfig, LevelOverride, ResolvedConfig, ResolvedLevelConfig, ResolvedRoleConfig, ResolvedTimeouts } from "./types.js";
 
 /**
  * Resolve a validated layered configuration into the complete application-facing runtime contract.
@@ -11,7 +11,7 @@ import type { DevClawConfig, LevelOverride, ResolvedConfig, ResolvedLevelConfig,
  *
  * @param config - Validated result of the layered merge.
  */
-export function resolveConfig(config: DevClawConfig): ResolvedConfig {
+export function resolveConfig(config: ClawFoundryConfig): ResolvedConfig {
   const roles: Record<string, ResolvedRoleConfig> = {};
   const globalMaxWorkers = config.workflow?.maxWorkersPerLevel ?? DEFAULT_MAX_WORKERS_PER_LEVEL;
   const roleErrors = validateRoleIntegrity(config.roles ?? {}, new Set(getAllRoleIds()));

@@ -44,7 +44,7 @@ import { parseIssueCreationStore } from "./creation/schema.js";
  */
 function issue(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 123,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",
@@ -69,49 +69,49 @@ function issue(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
 
 describe("issue state store", () => {
   it("rejects invalid notification timestamps on writes and preserves corrupt reads for explicit repair", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-invalid-time-"));
-    const filePath = issueStatePath(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-invalid-time-"));
+    const filePath = issueStatePath(tmpDir, "claw-foundry");
     const state = issue({ pipelineNotification: { eventKey: "done", status: "retryable", attemptedAt: "broken" } });
 
     try {
-      await writeIssueStateStore(tmpDir, "devclaw", { projectSlug: "devclaw", issues: { "123": issue() } });
+      await writeIssueStateStore(tmpDir, "claw-foundry", { projectSlug: "claw-foundry", issues: { "123": issue() } });
       const previous = await fs.readFile(filePath, "utf8");
 
-      await assert.rejects(writeIssueStateStore(tmpDir, "devclaw", { projectSlug: "devclaw", issues: { "123": state } }), /attemptedAt/);
+      await assert.rejects(writeIssueStateStore(tmpDir, "claw-foundry", { projectSlug: "claw-foundry", issues: { "123": state } }), /attemptedAt/);
       assert.equal(await fs.readFile(filePath, "utf8"), previous);
-      const corrupt = JSON.stringify({ projectSlug: "devclaw", issues: { "123": state } });
+      const corrupt = JSON.stringify({ projectSlug: "claw-foundry", issues: { "123": state } });
 
       await fs.writeFile(filePath, corrupt);
-      await assert.rejects(reservePipelineNotification(tmpDir, "devclaw", 123, "done"), /Cannot read active issue store.*attemptedAt/s);
+      await assert.rejects(reservePipelineNotification(tmpDir, "claw-foundry", 123, "done"), /Cannot read active issue store.*attemptedAt/s);
       assert.equal(await fs.readFile(filePath, "utf8"), corrupt);
     } finally {
       await fs.rm(tmpDir, { recursive: true, force: true });
     }
   });
   it("keeps a missing creation store in memory until a locked update persists it", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issue-creations-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issue-creations-"));
     const filePath = path.join(
       tmpDir,
       DATA_DIR,
       PROJECTS_DIRECTORY_NAME,
-      "devclaw",
+      "claw-foundry",
       ISSUE_CREATIONS_FILE_NAME,
     );
 
     try {
-      const store = await readIssueCreationStore(tmpDir, "devclaw");
+      const store = await readIssueCreationStore(tmpDir, "claw-foundry");
 
-      assert.deepStrictEqual(store, emptyIssueCreationStore("devclaw"));
+      assert.deepStrictEqual(store, emptyIssueCreationStore("claw-foundry"));
       await assert.rejects(fs.access(filePath), { code: "ENOENT" });
 
-      await updateIssueCreationStore(tmpDir, "devclaw", (current) => ({
+      await updateIssueCreationStore(tmpDir, "claw-foundry", (current) => ({
         store: { ...current, operations: { ...current.operations } },
         result: undefined,
       }));
 
       assert.deepStrictEqual(
         JSON.parse(await fs.readFile(filePath, "utf-8")),
-        emptyIssueCreationStore("devclaw"),
+        emptyIssueCreationStore("claw-foundry"),
       );
     } finally {
       await fs.rm(tmpDir, { recursive: true });
@@ -119,12 +119,12 @@ describe("issue state store", () => {
   });
 
   it("returns an in-memory active store without writing when missing", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const store = await readIssueStateStore(tmpDir, "devclaw");
-      const filePath = issueStatePath(tmpDir, "devclaw");
+      const store = await readIssueStateStore(tmpDir, "claw-foundry");
+      const filePath = issueStatePath(tmpDir, "claw-foundry");
 
-      assert.deepStrictEqual(store, emptyIssueStateStore("devclaw"));
+      assert.deepStrictEqual(store, emptyIssueStateStore("claw-foundry"));
       await assert.rejects(fs.access(filePath), { code: "ENOENT" });
     } finally {
       await fs.rm(tmpDir, { recursive: true });
@@ -132,19 +132,19 @@ describe("issue state store", () => {
   });
 
   it("reads an existing issues.json", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const filePath = issueStatePath(tmpDir, "devclaw");
+      const filePath = issueStatePath(tmpDir, "claw-foundry");
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, JSON.stringify({
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issues: {
           "123": issue(),
         },
       }), "utf-8");
 
-      const store = await readIssueStateStore(tmpDir, "devclaw");
-      assert.strictEqual(store.projectSlug, "devclaw");
+      const store = await readIssueStateStore(tmpDir, "claw-foundry");
+      assert.strictEqual(store.projectSlug, "claw-foundry");
       assert.strictEqual(store.issues["123"]!.workflowState, "todo");
     } finally {
       await fs.rm(tmpDir, { recursive: true });
@@ -152,9 +152,9 @@ describe("issue state store", () => {
   });
 
   it("rejects retired fields and missing current nullable values", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const filePath = issueStatePath(tmpDir, "devclaw");
+      const filePath = issueStatePath(tmpDir, "claw-foundry");
       const persistedIssue: Record<string, unknown> = {
         ...issue(),
         branchContract: { branch: "feature/123" },
@@ -166,27 +166,27 @@ describe("issue state store", () => {
       delete persistedIssue.pipelineNotification;
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, JSON.stringify({
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issues: { "123": persistedIssue },
       }), "utf-8");
 
-      await assert.rejects(readIssueStateStore(tmpDir, "devclaw"), /Cannot read active issue store/);
+      await assert.rejects(readIssueStateStore(tmpDir, "claw-foundry"), /Cannot read active issue store/);
     } finally {
       await fs.rm(tmpDir, { recursive: true });
     }
   });
 
   it("writes issue state and preserves projectSlug", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const store = emptyIssueStateStore("devclaw");
+      const store = emptyIssueStateStore("claw-foundry");
       store.issues["123"] = issue();
 
-      await writeIssueStateStore(tmpDir, "devclaw", store);
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
+      await writeIssueStateStore(tmpDir, "claw-foundry", store);
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
 
-      assert.strictEqual(loaded.projectSlug, "devclaw");
-      assert.strictEqual(loaded.issues["123"]!.projectSlug, "devclaw");
+      assert.strictEqual(loaded.projectSlug, "claw-foundry");
+      assert.strictEqual(loaded.issues["123"]!.projectSlug, "claw-foundry");
       assert.strictEqual(loaded.issues["123"]!.workflowLabel, "To Do");
     } finally {
       await fs.rm(tmpDir, { recursive: true });
@@ -194,14 +194,14 @@ describe("issue state store", () => {
   });
 
   it("supports update-by-callback under lock", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const returned = await updateIssueStateStore(tmpDir, "devclaw", (store) => {
+      const returned = await updateIssueStateStore(tmpDir, "claw-foundry", (store) => {
         const state = issue();
 
         return { store: { ...store, issues: { ...store.issues, "123": state } }, result: state.workflowState };
       });
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
 
       assert.strictEqual(returned, "todo");
       assert.strictEqual(loaded.issues["123"]!.issueId, 123);
@@ -211,14 +211,14 @@ describe("issue state store", () => {
   });
 
   it("updates the managed role and level together", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const store = emptyIssueStateStore("devclaw");
+      const store = emptyIssueStateStore("claw-foundry");
       store.issues["123"] = issue({ assignedRole: "developer", assignedLevel: "senior" });
-      await writeIssueStateStore(tmpDir, "devclaw", store);
+      await writeIssueStateStore(tmpDir, "claw-foundry", store);
 
-      const updated = await writeIssueRoleLevel(tmpDir, "devclaw", 123, "tester", "junior");
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
+      const updated = await writeIssueRoleLevel(tmpDir, "claw-foundry", 123, "tester", "junior");
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
 
       assert.strictEqual(updated.assignedRole, "tester");
       assert.strictEqual(updated.assignedLevel, "junior");
@@ -230,21 +230,21 @@ describe("issue state store", () => {
   });
 
   it("reserves and confirms one terminal pipeline notification", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const store = emptyIssueStateStore("devclaw");
+      const store = emptyIssueStateStore("claw-foundry");
       store.issues["123"] = issue({ workflowState: "done", workflowLabel: "Done" });
-      await writeIssueStateStore(tmpDir, "devclaw", store);
+      await writeIssueStateStore(tmpDir, "claw-foundry", store);
 
-      const token = await reservePipelineNotification(tmpDir, "devclaw", 123, "pipelineComplete:done");
+      const token = await reservePipelineNotification(tmpDir, "claw-foundry", 123, "pipelineComplete:done");
       assert.ok(token);
       assert.strictEqual(
-        await reservePipelineNotification(tmpDir, "devclaw", 123, "pipelineComplete:done"),
+        await reservePipelineNotification(tmpDir, "claw-foundry", 123, "pipelineComplete:done"),
         null,
       );
 
-      await settlePipelineNotification(tmpDir, "devclaw", 123, "pipelineComplete:done", token, PIPELINE_NOTIFICATION_STATUS.DELIVERED);
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
+      await settlePipelineNotification(tmpDir, "claw-foundry", 123, "pipelineComplete:done", token, PIPELINE_NOTIFICATION_STATUS.DELIVERED);
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
 
       assert.strictEqual(
         loaded.issues["123"]!.pipelineNotification?.status,
@@ -257,23 +257,23 @@ describe("issue state store", () => {
   });
 
   it("marks an expired unconfirmed attempt unknown and accepts its own late confirmation", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     const firstAttempt = new Date("2026-06-22T00:00:00.000Z");
 
     try {
-      await updateIssueStateStore(tmpDir, "devclaw", (store) => ({
+      await updateIssueStateStore(tmpDir, "claw-foundry", (store) => ({
         store: { ...store, issues: { "123": issue() } },
         result: undefined,
       }));
 
       assert.equal(
-        await reservePipelineNotification(tmpDir, "devclaw", 123, "pipelineComplete:done", firstAttempt),
+        await reservePipelineNotification(tmpDir, "claw-foundry", 123, "pipelineComplete:done", firstAttempt),
         firstAttempt.toISOString(),
       );
       assert.equal(
         await reservePipelineNotification(
           tmpDir,
-          "devclaw",
+          "claw-foundry",
           123,
           "pipelineComplete:done",
           new Date(firstAttempt.getTime() + PIPELINE_NOTIFICATION_ATTEMPT_LEASE_MS - 1),
@@ -283,26 +283,26 @@ describe("issue state store", () => {
       assert.equal(
         await reservePipelineNotification(
           tmpDir,
-          "devclaw",
+          "claw-foundry",
           123,
           "pipelineComplete:done",
           new Date(firstAttempt.getTime() + PIPELINE_NOTIFICATION_ATTEMPT_LEASE_MS),
         ),
         null,
       );
-      const unknown = (await readIssueStateStore(tmpDir, "devclaw")).issues["123"].pipelineNotification;
+      const unknown = (await readIssueStateStore(tmpDir, "claw-foundry")).issues["123"].pipelineNotification;
       assert.equal(unknown?.status, PIPELINE_NOTIFICATION_STATUS.UNKNOWN);
-      assert.equal(await settlePipelineNotification(tmpDir, "devclaw", 123, "pipelineComplete:done", firstAttempt.toISOString(), PIPELINE_NOTIFICATION_STATUS.DELIVERED), true);
+      assert.equal(await settlePipelineNotification(tmpDir, "claw-foundry", 123, "pipelineComplete:done", firstAttempt.toISOString(), PIPELINE_NOTIFICATION_STATUS.DELIVERED), true);
     } finally {
       await fs.rm(tmpDir, { recursive: true });
     }
   });
 
   it("rejects role-level writes for an uninitialized issue", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
       await assert.rejects(
-        writeIssueRoleLevel(tmpDir, "devclaw", 404, "developer", "junior"),
+        writeIssueRoleLevel(tmpDir, "claw-foundry", 404, "developer", "junior"),
         /Issue #404 has no initialized local runtime state/,
       );
     } finally {
@@ -311,18 +311,18 @@ describe("issue state store", () => {
   });
 
   it("returns an in-memory archive without writing when missing", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const archive = await readIssueArchiveStore(tmpDir, "devclaw");
+      const archive = await readIssueArchiveStore(tmpDir, "claw-foundry");
       const archivePath = path.join(
         tmpDir,
         DATA_DIR,
         PROJECTS_DIRECTORY_NAME,
-        "devclaw",
+        "claw-foundry",
         ARCHIVED_ISSUES_FILE_NAME,
       );
 
-      assert.deepStrictEqual(archive, emptyIssueArchiveStore("devclaw"));
+      assert.deepStrictEqual(archive, emptyIssueArchiveStore("claw-foundry"));
       await assert.rejects(fs.access(archivePath), { code: "ENOENT" });
     } finally {
       await fs.rm(tmpDir, { recursive: true });
@@ -330,23 +330,23 @@ describe("issue state store", () => {
   });
 
   it("resets both stores only through the explicit reset operation", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const store = emptyIssueStateStore("devclaw");
+      const store = emptyIssueStateStore("claw-foundry");
       store.issues["123"] = issue();
-      await writeIssueStateStore(tmpDir, "devclaw", store);
-      await resetIssueStores(tmpDir, "devclaw");
-      assert.deepStrictEqual(await readIssueStateStore(tmpDir, "devclaw"), emptyIssueStateStore("devclaw"));
-      assert.deepStrictEqual(await readIssueArchiveStore(tmpDir, "devclaw"), emptyIssueArchiveStore("devclaw"));
+      await writeIssueStateStore(tmpDir, "claw-foundry", store);
+      await resetIssueStores(tmpDir, "claw-foundry");
+      assert.deepStrictEqual(await readIssueStateStore(tmpDir, "claw-foundry"), emptyIssueStateStore("claw-foundry"));
+      assert.deepStrictEqual(await readIssueArchiveStore(tmpDir, "claw-foundry"), emptyIssueArchiveStore("claw-foundry"));
     } finally {
       await fs.rm(tmpDir, { recursive: true });
     }
   });
 
   it("rejects projectSlug mismatch with deterministic error", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
-      const filePath = issueStatePath(tmpDir, "devclaw");
+      const filePath = issueStatePath(tmpDir, "claw-foundry");
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, JSON.stringify({
         projectSlug: "other",
@@ -354,8 +354,8 @@ describe("issue state store", () => {
       }), "utf-8");
 
       await assert.rejects(
-        readIssueStateStore(tmpDir, "devclaw"),
-        /Issue store projectSlug mismatch: expected devclaw, got other/,
+        readIssueStateStore(tmpDir, "claw-foundry"),
+        /Issue store projectSlug mismatch: expected claw-foundry, got other/,
       );
     } finally {
       await fs.rm(tmpDir, { recursive: true });
@@ -365,23 +365,23 @@ describe("issue state store", () => {
   it("rejects active records whose key or nested project identity disagrees with the envelope", () => {
     assert.throws(
       () => parseIssueStateStore({
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issues: { "999": issue() },
-      }, "devclaw"),
+      }, "claw-foundry"),
       /Issue store key mismatch/,
     );
     assert.throws(
       () => parseIssueStateStore({
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issues: { "123": issue({ projectSlug: "other-project" }) },
-      }, "devclaw"),
+      }, "claw-foundry"),
       /Issue #123 projectSlug mismatch/,
     );
   });
 
   it("rejects archive records whose key or nested project identity disagrees with the envelope", () => {
     const record = {
-      projectSlug: "devclaw",
+      projectSlug: "claw-foundry",
       issueId: 123,
       provider: ISSUE_PROVIDER.GITHUB,
       finalWorkflowState: "done",
@@ -393,21 +393,21 @@ describe("issue state store", () => {
     };
 
     assert.throws(() => parseIssueArchiveStore({
-      projectSlug: "devclaw", issues: { "github:devclaw:123": { ...record, archivedAt: "invalid" } },
-    }, "devclaw"), /archivedAt/);
+      projectSlug: "claw-foundry", issues: { "github:claw-foundry:123": { ...record, archivedAt: "invalid" } },
+    }, "claw-foundry"), /archivedAt/);
 
     assert.throws(
       () => parseIssueArchiveStore({
-        projectSlug: "devclaw",
-        issues: { "github:devclaw:999": record },
-      }, "devclaw"),
+        projectSlug: "claw-foundry",
+        issues: { "github:claw-foundry:999": record },
+      }, "claw-foundry"),
       /Issue archive key mismatch/,
     );
     assert.throws(
       () => parseIssueArchiveStore({
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issues: { "github:other-project:123": { ...record, projectSlug: "other-project" } },
-      }, "devclaw"),
+      }, "claw-foundry"),
       /Archived issue #123 projectSlug mismatch/,
     );
   });
@@ -417,7 +417,7 @@ describe("issue state store", () => {
       operationId: "11111111-1111-4111-8111-111111111111",
       idempotencyKey: "request-123",
       payloadHash: "b".repeat(64),
-      projectSlug: "devclaw",
+      projectSlug: "claw-foundry",
       requestedBy: "tester",
       requestedAt: "2026-06-22T00:00:00.000Z",
       updatedAt: "2026-06-22T00:00:00.000Z",
@@ -444,37 +444,37 @@ describe("issue state store", () => {
     };
 
     assert.throws(() => parseIssueCreationStore({
-      projectSlug: "devclaw", operations: { "request-123": { ...operation, retryAfter: "invalid" } },
-    }, "devclaw"), /retryAfter/);
+      projectSlug: "claw-foundry", operations: { "request-123": { ...operation, retryAfter: "invalid" } },
+    }, "claw-foundry"), /retryAfter/);
 
     assert.throws(
       () => parseIssueCreationStore({
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         operations: { "wrong-key": operation },
-      }, "devclaw"),
+      }, "claw-foundry"),
       /Issue creation key mismatch/,
     );
     assert.throws(
       () => parseIssueCreationStore({
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         operations: { "request-123": { ...operation, projectSlug: "other-project" } },
-      }, "devclaw"),
+      }, "claw-foundry"),
       /Issue creation operation projectSlug mismatch/,
     );
   });
 
   it("serializes concurrent updates through the lock", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-issues-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-issues-"));
     try {
       await Promise.all([
-        updateIssueStateStore(tmpDir, "devclaw", async (store) => {
+        updateIssueStateStore(tmpDir, "claw-foundry", async (store) => {
           await new Promise((resolve) => setTimeout(resolve, 20));
           return {
             store: { ...store, issues: { ...store.issues, "101": issue({ issueId: 101 }) } },
             result: undefined,
           };
         }),
-        updateIssueStateStore(tmpDir, "devclaw", async (store) => {
+        updateIssueStateStore(tmpDir, "claw-foundry", async (store) => {
           return {
             store: { ...store, issues: { ...store.issues, "102": issue({ issueId: 102 }) } },
             result: undefined,
@@ -482,7 +482,7 @@ describe("issue state store", () => {
         }),
       ]);
 
-      const loaded = await readIssueStateStore(tmpDir, "devclaw");
+      const loaded = await readIssueStateStore(tmpDir, "claw-foundry");
       assert.strictEqual(loaded.issues["101"]!.issueId, 101);
       assert.strictEqual(loaded.issues["102"]!.issueId, 102);
     } finally {

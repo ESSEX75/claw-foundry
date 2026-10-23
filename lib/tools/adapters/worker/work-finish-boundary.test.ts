@@ -13,7 +13,7 @@ import { createTestHarness } from "../../../testing/index.js";
 import { createWorkFinishTool } from "./work-finish.js";
 
 /** Workspace override fixture consumed by the actual resolved role configuration. */
-const CONFIG_PATH = ["devclaw", "workflow.yaml"];
+const CONFIG_PATH = ["claw-foundry", "workflow.yaml"];
 
 describe("work_finish configured results", () => {
   it("accepts a custom result, commits its transition and rejects an unconfigured result", async () => {

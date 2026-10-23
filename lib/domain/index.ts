@@ -1,5 +1,5 @@
 /**
- * Exposes the supported public API for DevClaw's pure domain semantics.
+ * Exposes the supported public API for Claw Foundry's pure domain semantics.
  * Consumers outside `lib/domain` import domain-owned contracts through this entrypoint.
  */
 

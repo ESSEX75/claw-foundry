@@ -4,6 +4,7 @@
 
 import path from "node:path";
 
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { LOCK_FILE_SUFFIX, withFileLock } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
@@ -31,6 +32,8 @@ export function issueOrchestrationLockPath(
   projectSlug: string,
   issueId: number,
 ): string {
+  assertWorkspaceMigrated(workspaceDir);
+
   return path.join(
     workspaceDir, DATA_DIR, PROJECTS_DIRECTORY_NAME, parseProjectSlug(projectSlug),
     ORCHESTRATION_LOCKS_DIRECTORY_NAME,

@@ -13,7 +13,7 @@ import { expectedManagedLabels } from "./render.js";
  */
 function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 123,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",
@@ -62,7 +62,7 @@ describe("projection labels", () => {
   it("preserves plugin-prefixed labels that have no configured or local meaning", () => {
     const local = state();
     const expected = expectedManagedLabels(local);
-    const userLabels = ["devclaw:example", "devclaw:issue-creation", "devclaw:issue-metadata"];
+    const userLabels = ["claw-foundry:example", "devclaw:issue-creation", "devclaw:issue-metadata"];
     const options = { stateLabels: ["To Do", "Doing"], roles: ["developer"] };
     const diff = diffIssueProjection({ state: local, actualLabels: [...expected, ...userLabels], options });
 
@@ -74,9 +74,9 @@ describe("projection labels", () => {
   });
 
   it("classifies plugin-prefixed labels only through explicit workflow or role ownership", () => {
-    assert.strictEqual(isManagedLabel("devclaw:queued", { stateLabels: ["devclaw:queued"], roles: [] }), true);
-    assert.strictEqual(isManagedLabel("devclaw:junior", { stateLabels: [], roles: ["devclaw"] }), true);
-    assert.strictEqual(isManagedLabel("devclaw:junior", { stateLabels: [], roles: [] }), false);
+    assert.strictEqual(isManagedLabel("claw-foundry:queued", { stateLabels: ["claw-foundry:queued"], roles: [] }), true);
+    assert.strictEqual(isManagedLabel("claw-foundry:junior", { stateLabels: [], roles: ["claw-foundry"] }), true);
+    assert.strictEqual(isManagedLabel("claw-foundry:junior", { stateLabels: [], roles: [] }), false);
   });
 
   it("derives expected managed labels from issue state", () => {

@@ -4,7 +4,7 @@
 export const PROJECTS_FIXTURE_FILE_NAME = "projects.json";
 
 /** Temporary workspace namespace. */
-export const WORKSPACE_TEMP_PREFIX = "devclaw-e2e-";
+export const WORKSPACE_TEMP_PREFIX = "claw-foundry-e2e-";
 
 /** Test log resource created before diagnostic effects run. */
 export const LOG_DIRECTORY_NAME = "log";

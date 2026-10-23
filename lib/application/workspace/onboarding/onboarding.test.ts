@@ -16,10 +16,10 @@ it("offers explicit assignments and default acceptance without model discovery",
 });
 
 it("shows effective custom assignments without changing workspace files", async () => {
-  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-onboarding-"));
+  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-onboarding-"));
 
   try {
-    const configDir = path.join(workspaceDir, "devclaw");
+    const configDir = path.join(workspaceDir, "claw-foundry");
     const workflowPath = path.join(configDir, "workflow.yaml");
     const yaml = `roles:
   developer:

@@ -88,7 +88,7 @@ describe("extractIssueReferences", () => {
 
 describe("saveAttachment / listAttachments", () => {
   it("saves and lists attachments", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-attach-test-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-attach-test-"));
     try {
       const buffer = Buffer.from("hello world");
       const meta = await saveAttachment(tmpDir, "test-project", 42, {
@@ -130,7 +130,7 @@ describe("saveAttachment / listAttachments", () => {
   });
 
   it("returns empty list for non-existent issue", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-attach-test-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-attach-test-"));
     try {
       const list = await listAttachments(tmpDir, "test-project", 999);
       assert.strictEqual(list.length, 0);
@@ -168,7 +168,7 @@ describe("formatAttachmentComment", () => {
 
 describe("formatAttachmentsForTask", () => {
   it("returns empty string when no attachments", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-attach-test-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-attach-test-"));
     try {
       const result = await formatAttachmentsForTask(tmpDir, "test-project", 999);
       assert.strictEqual(result, "");
@@ -178,7 +178,7 @@ describe("formatAttachmentsForTask", () => {
   });
 
   it("includes attachment info for existing attachments", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-attach-test-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-attach-test-"));
     try {
       await saveAttachment(tmpDir, "test-project", 42, {
         buffer: Buffer.from("test"),
@@ -198,7 +198,7 @@ describe("formatAttachmentsForTask", () => {
 
 describe("purgeIssueAttachments", () => {
   it("produces a hash manifest and removes only the normalized issue directory", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-attach-purge-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-attach-purge-"));
     try {
       await saveAttachment(tmpDir, "test-project", 42, {
         buffer: Buffer.from("retained bytes"), filename: "evidence.txt",
@@ -218,7 +218,7 @@ describe("purgeIssueAttachments", () => {
 it("does not hide a corrupt attachment index or overwrite it on save", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "attachment-corrupt-"));
   try {
-    const dir = path.join(root, "devclaw", "attachments", "test-project", "42");
+    const dir = path.join(root, "claw-foundry", "attachments", "test-project", "42");
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(path.join(dir, "metadata.json"), "broken");
     await assert.rejects(listAttachments(root, "test-project", 42));
@@ -241,7 +241,7 @@ it("refuses purge through a project junction", async () => {
     const outside = path.join(root, "outside");
     await fs.mkdir(path.join(outside, "42"), { recursive: true });
     await fs.writeFile(path.join(outside, "42", "keep.txt"), "keep");
-    const parent = path.join(root, "devclaw", "attachments");
+    const parent = path.join(root, "claw-foundry", "attachments");
     await fs.mkdir(parent, { recursive: true });
     await fs.symlink(outside, path.join(parent, "test-project"), "junction");
     await assert.rejects(purgeIssueAttachments(root, "test-project", 42));

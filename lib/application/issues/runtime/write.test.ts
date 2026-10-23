@@ -31,7 +31,7 @@ async function withRuntimeInput(run: (input: IssueStateInitializeInput) => Promi
 /** Build a complete current runtime record for projection-drift tests. */
 function issueState(): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 123,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",
@@ -198,18 +198,18 @@ describe("writeIssueRuntimeState", () => {
   });
 
   it("preserves explicit local nulls and workflow when provider labels drift", async () => {
-    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-runtime-write-"));
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-runtime-write-"));
 
     try {
       const previous = { ...issueState(), assignedRole: null, assignedLevel: null,
         reviewPolicy: null, testPolicy: null, owner: null };
-      const store = emptyIssueStateStore("devclaw");
+      const store = emptyIssueStateStore("claw-foundry");
 
       store.issues["123"] = previous;
-      await writeIssueStateStore(workspaceDir, "devclaw", store);
+      await writeIssueStateStore(workspaceDir, "claw-foundry", store);
       const updated = await writeIssueRuntimeState({
         workspaceDir,
-        project: { slug: "devclaw", channels: [] },
+        project: { slug: "claw-foundry", channels: [] },
         issue: { iid: 123, labels: ["Doing", "tester:junior", "review:agent", "test:agent"] },
         providerType: ISSUE_PROVIDER.GITHUB,
         workflow: DEFAULT_WORKFLOW,
@@ -224,16 +224,16 @@ describe("writeIssueRuntimeState", () => {
   });
 
   it("preserves local semantics when provider projection labels drift", async () => {
-    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-runtime-write-"));
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-runtime-write-"));
 
     try {
-      const store = emptyIssueStateStore("devclaw");
+      const store = emptyIssueStateStore("claw-foundry");
 
       store.issues["123"] = issueState();
-      await writeIssueStateStore(workspaceDir, "devclaw", store);
+      await writeIssueStateStore(workspaceDir, "claw-foundry", store);
       const updated = await writeIssueRuntimeState({
         workspaceDir,
-        project: { slug: "devclaw", channels: [] },
+        project: { slug: "claw-foundry", channels: [] },
         issue: { iid: 123, labels: ["To Do", "tester:junior", "review:agent", "test:agent"] },
         providerType: ISSUE_PROVIDER.GITHUB,
         workflow: DEFAULT_WORKFLOW,
@@ -243,7 +243,7 @@ describe("writeIssueRuntimeState", () => {
       assert.equal(updated.assignedLevel, "medior");
       assert.equal(updated.reviewPolicy, "human");
       assert.equal(updated.testPolicy, "skip");
-      assert.equal((await readIssueStateStore(workspaceDir, "devclaw")).issues["123"]?.owner, "main");
+      assert.equal((await readIssueStateStore(workspaceDir, "claw-foundry")).issues["123"]?.owner, "main");
     } finally {
       await fs.rm(workspaceDir, { force: true, recursive: true });
     }

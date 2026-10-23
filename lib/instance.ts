@@ -2,7 +2,7 @@
  * instance.ts — Persistent instance identity.
  *
  * Each workspace gets a unique fun name (CS pioneer) stored in
- * <workspace>/devclaw/instance.json. The name is generated on first
+ * <workspace>/claw-foundry/instance.json. The name is generated on first
  * access and persisted across restarts.
  *
  * Can be overridden via `instance.name` in workflow.yaml.
@@ -13,7 +13,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { nameFromSeed } from "./names.js";
-import { DATA_DIR } from "./state/index.js";
+import { assertWorkspaceMigrated, DATA_DIR } from "./state/index.js";
 
 export type InstanceIdentity = {
   name: string;
@@ -31,11 +31,16 @@ function instancePath(workspaceDir: string): string {
  *   1. configOverride (from resolved workflow.yaml `instance.name`)
  *   2. Persisted instance.json
  *   3. Auto-generate from hostname + workspace path, persist, return
+ * Refuses unmigrated upstream workspaces before creating a replacement identity.
+ * @param workspaceDir - Workspace owning the persistent instance identity.
+ * @param configOverride - Explicit identity selected by resolved configuration.
  */
 export async function loadInstanceName(
   workspaceDir: string,
   configOverride?: string,
 ): Promise<string> {
+  assertWorkspaceMigrated(workspaceDir);
+
   if (configOverride) return configOverride;
 
   const filePath = instancePath(workspaceDir);

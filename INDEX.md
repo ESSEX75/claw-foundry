@@ -1,4 +1,4 @@
-# DevClaw Code Index
+# Claw Foundry Code Index
 
 This file is a source navigation map for agents and developers. It is not part of the npm package runtime surface.
 

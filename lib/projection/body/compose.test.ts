@@ -26,7 +26,7 @@ for (const body of [
   "<!-- devclaw:issue-metadata broken <!-- devclaw:issue-creation abc --> -->",
 ]) {
   it(`rejects unsafe framing without rebuilding or consuming user text: ${body}`, () => {
-    const metadata = { projectSlug: "devclaw", issueId: 123 };
+    const metadata = { projectSlug: "claw-foundry", issueId: 123 };
 
     assert.equal(extractIssueMetadata(body), null);
     assert.equal(extractIssueCreationMarker(body), null);
@@ -50,7 +50,7 @@ it("composes pre-create identity without copied metadata or markers and is idemp
 
 it("removes provider creation identity when the application supplies no local creation identity", () => {
   const body = "User content\n" + renderIssueCreationMarker("ffffffff-bbbb-cccc-dddd-eeeeeeeeeeee");
-  const composed = composeManagedIssueBody(body, { projectSlug: "devclaw", issueId: 123 });
+  const composed = composeManagedIssueBody(body, { projectSlug: "claw-foundry", issueId: 123 });
 
   assert.equal(extractIssueCreationMarker(composed), null);
   assert.ok(composed.startsWith("User content"));

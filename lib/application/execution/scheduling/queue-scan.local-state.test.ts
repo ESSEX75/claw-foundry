@@ -13,7 +13,7 @@ import { findNextIssueForRole } from "./scan.js";
 
 function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
   return {
-    projectSlug: "devclaw",
+    projectSlug: "claw-foundry",
     issueId: 123,
     provider: ISSUE_PROVIDER.GITHUB,
     workflowState: "todo",
@@ -37,14 +37,14 @@ function state(overrides: Partial<IssueRuntimeState> = {}): IssueRuntimeState {
 }
 
 async function withStore<T>(states: IssueRuntimeState[], fn: (tmpDir: string, provider: TestProvider) => Promise<T>): Promise<T> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-scan-"));
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-scan-"));
   const provider = new TestProvider();
   try {
-    const store = emptyIssueStateStore("devclaw");
+    const store = emptyIssueStateStore("claw-foundry");
     for (const issueState of states) {
       store.issues[String(issueState.issueId)] = issueState;
     }
-    await writeIssueStateStore(tmpDir, "devclaw", store);
+    await writeIssueStateStore(tmpDir, "claw-foundry", store);
     return await fn(tmpDir, provider);
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
@@ -61,7 +61,7 @@ describe("findNextIssueForRole local state", () => {
         "developer",
         DEFAULT_WORKFLOW,
         undefined,
-        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+        { workspaceDir: tmpDir, projectSlug: "claw-foundry" },
       );
 
       assert.strictEqual(next?.issue.iid, 123);
@@ -77,7 +77,7 @@ describe("findNextIssueForRole local state", () => {
 
       const next = await findNextIssueForRole(
         provider, "developer", DEFAULT_WORKFLOW, undefined,
-        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+        { workspaceDir: tmpDir, projectSlug: "claw-foundry" },
       );
 
       assert.equal(next?.issue.iid, 123);
@@ -97,7 +97,7 @@ describe("findNextIssueForRole local state", () => {
         "developer",
         DEFAULT_WORKFLOW,
         undefined,
-        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+        { workspaceDir: tmpDir, projectSlug: "claw-foundry" },
       );
 
       assert.strictEqual(next, null);
@@ -115,7 +115,7 @@ describe("findNextIssueForRole local state", () => {
       provider.seedIssue({ iid: 125, labels: ["To Do"] });
       const next = await findNextIssueForRole(
         provider, "developer", DEFAULT_WORKFLOW, undefined,
-        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+        { workspaceDir: tmpDir, projectSlug: "claw-foundry" },
       );
 
       assert.equal(next, null);
@@ -132,7 +132,7 @@ describe("findNextIssueForRole local state", () => {
         "developer",
         DEFAULT_WORKFLOW,
         undefined,
-        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+        { workspaceDir: tmpDir, projectSlug: "claw-foundry" },
       );
 
       assert.strictEqual(next, null);
@@ -149,7 +149,7 @@ describe("findNextIssueForRole local state", () => {
         "developer",
         DEFAULT_WORKFLOW,
         "primary",
-        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+        { workspaceDir: tmpDir, projectSlug: "claw-foundry" },
       );
 
       assert.strictEqual(next?.issue.iid, 123);
@@ -166,7 +166,7 @@ describe("findNextIssueForRole local state", () => {
         "developer",
         DEFAULT_WORKFLOW,
         "primary",
-        { workspaceDir: tmpDir, projectSlug: "devclaw" },
+        { workspaceDir: tmpDir, projectSlug: "claw-foundry" },
       );
 
       assert.strictEqual(next, null);

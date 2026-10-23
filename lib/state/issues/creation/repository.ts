@@ -9,6 +9,7 @@ import path from "node:path";
 
 import { getErrorMessage,hasErrorCode } from "../../../shared/errors/index.js";
 import { sha256Hex } from "../../../shared/hashing/index.js";
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, PROJECTS_DIRECTORY_NAME } from "../../paths.js";
 import { LOCK_FILE_SUFFIX, withFileLock, writeJsonAtomic } from "../../persistence/index.js";
 import { parseProjectSlug } from "../../projects/index.js";
@@ -24,6 +25,8 @@ import type { IssueCreationIdentity, IssueCreationStore, IssueCreationUpdate } f
  * @param projectSlug - Project whose creation operations are addressed.
  */
 function issueCreationStorePath(workspaceDir: string, projectSlug: string): string {
+  assertWorkspaceMigrated(workspaceDir);
+
   return path.join(
     workspaceDir,
     DATA_DIR,

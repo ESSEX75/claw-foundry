@@ -10,7 +10,7 @@ import { BACKUP_FILE_SUFFIX } from "./const.js";
 import { backupAndWrite } from "./replacement.js";
 
 it("preserves the document when backup or destination rename fails and permits retry", async t => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-document-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-document-"));
   const destination = path.join(directory, "instructions.md");
   const backup = `${destination}${BACKUP_FILE_SUFFIX}`;
   const rename = fs.rename.bind(fs);

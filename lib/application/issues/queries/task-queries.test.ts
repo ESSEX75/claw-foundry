@@ -12,13 +12,13 @@ import { listManagedTasks } from "./list-tasks.js";
 
 describe("task query use cases", () => {
   it("lists initialized managed issues from local state", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-task-list-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-task-list-"));
     try {
       const provider = new TestProvider();
       const created = await createManagedTaskIssue({
         workspaceDir: tmpDir,
         project: {
-          slug: "devclaw",
+          slug: "claw-foundry",
           channels: [{
             channelId: "telegram:1",
             channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -40,7 +40,7 @@ describe("task query use cases", () => {
 
       const result = await listManagedTasks({
         workspaceDir: tmpDir,
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
         provider,
@@ -54,7 +54,7 @@ describe("task query use cases", () => {
 
       const input = {
         workspaceDir: tmpDir,
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
         label: "Planning",
@@ -70,13 +70,13 @@ describe("task query use cases", () => {
   });
 
   it("reports execution-aware task status from local state", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-task-status-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-task-status-"));
     try {
       const provider = new TestProvider();
       const created = await createManagedTaskIssue({
         workspaceDir: tmpDir,
         project: {
-          slug: "devclaw",
+          slug: "claw-foundry",
           channels: [{
             channelId: "telegram:1",
             channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -98,7 +98,7 @@ describe("task query use cases", () => {
 
       const status = await getManagedTaskStatus({
         workspaceDir: tmpDir,
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
         provider,
@@ -110,7 +110,7 @@ describe("task query use cases", () => {
       assert.strictEqual(status.hold.Planning?.issues[0]?.id, created.issue.iid);
       await assert.rejects(getManagedTaskStatus({
         workspaceDir: tmpDir,
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         workflow: DEFAULT_WORKFLOW,
         roles: ["developer"],
         provider: { getIssue: async () => { throw new Error("provider unavailable"); } },

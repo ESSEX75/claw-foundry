@@ -4,7 +4,7 @@ import { listConfiguredAgents } from "../../integrations/index.js";
 import { parseDuration } from "../../shared/duration/index.js";
 import type { ProjectsData, ResolvedConfig } from "../../state/index.js";
 import { inspectConfiguredProjectRoutes } from "../projects/routing/index.js";
-import { DEVCLAW_AGENT_TOOLS } from "../workspace/permissions/index.js";
+import { CLAW_FOUNDRY_AGENT_TOOLS } from "../workspace/permissions/index.js";
 import { DOCTOR_FINDING_CODE, DOCTOR_SEVERITY } from "./const.js";
 import type { DoctorArchiveReport, DoctorFinding, DoctorRuntime, WorkspaceDiagnosticsReport } from "./types.js";
 
@@ -33,20 +33,20 @@ export function buildWorkspaceDiagnosticsReport(
     }
   }
 
-  const toolNames: ReadonlySet<string> = new Set(DEVCLAW_AGENT_TOOLS);
+  const toolNames: ReadonlySet<string> = new Set(CLAW_FOUNDRY_AGENT_TOOLS);
   const agents = listConfiguredAgents(config).map((agent) => {
     const allowed = new Set([...(agent.tools?.allow ?? []), ...(agent.tools?.alsoAllow ?? [])]);
     const deny = new Set(agent.tools?.deny ?? []);
-    const allAllowed = DEVCLAW_AGENT_TOOLS.every((tool) => allowed.has(tool) && !deny.has(tool));
-    const anyAllowed = DEVCLAW_AGENT_TOOLS.some((tool) => allowed.has(tool) && !deny.has(tool));
-    const allDenied = DEVCLAW_AGENT_TOOLS.every((tool) => deny.has(tool));
+    const allAllowed = CLAW_FOUNDRY_AGENT_TOOLS.every((tool) => allowed.has(tool) && !deny.has(tool));
+    const anyAllowed = CLAW_FOUNDRY_AGENT_TOOLS.some((tool) => allowed.has(tool) && !deny.has(tool));
+    const allDenied = CLAW_FOUNDRY_AGENT_TOOLS.every((tool) => deny.has(tool));
     const ownsProject = projectAgentIds.has(agent.id);
 
     if (ownsProject && !allAllowed) {
       findings.push({
         code: DOCTOR_FINDING_CODE.OWNER_TOOLS_INCOMPLETE,
         severity: DOCTOR_SEVERITY.ERROR,
-        message: `Project agent "${agent.id}" does not explicitly allow every DevClaw tool.`,
+        message: `Project agent "${agent.id}" does not explicitly allow every Claw Foundry tool.`,
       });
     }
 
@@ -54,13 +54,13 @@ export function buildWorkspaceDiagnosticsReport(
       findings.push({
         code: DOCTOR_FINDING_CODE.FOREIGN_AGENT_TOOLS_VISIBLE,
         severity: DOCTOR_SEVERITY.ERROR,
-        message: `Non-project agent "${agent.id}" is not explicitly denied every DevClaw tool.`,
+        message: `Non-project agent "${agent.id}" is not explicitly denied every Claw Foundry tool.`,
       });
     }
 
     const explicitAllowedTool = [...allowed].some((tool) => toolNames.has(tool));
 
-    return { agentId: agent.id, devclawToolsAllowed: ownsProject && allAllowed && explicitAllowedTool };
+    return { agentId: agent.id, clawFoundryToolsAllowed: ownsProject && allAllowed && explicitAllowedTool };
   });
 
   if (findings.length === 0) {

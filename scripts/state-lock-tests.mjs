@@ -40,7 +40,7 @@ it("isolated lock actor", async () => {
 
 /** Check real process isolation and recover only after an actor has exited. */
 export async function verifyStateProcessLocks() {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-process-lock-"));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-process-lock-"));
   const actor = path.join(directory, "actor.mjs");
   const lock = path.join(directory, "state.lock");
   const counter = path.join(directory, "counter.txt");

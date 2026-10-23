@@ -20,7 +20,7 @@ describe("registered worker bootstrap", () => {
       const h = await createTestHarness({ projectName: "my-project", workers: { [role]: { level: "expert-long", sessionKey } } });
       try {
         if (role.startsWith("security")) {
-          await fs.writeFile(path.join(h.workspaceDir, "devclaw", "workflow.yaml"),
+          await fs.writeFile(path.join(h.workspaceDir, "claw-foundry", "workflow.yaml"),
             `roles:\n  ${role}:\n    levels:\n      expert-long:\n        rank: 1\n        model: model/security\n    defaultLevel: expert-long\n    completion:\n      done: COMPLETE\n`);
         }
         await h.writePrompt(role, `Instructions for ${role}`, h.project.slug);
@@ -43,7 +43,7 @@ describe("registered worker bootstrap", () => {
     const sessionKey = `agent:test-agent:subagent:my-project-${role}-standard-0`;
     const h = await createTestHarness({ projectName: "my-project", workers: { [role]: { level: "standard", sessionKey } } });
     try {
-      await fs.writeFile(path.join(h.workspaceDir, "devclaw", "workflow.yaml"),
+      await fs.writeFile(path.join(h.workspaceDir, "claw-foundry", "workflow.yaml"),
         `roles:\n  ${role}:\n    levels:\n      standard:\n        rank: 1\n        model: model/security\n    defaultLevel: standard\n    completion:\n      done: COMPLETE\n`);
       assert.equal((await h.simulateBootstrap(sessionKey)).agentsMdStripped, true);
     } finally {
@@ -55,7 +55,7 @@ describe("registered worker bootstrap", () => {
     const sessionKey = "agent:test-agent:subagent:my-project-developer-medior-ada";
     const h = await createTestHarness({ projectName: "my-project", workers: { developer: { level: "medior", sessionKey } } });
     try {
-      const promptDirectory = path.join(h.workspaceDir, "devclaw", "projects", h.project.slug, "prompts", "developer.md");
+      const promptDirectory = path.join(h.workspaceDir, "claw-foundry", "projects", h.project.slug, "prompts", "developer.md");
       await fs.mkdir(promptDirectory, { recursive: true });
       const handlers: Parameters<OpenClawPluginApi["registerHook"]>[1][] = [];
       const bootstrapFiles = [{ name: "AGENTS.md", path: path.join(h.workspaceDir, "AGENTS.md"),
@@ -92,9 +92,9 @@ describe("registered worker bootstrap", () => {
 });
 
 describe("loadRoleInstructions", () => {
-  it("should load project-specific instructions from devclaw/projects/<project>/prompts/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-test-"));
-    const projectDir = path.join(tmpDir, "devclaw", "projects", "test-project", "prompts");
+  it("should load project-specific instructions from claw-foundry/projects/<project>/prompts/", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-test-"));
+    const projectDir = path.join(tmpDir, "claw-foundry", "projects", "test-project", "prompts");
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(projectDir, "developer.md"), "# Developer Instructions\nDo the thing.");
 
@@ -104,9 +104,9 @@ describe("loadRoleInstructions", () => {
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should fall back to default instructions from devclaw/prompts/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-test-"));
-    const promptsDir = path.join(tmpDir, "devclaw", "prompts");
+  it("should fall back to default instructions from claw-foundry/prompts/", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-test-"));
+    const promptsDir = path.join(tmpDir, "claw-foundry", "prompts");
     await fs.mkdir(promptsDir, { recursive: true });
     await fs.writeFile(path.join(promptsDir, "tester.md"), "# Tester Default\nReview carefully.");
 
@@ -117,7 +117,7 @@ describe("loadRoleInstructions", () => {
   });
 
   it("should fall back to package defaults when workspace instructions do not exist", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-test-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-test-"));
 
     const result = await loadRoleInstructions(tmpDir, "missing", "developer");
     assert.ok(result.includes("# DEVELOPER Worker Instructions"));
@@ -126,9 +126,9 @@ describe("loadRoleInstructions", () => {
   });
 
   it("should prefer project-specific over default", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-test-"));
-    const projectPromptsDir = path.join(tmpDir, "devclaw", "projects", "my-project", "prompts");
-    const defaultPromptsDir = path.join(tmpDir, "devclaw", "prompts");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-test-"));
+    const projectPromptsDir = path.join(tmpDir, "claw-foundry", "projects", "my-project", "prompts");
+    const defaultPromptsDir = path.join(tmpDir, "claw-foundry", "prompts");
     await fs.mkdir(projectPromptsDir, { recursive: true });
     await fs.mkdir(defaultPromptsDir, { recursive: true });
     await fs.writeFile(path.join(projectPromptsDir, "developer.md"), "Project-specific instructions");

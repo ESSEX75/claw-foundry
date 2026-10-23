@@ -78,7 +78,7 @@ describe("project queries", () => {
       accountId: "dev",
     }));
 
-    assert.equal(getProject(data, "devclaw")?.slug, "devclaw");
+    assert.equal(getProject(data, "claw-foundry")?.slug, "claw-foundry");
     assert.equal(getProject(data, "chat-1"), undefined);
   });
 });
@@ -95,7 +95,7 @@ describe("readProjects", () => {
     if (!isObjectRecord(fixture) || !isObjectRecord(fixture.projects)) {
       throw new Error("Invalid test fixture.");
     }
-    const project = fixture.projects.devclaw;
+    const project = fixture.projects["claw-foundry"];
 
     if (!isObjectRecord(project)) throw new Error("Invalid test project fixture.");
     delete project.agentId;
@@ -106,9 +106,9 @@ describe("readProjects", () => {
   it("rejects endpoints without an explicit account", () => {
     assert.throws(() => parseProjectsData({
       projects: {
-        devclaw: {
-          slug: "devclaw",
-          name: "devclaw",
+        "claw-foundry": {
+          slug: "claw-foundry",
+          name: "claw-foundry",
           agentId: "dev-agent",
           repo: "repo",
           baseBranch: "main",
@@ -134,8 +134,8 @@ describe("readProjects", () => {
       threadId: "5",
     }));
 
-    assert.equal(data.projects.devclaw?.channels[0]?.channelId, "-1003911014709");
-    assert.equal(data.projects.devclaw?.channels[0]?.threadId, "5");
+    assert.equal(data.projects["claw-foundry"]?.channels[0]?.channelId, "-1003911014709");
+    assert.equal(data.projects["claw-foundry"]?.channels[0]?.threadId, "5");
   });
 
   it("rejects unknown endpoint fields", () => {
@@ -163,11 +163,11 @@ describe("readProjects", () => {
     if (!isObjectRecord(fixture)) throw new Error("Invalid test fixture root.");
     const projects = fixture.projects;
 
-    if (!isObjectRecord(projects) || !isObjectRecord(projects.devclaw)) {
+    if (!isObjectRecord(projects) || !isObjectRecord(projects["claw-foundry"])) {
       throw new Error("Invalid test project fixture.");
     }
 
-    projects.devclaw.channels = [
+    projects["claw-foundry"].channels = [
       {
         channelId: "-1003911014709",
         channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -188,8 +188,8 @@ describe("readProjects", () => {
   });
 
   it("rejects removed project fields and string slot issue IDs", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-proj-"));
+    const dataDir = path.join(tmpDir, "claw-foundry");
 
     await fs.mkdir(dataDir, { recursive: true });
 
@@ -243,10 +243,10 @@ describe("readProjects", () => {
     if (!isObjectRecord(traversalFixture) || !isObjectRecord(traversalFixture.projects)) {
       throw new Error("Invalid traversal fixture.");
     }
-    const project = traversalFixture.projects.devclaw;
+    const project = traversalFixture.projects["claw-foundry"];
 
     if (!isObjectRecord(project)) throw new Error("Invalid traversal project fixture.");
-    project.slug = "../devclaw";
+    project.slug = "../claw-foundry";
     assert.throws(() => parseProjectsData(traversalFixture), /lowercase kebab-case/);
 
     project.slug = "other-project";
@@ -263,11 +263,11 @@ describe("readProjects", () => {
 function projectsFixture(channel: ProjectFixtureChannel): unknown {
   return {
     projects: {
-      devclaw: {
-        slug: "devclaw",
-        name: "devclaw",
+      "claw-foundry": {
+        slug: "claw-foundry",
+        name: "claw-foundry",
         agentId: "dev-agent",
-        repo: "D:/web/devclaw",
+        repo: "D:/web/claw-foundry",
         baseBranch: "main",
         deployBranch: "main",
         provider: ISSUE_PROVIDER.GITHUB,
@@ -324,8 +324,8 @@ describe("per-level slot helpers", () => {
 
 describe("projects repository round-trip", () => {
   it("should preserve per-level workers through write/read cycle", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-proj-"));
+    const dataDir = path.join(tmpDir, "claw-foundry");
 
     await fs.mkdir(dataDir, { recursive: true });
 
@@ -368,7 +368,7 @@ describe("projects repository round-trip", () => {
   });
 
   it("rejects activation and deactivation when a slot belongs to another issue", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-ownership-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-proj-ownership-"));
     const initial = parseProjectsData(projectsFixture({
       channelId: "g1",
       channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -376,16 +376,16 @@ describe("projects repository round-trip", () => {
       accountId: "default",
     }));
 
-    initial.projects.devclaw!.workers.developer = emptyRoleWorkerState({ medior: 1 });
+    initial.projects["claw-foundry"]!.workers.developer = emptyRoleWorkerState({ medior: 1 });
     await writeProjectsFixture(tmpDir, initial);
-    await activateWorker(tmpDir, "devclaw", "developer", {
+    await activateWorker(tmpDir, "claw-foundry", "developer", {
       issueId: 101,
       level: "medior",
       slotIndex: 0,
     });
 
     await assert.rejects(
-      activateWorker(tmpDir, "devclaw", "developer", {
+      activateWorker(tmpDir, "claw-foundry", "developer", {
         issueId: 102,
         level: "medior",
         slotIndex: 0,
@@ -393,7 +393,7 @@ describe("projects repository round-trip", () => {
       /already assigned to issue #101/,
     );
     await assert.rejects(
-      deactivateWorker(tmpDir, "devclaw", "developer", {
+      deactivateWorker(tmpDir, "claw-foundry", "developer", {
         issueId: 102,
         level: "medior",
         slotIndex: 0,
@@ -401,14 +401,14 @@ describe("projects repository round-trip", () => {
       /belongs to issue #101, not #102/,
     );
     assert.equal(
-      (await readProjects(tmpDir)).projects.devclaw!.workers.developer!.levels.medior![0]!.issueId,
+      (await readProjects(tmpDir)).projects["claw-foundry"]!.workers.developer!.levels.medior![0]!.issueId,
       101,
     );
     await fs.rm(tmpDir, { recursive: true });
   });
 
   it("allows first-slot creation and idempotent activation by the same issue", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-idempotent-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-proj-idempotent-"));
     const initial = parseProjectsData(projectsFixture({
       channelId: "g1",
       channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -416,23 +416,23 @@ describe("projects repository round-trip", () => {
       accountId: "default",
     }));
 
-    const project = initial.projects.devclaw;
+    const project = initial.projects["claw-foundry"];
 
     assert.ok(project);
     project.workers.developer = emptyRoleWorkerState({});
     await writeProjectsFixture(tmpDir, initial);
-    await activateWorker(tmpDir, "devclaw", "developer", {
+    await activateWorker(tmpDir, "claw-foundry", "developer", {
       issueId: 101,
       level: "medior",
       sessionKey: "first-session",
     });
-    await activateWorker(tmpDir, "devclaw", "developer", {
+    await activateWorker(tmpDir, "claw-foundry", "developer", {
       issueId: 101,
       level: "medior",
       sessionKey: "replacement-session",
     });
 
-    const loadedProject = (await readProjects(tmpDir)).projects.devclaw;
+    const loadedProject = (await readProjects(tmpDir)).projects["claw-foundry"];
     const worker = loadedProject?.workers.developer;
     const slot = worker?.levels.medior?.[0];
 
@@ -443,7 +443,7 @@ describe("projects repository round-trip", () => {
   });
 
   it("serializes concurrent immutable updates without losing either change", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-concurrency-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-proj-concurrency-"));
     const initial = parseProjectsData(projectsFixture({
       channelId: "g1",
       channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -451,12 +451,12 @@ describe("projects repository round-trip", () => {
       accountId: "default",
     }));
 
-    await fs.mkdir(path.join(tmpDir, "devclaw"), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, "claw-foundry"), { recursive: true });
     await writeProjectsFixture(tmpDir, initial);
     await Promise.all(["first", "second"].map((name) => updateProjects(tmpDir, (current) => {
       const data = structuredClone(current);
 
-      data.projects.devclaw!.channels.push({
+      data.projects["claw-foundry"]!.channels.push({
         channelId: name,
         channel: NOTIFICATION_CHANNEL.TELEGRAM,
         name,
@@ -466,14 +466,14 @@ describe("projects repository round-trip", () => {
       return { data, result: undefined };
     })));
 
-    const channels = (await readProjects(tmpDir)).projects.devclaw!.channels.map((channel) => channel.channelId);
+    const channels = (await readProjects(tmpDir)).projects["claw-foundry"]!.channels.map((channel) => channel.channelId);
 
     assert.deepStrictEqual([...channels].sort(), ["first", "g1", "second"]);
     await fs.rm(tmpDir, { recursive: true });
   });
 
   it("does not persist a candidate mutated before a callback failure", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-failure-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-proj-failure-"));
     const initial = parseProjectsData(projectsFixture({
       channelId: "g1",
       channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -481,15 +481,15 @@ describe("projects repository round-trip", () => {
       accountId: "default",
     }));
 
-    await fs.mkdir(path.join(tmpDir, "devclaw"), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, "claw-foundry"), { recursive: true });
     await writeProjectsFixture(tmpDir, initial);
     await assert.rejects(() => updateProjects(tmpDir, (current) => {
       const data = structuredClone(current);
 
-      data.projects.devclaw!.name = "not-persisted";
+      data.projects["claw-foundry"]!.name = "not-persisted";
       throw new Error("callback failed");
     }), /callback failed/);
-    assert.equal((await readProjects(tmpDir)).projects.devclaw!.name, "devclaw");
+    assert.equal((await readProjects(tmpDir)).projects["claw-foundry"]!.name, "claw-foundry");
     await fs.rm(tmpDir, { recursive: true });
   });
 });

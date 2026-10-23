@@ -59,7 +59,7 @@ export function createHeartbeatLifecycle(pluginCtx: HeartbeatServiceDependencies
 
             for (const error of discovery.errors) svcCtx.logger.warn(error);
             if (discovery.agents.length === 0) {
-              if (!warnedNoAgents) svcCtx.logger.warn("work_heartbeat tick skipped: no DevClaw project workspaces discovered");
+              if (!warnedNoAgents) svcCtx.logger.warn("work_heartbeat tick skipped: no Claw Foundry project workspaces discovered");
               warnedNoAgents = true;
 
               return;

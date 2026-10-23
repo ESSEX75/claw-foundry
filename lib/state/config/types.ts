@@ -1,5 +1,5 @@
 /**
- * config/types.ts — Types for the unified DevClaw configuration.
+ * config/types.ts — Types for the unified Claw Foundry configuration.
  *
  * A single workflow.yaml combines structured role levels and workflow behavior.
  * Three-layer resolution: built-in → workspace → per-project.
@@ -131,7 +131,7 @@ type InstanceConfig = {
  * The full workflow.yaml shape.
  * All fields optional — missing fields inherit from the layer below.
  */
-export type DevClawConfig = {
+export type ClawFoundryConfig = {
   /** Sparse role definitions keyed by configured role identifier. */
   roles?: Record<string, RoleOverride | false>;
   /** Sparse workflow definition layered over lower-precedence configuration. */

@@ -130,4 +130,4 @@ Registration uses one fresh SDK config transaction with caller-selected reload p
 rejects existing identities and performs no filesystem effects. Directory provisioning
 is explicit, idempotent and never removes an agent after partial failure. Existing-agent
 setup resumes explicitly configured directory plans; implicit SDK resources remain host-managed.
-DevClaw workspace scaffolding and model YAML persistence remain state-owned.
+Claw Foundry workspace scaffolding and model YAML persistence remain state-owned.

@@ -44,7 +44,7 @@ async function seed(file: string, count: number): Promise<void> {
 }
 
 it("creates the existing journal location and reserves timestamp and event identity", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));
   await log(workspace, "created", { project: "example", ts: "payload", event: "payload" });
@@ -59,7 +59,7 @@ it("creates the existing journal location and reserves timestamp and event ident
 });
 
 it("preserves existing records beyond the former 50-line limit", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));
@@ -73,7 +73,7 @@ it("preserves existing records beyond the former 50-line limit", async t => {
 });
 
 it("preserves every concurrent record below the byte rotation limit", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));
@@ -88,7 +88,7 @@ it("preserves every concurrent record below the byte rotation limit", async t =>
 });
 
 it("suppresses unsupported payload serialization without creating files", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
   const circular: Record<string, unknown> = {};
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));
@@ -101,7 +101,7 @@ it("suppresses unsupported payload serialization without creating files", async 
 });
 
 it("suppresses directory creation failure and allows a later successful retry", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));
   const failure = t.mock.method(fs, "mkdir", async () => { throw new Error("storage unavailable"); });
@@ -113,7 +113,7 @@ it("suppresses directory creation failure and allows a later successful retry", 
 });
 
 it("does not replace a journal that cannot be read", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
 
   t.after(() => fs.rm(workspace, { recursive: true, force: true }));
@@ -128,7 +128,7 @@ it("does not replace a journal that cannot be read", async t => {
 });
 
 it("preserves the prior journal on publication failure, cleans up and permits retry", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
   const rename = fs.rename.bind(fs);
 
@@ -149,7 +149,7 @@ it("preserves the prior journal on publication failure, cleans up and permits re
 });
 
 it("suppresses lock acquisition failure without deleting unknown ownership evidence", async t => {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-audit-"));
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-audit-"));
   const file = path.join(workspace, DATA_DIR, LOG_DIRECTORY_NAME, AUDIT_FILE_NAME);
   const lock = `${file}${LOCK_FILE_SUFFIX}`;
 

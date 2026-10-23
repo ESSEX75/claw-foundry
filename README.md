@@ -1,28 +1,23 @@
-<p align="center">
-  <img src="assets/DevClaw.png" width="300" alt="DevClaw Logo">
-</p>
+# Claw Foundry — Development Plugin for OpenClaw
 
-<p align="center">
-  <a href="https://discord.gg/BSEafj4m"><img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT"></a>
-</p>
+Claw Foundry is based on [DevClaw](https://github.com/laurentenhoor/devclaw), originally by Lauren ten Hoor. Current author and maintainer: [Egor Kislitsyn (ESSEX75)](https://github.com/ESSEX75). Original MIT notices are preserved in [LICENSE](LICENSE).
 
-# DevClaw — Development Plugin for OpenClaw
+Read [migration and release preparation](docs/MIGRATION.md) before upgrading an existing installation.
 
 **Turn any group chat into a dev team that ships.**
 
-DevClaw is a plugin for [OpenClaw](https://openclaw.ai) that turns your orchestrator agent into a development manager. It hires developers, assigns tasks, reviews code, and keeps the pipeline moving — across as many projects as you have group chats.
+Claw Foundry is a plugin for [OpenClaw](https://openclaw.ai) that turns your orchestrator agent into a development manager. It hires developers, assigns tasks, reviews code, and keeps the pipeline moving — across as many projects as you have group chats.
 
 **Prerequisites:** [OpenClaw](https://openclaw.ai) must be installed and running.
 
 ```bash
-openclaw plugins install @laurentenhoor/devclaw
+openclaw plugins install @essex75/claw-foundry
 ```
 
 Then start onboarding by chatting with your agent in any channel:
 
 ```
-"Hey, can you help me set up DevClaw?"
+"Hey, can you help me set up Claw Foundry?"
 ```
 
 [Read more on onboarding &rarr;](#getting-started)
@@ -64,7 +59,7 @@ Multiple issues shipped, a PR review round-trip automatically handled, and a sec
 
 ---
 
-## Why DevClaw
+## Why Claw Foundry
 
 ### Autonomous multi-project development
 
@@ -92,11 +87,11 @@ Three mechanisms compound to cut token usage dramatically versus running one lar
 
 ---
 
-## The problem DevClaw solves
+## The problem Claw Foundry solves
 
 OpenClaw is a great multi-agent runtime. It handles sessions, tools, channels, gateway RPC — everything you need to run AI agents. But it's a general-purpose platform. It has no opinion about how software gets built.
 
-Without DevClaw, your orchestrator agent has to figure out on its own how to:
+Without Claw Foundry, your orchestrator agent has to figure out on its own how to:
 
 - Pick the right model for the task complexity
 - Create or reuse the right worker session
@@ -108,13 +103,13 @@ Without DevClaw, your orchestrator agent has to figure out on its own how to:
 
 That's a lot of reasoning per task. LLMs do it imperfectly — they forget steps, corrupt state, pick the wrong model, lose session references. You end up babysitting the thing you built to avoid babysitting.
 
-DevClaw moves all of that into deterministic plugin code. The agent says "pick up issue #42." The plugin handles the other 10 steps atomically. Every time, the same way, zero reasoning tokens spent on orchestration.
+Claw Foundry moves all of that into deterministic plugin code. The agent says "pick up issue #42." The plugin handles the other 10 steps atomically. Every time, the same way, zero reasoning tokens spent on orchestration.
 
 ---
 
 ## Meet your team
 
-DevClaw doesn't think in model IDs. It thinks in people.
+Claw Foundry doesn't think in model IDs. It thinks in people.
 
 When a task comes in, you don't configure `anthropic/claude-sonnet-4-5` — you assign a **medior developer**. The orchestrator evaluates task complexity and picks the right person for the job:
 
@@ -156,7 +151,7 @@ Every mapping is [configurable](docs/CONFIGURATION.md#model-tiers) — swap in a
 
 ## How a task moves through the pipeline
 
-Every issue follows the same path, no exceptions. DevClaw enforces it:
+Every issue follows the same path, no exceptions. Claw Foundry enforces it:
 
 ```
 Planning → To Do → Doing → To Review → PR approved → Done (auto-merge + close)
@@ -187,7 +182,7 @@ stateDiagram-v2
 
 By default, PRs go through **human review** on GitHub/GitLab. The heartbeat polls for approvals and auto-merges. You can switch to agent review or enable an [optional test phase](docs/WORKFLOW.md#test-phase-optional) in `workflow.yaml`.
 
-These labels live on your actual GitHub/GitLab issues. Not in some detached tracker — in the tool you already use. For initialized DevClaw-managed issues, runtime truth is stored in `<workspace>/devclaw/projects/<project>/issues.json`; provider labels are the visual projection of that state. Filter by `Doing` in GitHub to see what's in progress, but manual label edits do not mutate local runtime state.
+These labels live on your actual GitHub/GitLab issues. Not in some detached tracker — in the tool you already use. For initialized Claw Foundry-managed issues, runtime truth is stored in `<workspace>/claw-foundry/projects/<project>/issues.json`; provider labels are the visual projection of that state. Filter by `Doing` in GitHub to see what's in progress, but manual label edits do not mutate local runtime state.
 
 ### What "atomic" means here
 
@@ -243,7 +238,7 @@ Each role/level/slot gets its own persistent session per project. Your medior de
 
 That's a **~40-60% token saving per task** from session reuse alone.
 
-Combined with tier selection (not using Opus when Haiku will do) and the token-free heartbeat (more on that next), DevClaw significantly reduces your token bill versus running everything through one large model.
+Combined with tier selection (not using Opus when Haiku will do) and the token-free heartbeat (more on that next), Claw Foundry significantly reduces your token bill versus running everything through one large model.
 
 ### Everything is logged
 
@@ -259,13 +254,13 @@ Full trace of every task, every level selection, every label transition, every h
 
 ## Automatic scheduling
 
-DevClaw doesn't wait for you to tell it what to do next. A background scheduling system continuously scans for available work and dispatches workers — zero LLM tokens, pure deterministic code. This is the engine that keeps the pipeline moving: when DEV finishes, the PR goes through review. When review feedback comes back, the scheduler dispatches DEV to fix it. No hand-offs, no orchestrator reasoning — just local-state scheduling with provider labels kept as projection.
+Claw Foundry doesn't wait for you to tell it what to do next. A background scheduling system continuously scans for available work and dispatches workers — zero LLM tokens, pure deterministic code. This is the engine that keeps the pipeline moving: when DEV finishes, the PR goes through review. When review feedback comes back, the scheduler dispatches DEV to fix it. No hand-offs, no orchestrator reasoning — just local-state scheduling with provider labels kept as projection.
 
 ### The `work_heartbeat`
 
 Every tick (default: 60 seconds), the scheduler runs these passes:
 
-1. **Projection integrity pass** — compares `<workspace>/devclaw/projects/<project>/issues.json` with provider labels/metadata. Recoverable label drift is repaired; metadata tamper marks the issue `integrity_error`.
+1. **Projection integrity pass** — compares `<workspace>/claw-foundry/projects/<project>/issues.json` with provider labels/metadata. Recoverable label drift is repaired; metadata tamper marks the issue `integrity_error`.
 2. **Health pass** — detects workers stuck for >2 hours, reverts their labels back to queue, deactivates them. Catches crashed sessions, context overflows, or workers that died without reporting back.
 3. **Review pass** — polls open PRs in `To Review` state. Auto-merges when approved, dispatches DEV fix when changes requested or merge conflict detected.
 4. **Queue pass** — scans for available tasks by local runtime state priority (`To Improve` > `To Review` > `To Do`), fills free worker slots.
@@ -298,7 +293,7 @@ Plugin-level scheduling is configured in `openclaw.json`:
 {
   "plugins": {
     "entries": {
-      "devclaw": {
+      "claw-foundry": {
         "config": {
           "work_heartbeat": {
             "enabled": true,
@@ -313,7 +308,7 @@ Plugin-level scheduling is configured in `openclaw.json`:
 }
 ```
 
-Role execution and model settings live in `devclaw/workflow.yaml` at workspace or project scope.
+Role execution and model settings live in `claw-foundry/workflow.yaml` at workspace or project scope.
 
 | Setting                            | Where           | Default      | What it controls                         |
 | ---------------------------------- | --------------- | ------------ | ---------------------------------------- |
@@ -331,7 +326,7 @@ See the [Configuration reference](docs/CONFIGURATION.md) for the full schema.
 
 ### Your issues stay in your tracker
 
-DevClaw uses **GitHub Issues** or **GitLab Issues** as the visible task surface, auto-detected from your git remote. For initialized DevClaw-managed issues, runtime state lives in `<workspace>/devclaw/projects/<project>/issues.json`; provider labels and the required `eyes` reaction are compatibility/projection markers. Your project manager still sees progress in GitHub/GitLab, and if you stop using DevClaw, your issues and labels stay where they are.
+Claw Foundry uses **GitHub Issues** or **GitLab Issues** as the visible task surface, auto-detected from your git remote. For initialized Claw Foundry-managed issues, runtime state lives in `<workspace>/claw-foundry/projects/<project>/issues.json`; provider labels and the required `eyes` reaction are compatibility/projection markers. Your project manager still sees progress in GitHub/GitLab, and if you stop using Claw Foundry, your issues and labels stay where they are.
 
 The provider is pluggable (`IssueProvider` interface). GitHub and GitLab work today. Jira, Linear, or anything else just needs to implement the same interface.
 
@@ -354,7 +349,7 @@ Workers can also comment during work — QA leaves review feedback, DEV posts im
 Each project gets instruction files that workers receive with every task they pick up:
 
 ```
-devclaw/
+claw-foundry/
 ├── workflow.yaml                     (workspace-level workflow overrides)
 ├── prompts/                          (workspace defaults — fallback)
 │   ├── developer.md
@@ -424,41 +419,41 @@ The orchestrator saying "I'll just make this quick fix myself" is like a manager
 ### Prerequisites
 
 - [OpenClaw](https://openclaw.ai) installed (`openclaw --version`)
-- Node.js >= 20
+- Node.js >= 24.16.0 and < 25 (use `.nvmrc` for development)
 - `gh` CLI ([GitHub](https://cli.github.com)) or `glab` CLI ([GitLab](https://gitlab.com/gitlab-org/cli)), authenticated
 
 ### Install
 
 ```bash
-openclaw plugins install @laurentenhoor/devclaw
+openclaw plugins install @essex75/claw-foundry
 ```
 
 ### Upgrade
 
 ```bash
-openclaw plugins install @laurentenhoor/devclaw
+openclaw plugins install @essex75/claw-foundry
 ```
 
-Workspace files use write-once defaults with version tracking — new package versions only write files that haven't been customized. Your `workflow.yaml` and role prompt customizations are always preserved. Use `config({ action: "diff" })` to see what changed between versions, or `config({ action: "reset", scope: "all" })` to reset to defaults.
+For an existing DevClaw installation, complete the explicit [migration](docs/MIGRATION.md) before setup or restart. Workspace defaults are create-only: existing workflow and prompt files remain intact. Use `config({ action: "diff" })` to review differences, or explicitly reset selected defaults with recoverable backups.
 
 For local development:
 
 ```bash
-openclaw plugins install -l ./devclaw
+openclaw plugins install -l ./claw-foundry
 ```
 
 Start onboarding:
 
 ```bash
-openclaw chat "Help me set up DevClaw"
+openclaw chat "Help me set up Claw Foundry"
 ```
 
 ### Set up through conversation
 
-The easiest way to configure DevClaw is to just talk to your agent:
+The easiest way to configure Claw Foundry is to just talk to your agent:
 
 ```
-You:   "Help me set up DevClaw"
+You:   "Help me set up Claw Foundry"
 Agent: "I'll walk you through it. Should I use this agent as the
         orchestrator, or create a new one?"
 You:   "Use this one"
@@ -485,7 +480,7 @@ You can also use the [CLI wizard or non-interactive setup](docs/ONBOARDING.md#st
 
 ## The toolbox
 
-DevClaw gives the orchestrator 25 tools. These aren't just convenience wrappers — they're **guardrails**. Each tool encodes a complex multi-step operation into a single atomic call. The agent provides intent, the plugin handles mechanics. The agent physically cannot skip a label transition, forget to update state, or dispatch to the wrong session — those decisions are made by deterministic code, not LLM reasoning.
+Claw Foundry gives the orchestrator 25 tools. These aren't just convenience wrappers — they're **guardrails**. Each tool encodes a complex multi-step operation into a single atomic call. The agent provides intent, the plugin handles mechanics. The agent physically cannot skip a label transition, forget to update state, or dispatch to the wrong session — those decisions are made by deterministic code, not LLM reasoning.
 
 | Tool                   | What it does                                                                            |
 | ---------------------- | --------------------------------------------------------------------------------------- |
@@ -503,10 +498,10 @@ DevClaw gives the orchestrator 25 tools. These aren't just convenience wrappers 
 | `health`               | Detect zombie workers, stale sessions, state inconsistencies                            |
 | `project_register`     | One-time project setup: creates labels, scaffolds instructions, initializes state       |
 | `sync_labels`          | Sync GitHub/GitLab labels with workflow config after editing `workflow.yaml`            |
-| `devclaw repair issue` | CLI repair of provider projection from local issue state                                |
-| `devclaw worker-delivery` | Preview and resolve an operator-verified uncertain worker turn                       |
+| `claw-foundry repair issue` | CLI repair of provider projection from local issue state                                |
+| `claw-foundry worker-delivery` | Preview and resolve an operator-verified uncertain worker turn                       |
 | `issue_delete`           | Confirmed provider deletion with lossless local tombstone                            |
-| `devclaw issues archive` | Inspect and explicitly purge the dedicated local issue archive                       |
+| `claw-foundry issues archive` | Inspect and explicitly purge the dedicated local issue archive                       |
 | `channel_link`         | Link a chat/channel to a project (auto-detaches previous project)                      |
 | `channel_unlink`       | Remove a channel from a project                                                         |
 | `channel_list`         | List channels for a project or all projects                                             |
@@ -537,7 +532,7 @@ Full parameters and usage in the [Tools Reference](docs/TOOLS.md).
 
 ## Release Notes
 
-See the [Changelog](CHANGELOG.md) for a detailed history of changes, or browse [GitHub Releases](https://github.com/laurentenhoor/devclaw/releases) for per-version notes.
+See the [Changelog](CHANGELOG.md) and preserved [upstream history](CHANGELOG.devclaw.md).
 
 ---
 

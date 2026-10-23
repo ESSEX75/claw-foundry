@@ -14,9 +14,9 @@ import { createManagedTaskIssue } from "./command.js";
 
 /** Isolated workspace prefixes for the managed creation scenarios. */
 const FIXTURE_PREFIX = {
-  HOLD: "devclaw-task-create-hold-",
-  CUSTOM: "devclaw-task-create-custom-",
-  DEFAULT: "devclaw-task-create-",
+  HOLD: "claw-foundry-task-create-hold-",
+  CUSTOM: "claw-foundry-task-create-custom-",
+  DEFAULT: "claw-foundry-task-create-",
 } as const;
 
 describe("task_create managed initial-state flow", () => {
@@ -127,7 +127,7 @@ describe("task_create managed initial-state flow", () => {
       const result = await createManagedTaskIssue({
         workspaceDir: tmpDir,
         project: {
-          slug: "devclaw",
+          slug: "claw-foundry",
         channels: [{
           channelId: "telegram:1",
           channel: NOTIFICATION_CHANNEL.TELEGRAM,
@@ -149,7 +149,7 @@ describe("task_create managed initial-state flow", () => {
       assert.ok(result.issue);
 
       const issue = await provider.getIssue(result.issue.iid);
-      const store = await readIssueStateStore(tmpDir, "devclaw");
+      const store = await readIssueStateStore(tmpDir, "claw-foundry");
       const state = store.issues[String(result.issue.iid)]!;
 
       assert.ok(provider.callsTo("createIssue")[0]?.args.labels.includes("Planning"));
@@ -175,7 +175,7 @@ describe("task_create managed initial-state flow", () => {
       assert.ok(issue.labels.includes("test:skip"));
       assert.ok(issue.labels.includes("notify:telegram:primary"));
       assert.deepStrictEqual(extractIssueMetadata(issue.description), {
-        projectSlug: "devclaw",
+        projectSlug: "claw-foundry",
         issueId: result.issue.iid,
       });
     } finally {

@@ -123,7 +123,7 @@ The task is created in Planning state — the operator reviews and moves it to t
 
 ## Conventions
 
-- **Do NOT use closing keywords in PR/MR descriptions** (no "Closes #X", "Fixes #X", "Resolves #X"). Use "As described in issue #X" or "Addresses issue #X". DevClaw manages issue state — auto-closing bypasses the review lifecycle.
+- **Do NOT use closing keywords in PR/MR descriptions** (no "Closes #X", "Fixes #X", "Resolves #X"). Use "As described in issue #X" or "Addresses issue #X". Claw Foundry manages issue state — auto-closing bypasses the review lifecycle.
 
 ## Important
 

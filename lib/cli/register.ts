@@ -2,7 +2,7 @@
 
 import type { Command } from "commander";
 
-import { DEVCLAW_PLUGIN_ID } from "../shared/const.js";
+import { CLAW_FOUNDRY_PLUGIN_ID } from "../shared/const.js";
 import { registerDoctorCommand } from "./commands/doctor/index.js";
 import { registerIssuesCommands } from "./commands/issues/index.js";
 import { registerRepairCommands } from "./commands/repair/index.js";
@@ -15,13 +15,13 @@ import type { CliContext } from "./types.js";
  * @param ctx - Shared runtime dependencies supplied to command adapters.
  */
 export function registerCli(program: Command, ctx: CliContext): void {
-  const devclaw = program
-    .command(DEVCLAW_PLUGIN_ID)
-    .description("DevClaw development pipeline tools");
+  const clawFoundry = program
+    .command(CLAW_FOUNDRY_PLUGIN_ID)
+    .description("Claw Foundry development pipeline tools");
 
-  registerRepairCommands(devclaw, ctx);
-  registerIssuesCommands(devclaw, ctx);
-  registerSetupCommand(devclaw, ctx);
-  registerDoctorCommand(devclaw, ctx);
-  registerWorkerDeliveryCommand(devclaw, ctx);
+  registerRepairCommands(clawFoundry, ctx);
+  registerIssuesCommands(clawFoundry, ctx);
+  registerSetupCommand(clawFoundry, ctx);
+  registerDoctorCommand(clawFoundry, ctx);
+  registerWorkerDeliveryCommand(clawFoundry, ctx);
 }

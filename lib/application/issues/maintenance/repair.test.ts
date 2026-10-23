@@ -82,7 +82,7 @@ describe("repairManagedIssue", () => {
       const input = { workspaceDir: h.workspaceDir, projectSlug: h.project.slug, issueId: 123,
         source: ISSUE_REPAIR_SOURCE.LOCAL_STATE, actor: "test", provider: h.provider, runCommand: h.runCommand };
       const plan = await repairManagedIssue(input);
-      const directory = path.join(h.workspaceDir, "devclaw", "projects", h.project.slug);
+      const directory = path.join(h.workspaceDir, "claw-foundry", "projects", h.project.slug);
       await fs.mkdir(directory, { recursive: true });
       await fs.writeFile(path.join(directory, "workflow.yaml"), "workflow:\n  reviewPolicy: agent\n");
       const applied = await repairManagedIssue({ ...input, apply: true, planToken: plan.planToken });

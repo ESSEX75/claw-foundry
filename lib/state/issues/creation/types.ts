@@ -36,7 +36,7 @@ type IssueCreationInput = {
   assignedRole: string | null;
   /** Resolved worker level. */
   assignedLevel: string | null;
-  /** DevClaw instance owner. */
+  /** Claw Foundry instance owner. */
   owner: string | null;
   /** Resolved review-routing policy. */
   reviewPolicy: ReviewPolicy;

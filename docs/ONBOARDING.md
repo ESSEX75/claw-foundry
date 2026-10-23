@@ -1,4 +1,4 @@
-# DevClaw — Onboarding Guide
+# Claw Foundry — Onboarding Guide
 
 Step-by-step setup: install the plugin, configure an agent, register projects, and run your first task.
 
@@ -6,8 +6,8 @@ Step-by-step setup: install the plugin, configure an agent, register projects, a
 
 | Requirement | Why | How to check |
 |---|---|---|
-| [OpenClaw](https://openclaw.ai) installed | DevClaw is an OpenClaw plugin | `openclaw --version` |
-| Node.js >= 20 | Runtime for plugin | `node --version` |
+| [OpenClaw](https://openclaw.ai) installed | Claw Foundry is an OpenClaw plugin | `openclaw --version` |
+| Node.js >= 24.16.0 and < 25 | Runtime for plugin | `node --version` |
 | [`gh`](https://cli.github.com) or [`glab`](https://gitlab.com/gitlab-org/cli) CLI | Issue tracker provider (auto-detected from git remote) | `gh --version` or `glab --version` |
 | CLI authenticated | Plugin calls gh/glab for every label transition | `gh auth status` or `glab auth status` |
 | A GitHub/GitLab repo with issues | The task backlog lives in the issue tracker | `gh issue list` or `glab issue list` from your repo |
@@ -15,27 +15,27 @@ Step-by-step setup: install the plugin, configure an agent, register projects, a
 ## Step 1: Install the plugin
 
 ```bash
-openclaw plugins install @laurentenhoor/devclaw
+openclaw plugins install @essex75/claw-foundry
 ```
 
 Or for local development:
 ```bash
-openclaw plugins install -l ./devclaw
+openclaw plugins install -l ./claw-foundry
 ```
 
 Verify:
 ```bash
 openclaw plugins list
-# Should show: DevClaw | devclaw | loaded
+# Should show: Claw Foundry | claw-foundry | loaded
 ```
 
 ## Step 2: Run setup
 
-There are three ways to set up DevClaw:
+There are three ways to set up Claw Foundry:
 
 ### Option A: Conversational onboarding (recommended)
 
-Call the `onboard` tool from any agent that has the DevClaw plugin loaded. The agent walks you through configuration step by step — asking about:
+Call the `onboard` tool from any agent that has the Claw Foundry plugin loaded. The agent walks you through configuration step by step — asking about:
 - Agent selection (current or create new)
 - Channel endpoint binding (for example `telegram/dev`, `telegram/dev/-100123`, `telegram/dev/-100123:topic:331`, or none)
 - Model levels (accept defaults or customize)
@@ -46,7 +46,7 @@ The tool returns instructions that guide the agent through the QA-style setup co
 ### Option B: CLI wizard
 
 ```bash
-openclaw devclaw setup
+openclaw claw-foundry setup
 ```
 
 The setup wizard walks you through:
@@ -67,16 +67,16 @@ The setup wizard walks you through:
 Non-interactive mode:
 ```bash
 # Create new agent with default models
-openclaw devclaw setup --new-agent "My Dev Orchestrator"
+openclaw claw-foundry setup --new-agent "My Dev Orchestrator"
 
 # Create new agent bound to a specific Telegram topic on the dev account
-openclaw devclaw setup --new-agent "Topic Agent" \
+openclaw claw-foundry setup --new-agent "Topic Agent" \
   --channel-binding telegram \
   --channel-account-id dev \
   --channel-peer-id "-1003911014709:topic:331"
 
 # Configure existing agent with custom models
-openclaw devclaw setup --agent my-orchestrator \
+openclaw claw-foundry setup --agent my-orchestrator \
   --developer-junior "anthropic/claude-haiku-4-5" \
   --developer-senior "anthropic/claude-opus-4-6" \
   --tester-senior "anthropic/claude-opus-4-6"
@@ -174,7 +174,7 @@ Go to the Telegram/WhatsApp group for the project and tell the orchestrator agen
 The agent calls `project_register`, which atomically:
 - Validates the repo and auto-detects GitHub/GitLab from remote
 - Creates all state labels (idempotent)
-- Scaffolds role instruction files (`devclaw/projects/<project>/prompts/developer.md`, `tester.md`, `architect.md`)
+- Scaffolds role instruction files (`claw-foundry/projects/<project>/prompts/developer.md`, `tester.md`, `architect.md`)
 - Adds the project entry to `projects.json`
 - Logs the registration event
 
@@ -233,10 +233,10 @@ The agent calls `project_register`, which atomically:
 Issues can be created in multiple ways:
 - **Via the agent** — Ask the orchestrator in the Telegram group: "Create an issue for adding a login page" (uses `task_create`)
 - **Via workers** — DEVELOPER/TESTER workers can call `task_create` to file follow-up bugs they discover
-- **Via CLI** — prefer DevClaw CLI/tools so `issues.json` is initialized; raw `gh issue create` needs explicit backfill before managed dispatch
-- **Via web UI** — create the provider issue only when you plan to backfill it into DevClaw local state
+- **Via CLI** — prefer Claw Foundry CLI/tools so `issues.json` is initialized; raw `gh issue create` needs explicit backfill before managed dispatch
+- **Via web UI** — create the provider issue only when you plan to backfill it into Claw Foundry local state
 
-Note: `task_create` creates a managed issue in the configured initial state, normally "Planning". Call `task_start` to release it into "To Do". Provider-only issues created outside DevClaw are not normal dispatch candidates until they have local issue state.
+Note: `task_create` creates a managed issue in the configured initial state, normally "Planning". Call `task_start` to release it into "To Do". Provider-only issues created outside Claw Foundry are not normal dispatch candidates until they have local issue state.
 
 ## Step 6: Test the pipeline
 
@@ -273,7 +273,7 @@ Each project is fully isolated — separate queue, separate workers, separate st
 
 ## Developer levels
 
-DevClaw assigns tasks to developer levels instead of raw model names. This makes the system intuitive — you're assigning a "junior" to fix a typo, not configuring model parameters. Roles have configured level scales; built-in developer/tester use junior/medior/senior, while architect/reviewer use junior/senior.
+Claw Foundry assigns tasks to developer levels instead of raw model names. This makes the system intuitive — you're assigning a "junior" to fix a typo, not configuring model parameters. Roles have configured level scales; built-in developer/tester use junior/medior/senior, while architect/reviewer use junior/senior.
 
 | Role | Level | Default Model | When to assign |
 |------|-------|---------------|----------------|
@@ -292,11 +292,11 @@ Change which model powers each level in `workflow.yaml` — see [Configuration](
 
 | Responsibility | Who | Details |
 |---|---|---|
-| Plugin installation | You (once) | `openclaw plugins install @laurentenhoor/devclaw` |
+| Plugin installation | You (once) | `openclaw plugins install @essex75/claw-foundry` |
 | Agent + workspace setup | Plugin (`setup`) | Creates agent, configures models, writes workspace files |
 | Exact channel binding | Plugin (`setup`) | Creates an explicit account + peer binding for the selected agent |
 | Label setup | Plugin (`project_register`) | State labels, created idempotently via IssueProvider |
-| Prompt file scaffolding | Plugin (`project_register`) | Creates `devclaw/projects/<project>/prompts/<role>.md` for each role |
+| Prompt file scaffolding | Plugin (`project_register`) | Creates `claw-foundry/projects/<project>/prompts/<role>.md` for each role |
 | Project registration | Plugin (`project_register`) | Entry in `projects.json` with empty worker state |
 | Telegram group setup | You (once per project) | Add bot to group |
 | Issue creation | Plugin (`task_create`) | Orchestrator or workers create issues from chat |

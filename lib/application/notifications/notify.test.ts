@@ -12,7 +12,7 @@ import { NOTIFICATION_CHANNEL } from "../../domain/index.js";
 
 async function readAuditEvents(workspaceDir: string): Promise<Array<Record<string, unknown>>> {
   try {
-    const content = await fs.readFile(path.join(workspaceDir, "devclaw", "log", "audit.log"), "utf-8");
+    const content = await fs.readFile(path.join(workspaceDir, "claw-foundry", "log", "audit.log"), "utf-8");
     return content.split("\n").filter(Boolean).map((line) => JSON.parse(line));
   } catch {
     return [];
@@ -60,7 +60,7 @@ describe("notifications", () => {
   });
 
   it("blocks delivery when the exact route is not bound to the project agent", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
     const calls: string[][] = [];
     const runCommand: RunCommand = async (argv: string[]) => {
       calls.push(argv);
@@ -97,7 +97,7 @@ describe("notifications", () => {
   });
 
   it("uses the actual target branch in PR merged messages", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
     const calls: string[][] = [];
     const runCommand: RunCommand = async (argv: string[]) => {
       calls.push(argv);
@@ -142,7 +142,7 @@ describe("notifications", () => {
   });
 
   it("does not call CLI fallback or emit notify_error after runtime success", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
     const calls: string[][] = [];
     const sentPayloads: unknown[] = [];
     const runCommand: RunCommand = async (argv: string[]) => {
@@ -187,7 +187,7 @@ describe("notifications", () => {
   });
 
   it("does not resend through CLI when runtime acceptance is unknown", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
     const calls: string[][] = [];
     const runCommand: RunCommand = async (argv: string[]) => {
       calls.push(argv);
@@ -227,7 +227,7 @@ describe("notifications", () => {
   });
 
   it("emits one clear notify_error when runtime fails and fallback is unavailable", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
 
     try {
       const sent = await notify(
@@ -264,7 +264,7 @@ describe("notifications", () => {
   });
 
   it("uses command fallback when loading the runtime adapter fails", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
     const calls: string[][] = [];
     const runCommand: RunCommand = async (argv: string[]) => {
       calls.push(argv);
@@ -292,7 +292,7 @@ describe("notifications", () => {
   });
 
   it("records a failed delivery when the command exits nonzero", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
     const runCommand: RunCommand = async () => ({
       stdout: "", stderr: "delivery rejected", code: 1, signal: null, killed: false, termination: "exit",
     });
@@ -316,7 +316,7 @@ describe("notifications", () => {
   });
 
   it("returns a successful receipt when the sent audit record cannot be written", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
     let sent = 0;
     let fallback = 0;
     const runCommand: RunCommand = async () => {
@@ -325,7 +325,7 @@ describe("notifications", () => {
     };
     const runtime = runtimeWithSendText(async () => {
       sent++;
-      const auditPath = path.join(tmpDir, "devclaw", "log", "audit.log");
+      const auditPath = path.join(tmpDir, "claw-foundry", "log", "audit.log");
 
       await fs.rm(auditPath);
       await fs.mkdir(auditPath);
@@ -351,7 +351,7 @@ describe("notifications", () => {
 });
 
 it("audits unreadable route configuration without submitting a message", async () => {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-notify-"));
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-notify-"));
   let sends = 0;
   const runtime = runtimeWithSendText(async () => { sends++; return {}; });
   runtime.config.current = () => { throw new Error("Configuration unavailable"); };

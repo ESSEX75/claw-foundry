@@ -12,7 +12,7 @@ import { createTestHarness } from "../../../testing/index.js";
 import { createHealthTool } from "./health.js";
 
 /** Workspace configuration fixture consumed through the production config loader. */
-const CONFIG_PATH = ["devclaw", "workflow.yaml"];
+const CONFIG_PATH = ["claw-foundry", "workflow.yaml"];
 
 describe("manual health project policy", () => {
   for (const scenario of ["custom-workflow", "stale-threshold", "stall-threshold", "nudge-agent"]) {

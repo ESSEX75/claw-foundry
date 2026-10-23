@@ -9,23 +9,23 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 
 import type { ExecutionMode } from "../../../domain/index.js";
 import { findConfiguredAgent } from "../../../integrations/index.js";
-import { DEVCLAW_PLUGIN_ID } from "../../../shared/const.js";
+import { CLAW_FOUNDRY_PLUGIN_ID } from "../../../shared/const.js";
 import { HEARTBEAT_DEFAULTS } from "../../execution/heartbeat/configuration/index.js";
 import { ACTIVE_MEMORY_PLUGIN_ID, CONFIG_RELOAD_MODE, SUBAGENT_ARCHIVE_AFTER_MINUTES } from "../const.js";
 import { buildAgentToolPolicy, resolveProjectToolOwners } from "../permissions/index.js";
 import type { SetupRuntime } from "../types.js";
 
 /**
- * Write DevClaw plugin config to openclaw.json plugins section.
+ * Write Claw Foundry plugin config to openclaw.json plugins section.
  *
  * Configures:
- * - Tool permissions for DevClaw agents
+ * - Tool permissions for Claw Foundry agents
  * - Subagent cleanup interval (30 days) to keep development sessions alive
  * - Heartbeat defaults
  *
  * Uses SDK mutation to preserve concurrent configuration edits.
  * @param runtime - SDK configuration mutation transport.
- * @param agentId - Optional agent receiving DevClaw tool permissions.
+ * @param agentId - Optional agent receiving Claw Foundry tool permissions.
  * @param projectExecution - Optional explicit scheduling-mode change.
  * Note: models are NOT stored here — they live in workflow.yaml.
  */
@@ -44,8 +44,8 @@ export async function writePluginConfig(
 
       ensurePluginStructure(config);
 
-      if (projectExecution && config.plugins?.entries?.[DEVCLAW_PLUGIN_ID]?.config) {
-        config.plugins.entries[DEVCLAW_PLUGIN_ID].config.projectExecution = projectExecution;
+      if (projectExecution && config.plugins?.entries?.[CLAW_FOUNDRY_PLUGIN_ID]?.config) {
+        config.plugins.entries[CLAW_FOUNDRY_PLUGIN_ID].config.projectExecution = projectExecution;
       }
 
       ensurePluginAllowed(config);
@@ -82,19 +82,19 @@ export async function writePluginConfig(
 function ensurePluginStructure(config: OpenClawConfig): void {
   if (!config.plugins) config.plugins = {};
   if (!config.plugins.entries) config.plugins.entries = {};
-  if (!config.plugins.entries[DEVCLAW_PLUGIN_ID]) config.plugins.entries[DEVCLAW_PLUGIN_ID] = {};
-  if (!config.plugins.entries[DEVCLAW_PLUGIN_ID].config) config.plugins.entries[DEVCLAW_PLUGIN_ID].config = {};
+  if (!config.plugins.entries[CLAW_FOUNDRY_PLUGIN_ID]) config.plugins.entries[CLAW_FOUNDRY_PLUGIN_ID] = {};
+  if (!config.plugins.entries[CLAW_FOUNDRY_PLUGIN_ID].config) config.plugins.entries[CLAW_FOUNDRY_PLUGIN_ID].config = {};
 }
 
 /**
- * Ensure "devclaw" is in plugins.allow so OpenClaw trusts the plugin
+ * Ensure "claw-foundry" is in plugins.allow so OpenClaw trusts the plugin
  * without requiring manual config after install.
  * @param config - Fresh writable SDK configuration.
  */
 function ensurePluginAllowed(config: OpenClawConfig): void {
   if (!config.plugins) config.plugins = {};
   if (!Array.isArray(config.plugins.allow)) config.plugins.allow = [];
-  if (!config.plugins.allow.includes(DEVCLAW_PLUGIN_ID)) config.plugins.allow.push(DEVCLAW_PLUGIN_ID);
+  if (!config.plugins.allow.includes(CLAW_FOUNDRY_PLUGIN_ID)) config.plugins.allow.push(CLAW_FOUNDRY_PLUGIN_ID);
 }
 
 /** Retain managed worker sessions for the configured cleanup period.
@@ -127,7 +127,7 @@ function allowActiveMemoryForAgent(config: OpenClawConfig, agentId: string): voi
   }
 }
 
-/** Enable the internal hooks used by DevClaw.
+/** Enable the internal hooks used by Claw Foundry.
  * @param config - Fresh writable SDK configuration.
  */
 function ensureInternalHooks(config: OpenClawConfig): void {
@@ -140,10 +140,10 @@ function ensureInternalHooks(config: OpenClawConfig): void {
  * @param config - Fresh writable SDK configuration.
  */
 function ensureHeartbeatDefaults(config: OpenClawConfig): void {
-  const devclaw = config.plugins?.entries?.[DEVCLAW_PLUGIN_ID]?.config;
+  const clawFoundry = config.plugins?.entries?.[CLAW_FOUNDRY_PLUGIN_ID]?.config;
 
-  if (devclaw && !devclaw.work_heartbeat) {
-    devclaw.work_heartbeat = { ...HEARTBEAT_DEFAULTS };
+  if (clawFoundry && !clawFoundry.work_heartbeat) {
+    clawFoundry.work_heartbeat = { ...HEARTBEAT_DEFAULTS };
   }
 }
 

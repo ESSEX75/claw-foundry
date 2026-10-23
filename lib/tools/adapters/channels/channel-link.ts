@@ -20,7 +20,7 @@ import { CHANNEL_LINK_TOOL_NAME } from "./const.js";
 const channelLinkInput = z.strictObject({
   channelId: channelIdInput,
   accountId: requiredTextInput.describe("Explicit OpenClaw channel account ID for this destination."),
-  project: requiredTextInput.describe("Project name or slug to link to (e.g. 'devclaw'). Must already be registered via project_register."),
+  project: requiredTextInput.describe("Project name or slug to link to (e.g. 'claw-foundry'). Must already be registered via project_register."),
   channel: z.enum(Object.values(NOTIFICATION_CHANNEL)).describe("Channel type. Defaults to 'telegram'.").optional(),
   threadId: requiredTextInput.describe("Optional thread/topic ID for forum-style channels, e.g. Telegram topic ID.").optional(),
   name: requiredTextInput.describe("Display name for this channel (e.g. 'general', 'dev-chat'). Auto-generated if omitted.").optional(),

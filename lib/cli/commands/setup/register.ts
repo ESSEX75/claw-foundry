@@ -19,13 +19,13 @@ import { resolveSetupCliOptions } from "./target-prompts.js";
 import type { SetupCliOptions } from "./types.js";
 
 /** Register terminal options that dispatch the shared setup command.
- * @param parent - Parent DevClaw command group.
+ * @param parent - Parent Claw Foundry command group.
  * @param ctx - Setup runtime and scope command transport.
  */
 export function registerSetupCommand(parent: Command, ctx: Pick<SetupOpts, "runtime" | "runCommand">): void {
   const setupCmd = parent
     .command("setup")
-    .description("Set up DevClaw: create agent, configure models, write workspace files")
+    .description("Set up Claw Foundry: create agent, configure models, write workspace files")
     .option("--new-agent <name>", "Create a new agent with this name")
     .option("--agent <id>", "Use an existing agent by ID")
     .option("--workspace <path>", "Direct workspace path")
@@ -77,7 +77,7 @@ export function registerSetupCommand(parent: Command, ctx: Pick<SetupOpts, "runt
         console.error("OpenClaw scope approval required.");
         console.error(`Missing scopes: ${err.missingScopes.join(", ")}`);
         console.error(`Approval request: ${err.requestId}`);
-        console.error("Approve this request in OpenClaw UI or CLI, then rerun: openclaw devclaw setup");
+        console.error("Approve this request in OpenClaw UI or CLI, then rerun: openclaw claw-foundry setup");
         process.exitCode = 1;
 
         return;

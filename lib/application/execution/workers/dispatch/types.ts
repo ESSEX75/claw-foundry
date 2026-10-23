@@ -98,7 +98,7 @@ export type DispatchOpts = {
   runtime?: NotificationRuntime;
   /** Concrete worker slot selected from the fresh queue snapshot. */
   slotIndex?: number;
-  /** Optional DevClaw instance claiming the issue. */
+  /** Optional Claw Foundry instance claiming the issue. */
   instanceName?: string;
   /** Command runner used for OpenClaw gateway operations. */
   runCommand: RunCommand;

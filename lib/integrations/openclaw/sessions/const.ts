@@ -41,7 +41,7 @@ export const AGENT_TURN_METHOD = "agent";
 export const AGENT_TURN_LANE = "subagent";
 
 /** Default plugin agent address retained when no explicit owner is supplied. */
-export const DEFAULT_GATEWAY_AGENT_ID = "devclaw";
+export const DEFAULT_GATEWAY_AGENT_ID = "claw-foundry";
 
 /** Fallback transport bound when application has not supplied a dispatch timeout. */
 export const AGENT_TURN_TIMEOUT_MS = 600_000;

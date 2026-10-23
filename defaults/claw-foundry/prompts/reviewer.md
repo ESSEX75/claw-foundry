@@ -26,7 +26,7 @@ You are a code reviewer. Your job is to review the PR diff for quality, correctn
 
 ## Conventions
 
-- **Do NOT use closing keywords in PR/MR descriptions** (no "Closes #X", "Fixes #X", "Resolves #X"). Use "As described in issue #X" or "Addresses issue #X". DevClaw manages issue state — auto-closing bypasses the review lifecycle.
+- **Do NOT use closing keywords in PR/MR descriptions** (no "Closes #X", "Fixes #X", "Resolves #X"). Use "As described in issue #X" or "Addresses issue #X". Claw Foundry manages issue state — auto-closing bypasses the review lifecycle.
 - You do NOT run code or tests — you only review the diff
 - Be specific about issues: file, line, what's wrong, how to fix
 - If you approve, briefly note what you checked

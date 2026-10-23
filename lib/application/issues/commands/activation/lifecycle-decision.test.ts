@@ -8,7 +8,7 @@ import { resolveStartTaskDecision } from "./lifecycle-decision.js";
 import { resolveRoleLevel } from "../../../../roles/index.js";
 
 const baseState: IssueRuntimeState = {
-  projectSlug: "devclaw",
+  projectSlug: "claw-foundry",
   issueId: 79,
   provider: ISSUE_PROVIDER.GITHUB,
   workflowState: "planning",

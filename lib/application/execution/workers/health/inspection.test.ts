@@ -13,7 +13,7 @@ import { diagnoseWorkerHealth } from "./worker-diagnosis.js";
 import { remediateWorkerHealth } from "./worker-remediation.js";
 
 /** Workspace configuration fixture used to disable a persisted role. */
-const CONFIG_PATH = ["devclaw", "workflow.yaml"];
+const CONFIG_PATH = ["claw-foundry", "workflow.yaml"];
 
 describe("manual health inspection", () => {
   it("rejects invalid and unknown explicit scopes before gateway or provider observations", async () => {

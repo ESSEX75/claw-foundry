@@ -18,7 +18,7 @@ afterEach(async () => {
 
 describe("writeJsonAtomic", () => {
   it("replaces JSON and leaves no sibling temporary file", async () => {
-    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-atomic-file-"));
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "claw-foundry-atomic-file-"));
     const filePath = path.join(directory, "state.json");
 
     temporaryDirectories.push(directory);

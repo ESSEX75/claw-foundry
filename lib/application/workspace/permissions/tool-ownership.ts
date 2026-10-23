@@ -1,4 +1,4 @@
-/** Resolves DevClaw tool authorization from validated local project ownership. */
+/** Resolves Claw Foundry tool authorization from validated local project ownership. */
 
 import type { AgentRegistryConfig } from "../../../integrations/index.js";
 import { listConfiguredAgents, resolveConfiguredAgentWorkspace } from "../../../integrations/index.js";

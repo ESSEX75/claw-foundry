@@ -4,6 +4,7 @@ import path from "node:path";
 
 import YAML from "yaml";
 
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, WORKFLOW_FILE_NAME } from "../../paths.js";
 import type { WorkspaceWriteResult } from "../documents/index.js";
 import { updateDocument } from "../documents/index.js";
@@ -13,6 +14,8 @@ import { updateDocument } from "../documents/index.js";
  * @param models - Explicit role and level assignments validated by the application.
  */
 export async function writeWorkspaceModels(workspacePath: string, models: Record<string, Record<string, string>>): Promise<WorkspaceWriteResult> {
+  assertWorkspaceMigrated(workspacePath);
+
   const relativePath = path.join(DATA_DIR, WORKFLOW_FILE_NAME);
   const workflowPath = path.join(workspacePath, relativePath);
   const changed = await updateDocument(workflowPath, content => {

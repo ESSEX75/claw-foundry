@@ -149,7 +149,7 @@ export type TaskIssueProjectionView = {
   missingManagedLabels: string[];
   /** Managed provider labels inconsistent with authoritative state. */
   unexpectedManagedLabels: string[];
-  /** Provider labels outside DevClaw ownership. */
+  /** Provider labels outside Claw Foundry ownership. */
   unmanagedLabels: string[];
   /** Whether local integrity or observed label differences require explicit repair. */
   needsRepair: boolean;

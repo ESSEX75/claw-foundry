@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { getAllRoleIds } from "../../../roles/index.js";
+import { assertWorkspaceMigrated } from "../../migration.js";
 import { DATA_DIR, LOG_DIRECTORY_NAME, PROJECTS_DIRECTORY_NAME, PROJECTS_FILE_NAME, WORKFLOW_FILE_NAME } from "../../paths.js";
 import type { WorkspaceWriteResult } from "../documents/index.js";
 import { copyIfMissing, fileExists, writeIfMissing } from "../documents/index.js";
@@ -25,6 +26,7 @@ import {
  * @param workspacePath - Workspace whose missing current files should be created.
  */
 export async function initializeWorkspaceFiles(workspacePath: string): Promise<WorkspaceWriteResult> {
+  assertWorkspaceMigrated(workspacePath);
   const templates = await loadSetupTemplates();
   const dataDir = path.join(workspacePath, DATA_DIR);
   const written: string[] = [];
@@ -58,6 +60,7 @@ export async function initializeWorkspaceFiles(workspacePath: string): Promise<W
  * @param defaultWorkspacePath - Optional source for a create-only USER.md copy.
  */
 export async function scaffoldWorkspace(workspacePath: string, defaultWorkspacePath?: string): Promise<WorkspaceWriteResult> {
+  assertWorkspaceMigrated(workspacePath);
   const templates = await loadSetupTemplates();
   const written: string[] = [];
 
@@ -78,7 +81,7 @@ export async function scaffoldWorkspace(workspacePath: string, defaultWorkspaceP
 /**
  * Create every directory required by current setup and runtime persistence capabilities.
  *
- * @param dataDir - DevClaw data directory whose current structure is required.
+ * @param dataDir - Claw Foundry data directory whose current structure is required.
  */
 async function ensureDirectories(dataDir: string): Promise<void> {
   await Promise.all([

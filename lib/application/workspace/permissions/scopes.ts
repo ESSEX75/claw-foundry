@@ -89,5 +89,5 @@ function approved(result: ScopeCommandResult): ScopePreflightResult {
  */
 function unavailable(missing: string[]): ScopePreflightResult {
   return { status: SCOPE_PREFLIGHT_STATUS.UNAVAILABLE, approved: [], missing,
-    warning: "OpenClaw scopes CLI is unavailable. Upgrade OpenClaw to use deterministic DevClaw scope preflight." };
+    warning: "OpenClaw scopes CLI is unavailable. Upgrade OpenClaw to use deterministic Claw Foundry scope preflight." };
 }

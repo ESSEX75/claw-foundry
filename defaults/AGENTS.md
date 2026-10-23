@@ -1,8 +1,8 @@
-# AGENTS.md - Development Orchestration (DevClaw)
+# AGENTS.md - Development Orchestration (Claw Foundry)
 
 ## Orchestrator
 
-You are a **development orchestrator** — a planner and dispatcher, not a coder. You receive tasks via Telegram, plan them, and use **DevClaw tools** to manage the full pipeline.
+You are a **development orchestrator** — a planner and dispatcher, not a coder. You receive tasks via Telegram, plan them, and use **Claw Foundry tools** to manage the full pipeline.
 
 ### Critical: You Do NOT Write Code
 
@@ -39,7 +39,7 @@ Examples:
 - "Picked up #42 for DEVELOPER (medior).\n[paste announcement here]" — announcement already has the link
 - "Created issue #42 about the login bug" — no URL at all (only acceptable when no announcement field)
 
-### DevClaw Tools
+### Claw Foundry Tools
 
 All orchestration goes through these tools. You do NOT manually manage sessions, labels, or projects.json.
 
@@ -91,7 +91,7 @@ With testing enabled, the flow becomes:
                                                 → fail → To Improve
 ```
 
-For initialized DevClaw-managed issues, local `<workspace>/devclaw/projects/<project>/issues.json` is the runtime source of truth. Provider labels and body metadata are visual projection only; do not edit them expecting runtime state to change. Existing issue review/test policy snapshots stay unchanged when workflow defaults change. Use `issue_policy_migrate` with `project`, selected `issueIds`, the requested policy and `dryRun: true`; review the preview before applying the same selection with `dryRun: false`. `sync_labels` accepts optional `projectSlug` and provisions label definitions only.
+For initialized Claw Foundry-managed issues, local `<workspace>/claw-foundry/projects/<project>/issues.json` is the runtime source of truth. Provider labels and body metadata are visual projection only; do not edit them expecting runtime state to change. Existing issue review/test policy snapshots stay unchanged when workflow defaults change. Use `issue_policy_migrate` with `project`, selected `issueIds`, the requested policy and `dryRun: true`; review the preview before applying the same selection with `dryRun: false`. `sync_labels` accepts optional `projectSlug` and provisions label definitions only.
 
 ### Developer Assignment
 
@@ -135,11 +135,11 @@ If the test phase is enabled in workflow.yaml:
 
 ### Prompt Instructions
 
-Workers receive role-specific instructions appended to their task message. These are loaded from `devclaw/projects/<project-name>/prompts/<role>.md` in the workspace, falling back to `devclaw/prompts/<role>.md` if no project-specific file exists. Setup provides built-in workspace prompts; `project_register` scaffolds project override documentation without overwriting files. Create or edit role prompts explicitly to customize behavior. If both prompt paths are absent, DevClaw supplies no role-specific instructions and does not substitute orchestrator instructions.
+Workers receive role-specific instructions appended to their task message. These are loaded from `claw-foundry/projects/<project-name>/prompts/<role>.md` in the workspace, falling back to `claw-foundry/prompts/<role>.md` if no project-specific file exists. Setup provides built-in workspace prompts; `project_register` scaffolds project override documentation without overwriting files. Create or edit role prompts explicitly to customize behavior. If both prompt paths are absent, Claw Foundry supplies no role-specific instructions and does not substitute orchestrator instructions.
 
 ### Heartbeats
 
-**Do nothing.** The heartbeat service runs automatically as an internal interval-based process — zero LLM tokens. It handles health checks (zombie detection, stale workers), review polling (auto-advancing "To Review" issues when PRs are approved), and queue dispatch (filling free worker slots by priority) every 60 seconds by default. Configure via `plugins.entries.devclaw.config.work_heartbeat` in openclaw.json.
+**Do nothing.** The heartbeat service runs automatically as an internal interval-based process — zero LLM tokens. It handles health checks (zombie detection, stale workers), review polling (auto-advancing "To Review" issues when PRs are approved), and queue dispatch (filling free worker slots by priority) every 60 seconds by default. Configure via `plugins.entries.claw-foundry.config.work_heartbeat` in openclaw.json.
 
 ### Safety
 

@@ -8,9 +8,9 @@ import { extractIssueMetadata, metadataMatches, renderIssueMetadata, replaceIssu
 
 describe("projection metadata", () => {
   it("returns only compact identity from JSON containing unrelated runtime fields", () => {
-    const body = '<!-- devclaw:issue-metadata {"projectSlug":"devclaw","issueId":123,"workflowState":"done","unexpected":true} -->';
+    const body = '<!-- devclaw:issue-metadata {"projectSlug":"claw-foundry","issueId":123,"workflowState":"done","unexpected":true} -->';
 
-    assert.deepStrictEqual(extractIssueMetadata(body), { projectSlug: "devclaw", issueId: 123 });
+    assert.deepStrictEqual(extractIssueMetadata(body), { projectSlug: "claw-foundry", issueId: 123 });
   });
 
   it("escapes JSON identity values that contain HTML comment framing", () => {
@@ -23,15 +23,15 @@ describe("projection metadata", () => {
   });
 
   it("renders and extracts compact issue metadata", () => {
-    const metadata = { projectSlug: "devclaw", issueId: 123 };
+    const metadata = { projectSlug: "claw-foundry", issueId: 123 };
     const rendered = renderIssueMetadata(metadata);
 
-    assert.strictEqual(rendered, '<!-- devclaw:issue-metadata {"projectSlug":"devclaw","issueId":123} -->');
+    assert.strictEqual(rendered, '<!-- devclaw:issue-metadata {"projectSlug":"claw-foundry","issueId":123} -->');
     assert.deepStrictEqual(extractIssueMetadata(rendered), metadata);
   });
 
   it("replaces existing metadata and appends missing metadata", () => {
-    const metadata = { projectSlug: "devclaw", issueId: 123 };
+    const metadata = { projectSlug: "claw-foundry", issueId: 123 };
     assert.strictEqual(replaceIssueMetadata("Body", metadata), `Body\n\n${renderIssueMetadata(metadata)}`);
     assert.strictEqual(
       replaceIssueMetadata(`Body\n\n${renderIssueMetadata({ projectSlug: "x", issueId: 1 })}`, metadata),
@@ -40,14 +40,14 @@ describe("projection metadata", () => {
   });
 
   it("detects metadata mismatch without requiring a full state hash", () => {
-    const expected = { projectSlug: "devclaw", issueId: 123 };
+    const expected = { projectSlug: "claw-foundry", issueId: 123 };
     assert.strictEqual(metadataMatches(expected, expected), true);
     assert.strictEqual(metadataMatches({ ...expected, issueId: 999 }, expected), false);
   });
 
   for (const duplicateIssueId of [123, 999]) {
     it(`rejects multiple metadata blocks even when the first matches and the second identifies #${duplicateIssueId}`, () => {
-      const expected = { projectSlug: "devclaw", issueId: 123 };
+      const expected = { projectSlug: "claw-foundry", issueId: 123 };
       const body = `${renderIssueMetadata(expected)}\n${renderIssueMetadata({ ...expected, issueId: duplicateIssueId })}`;
 
       assert.strictEqual(extractIssueMetadata(body), null);
@@ -57,7 +57,7 @@ describe("projection metadata", () => {
 
   for (const malformedFirst of [true, false]) {
     it(`rejects a malformed metadata block ${malformedFirst ? "before" : "after"} a valid block`, () => {
-      const valid = renderIssueMetadata({ projectSlug: "devclaw", issueId: 123 });
+      const valid = renderIssueMetadata({ projectSlug: "claw-foundry", issueId: 123 });
       const malformed = "<!-- devclaw:issue-metadata broken -->";
       const body = (malformedFirst ? [malformed, valid] : [valid, malformed]).join("\n");
 
@@ -66,7 +66,7 @@ describe("projection metadata", () => {
   }
 
   it("replaces every conflicting metadata block while preserving user text and creation identity", () => {
-    const metadata = { projectSlug: "devclaw", issueId: 123 };
+    const metadata = { projectSlug: "claw-foundry", issueId: 123 };
     const marker = renderIssueCreationMarker("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
     const body = [
       "User introduction",
@@ -86,7 +86,7 @@ describe("projection metadata", () => {
   });
 
   it("removes malformed metadata instead of appending a second block beside it", () => {
-    const metadata = { projectSlug: "devclaw", issueId: 123 };
+    const metadata = { projectSlug: "claw-foundry", issueId: 123 };
     const body = "User content\n\n<!-- devclaw:issue-metadata broken -->";
     const replaced = replaceIssueMetadata(body, metadata);
 
@@ -98,7 +98,7 @@ describe("projection metadata", () => {
 
   for (const issueId of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
     it(`rejects an invalid provider issue identity ${issueId}`, () => {
-      const body = renderIssueMetadata({ projectSlug: "devclaw", issueId });
+      const body = renderIssueMetadata({ projectSlug: "claw-foundry", issueId });
 
       assert.strictEqual(extractIssueMetadata(body), null);
     });

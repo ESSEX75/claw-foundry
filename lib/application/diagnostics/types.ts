@@ -12,7 +12,7 @@ export type DoctorSeverity = ValueOf<typeof DOCTOR_SEVERITY>;
 export type DoctorFinding = {
   /** Stable identifier for automation and support references. */
   code: string;
-  /** Whether this finding blocks safe DevClaw routing. */
+  /** Whether this finding blocks safe Claw Foundry routing. */
   severity: DoctorSeverity;
   /** Human-readable diagnostic message. */
   message: string;
@@ -36,12 +36,12 @@ type DoctorProjectArchiveCounters = {
   attachmentsRetainedBytes: number;
 };
 
-/** Explicit DevClaw tool access observed for one configured agent. */
+/** Explicit Claw Foundry tool access observed for one configured agent. */
 type DoctorAgentToolAccess = {
   /** Configured OpenClaw agent whose explicit policy was inspected. */
   agentId: string;
-  /** Whether this project owner explicitly allows every required DevClaw tool. */
-  devclawToolsAllowed: boolean;
+  /** Whether this project owner explicitly allows every required Claw Foundry tool. */
+  clawFoundryToolsAllowed: boolean;
 };
 
 /** Routing and tool-access matrix returned by the doctor application service. */
@@ -50,7 +50,7 @@ export type WorkspaceDiagnosticsReport = {
   ok: boolean;
   /** Route, policy, and archive findings, including incomplete project inspections. */
   findings: DoctorFinding[];
-  /** Explicit DevClaw tool access calculated for every configured agent. */
+  /** Explicit Claw Foundry tool access calculated for every configured agent. */
   agents: DoctorAgentToolAccess[];
   /** Counters for successfully inspected projects; failed projects have findings instead. */
   archives: DoctorProjectArchiveCounters[];
